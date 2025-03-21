@@ -16,7 +16,7 @@ int main() {
     }
     std::cout << "]" << std::endl;
   } else {
-    std::cout << "no bad fault combination found" << std::endl;
+    std::cout << "no bad fault combinations" << std::endl;
   }
   return 0;
 }
