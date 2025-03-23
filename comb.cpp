@@ -1,5 +1,5 @@
 #include "comb.hpp"
-#include <iostream>
+#include <cassert>
 #include <optional>
 #include <vector>
 
@@ -58,6 +58,7 @@ private:
 };
 
 /// Class to generate all (i0, i1, ..., i_{k-1}) where 0<=i_j<s_j.
+/// All elements of `sizes` must be positive.
 class ProdGenerator {
 public:
   ProdGenerator(const std::vector<unsigned> &sizes)
@@ -110,19 +111,23 @@ private:
 
 /// Search for bad combinations of faults from the baskets indicated by their
 /// indices in `faults`.
-/// If a bad combination is found it is written to result (otherwise nullopt
-/// is).
+/// If a bad combination is found it is written to `result`, which should be
+/// `nullopt` on entry.
 void search_for_bad_combs(const std::vector<std::vector<fault_t>> &faults,
                           const std::vector<unsigned> &baskets,
                           const eval_fn &g,
                           std::optional<std::vector<unsigned>> *result) {
+  assert(!*result);
   unsigned k = baskets.size();
   std::vector<unsigned> sizes(k);
   for (unsigned i = 0; i < k; i++) {
-    sizes[i] = faults[baskets[i]].size();
+    unsigned basket_sz = faults[baskets[i]].size();
+    if (basket_sz == 0) {
+      return;
+    }
+    sizes[i] = basket_sz;
   }
   ProdGenerator pg(sizes);
-  *result = std::nullopt;
   while (true) {
     std::optional<std::vector<unsigned>> indices = pg.next();
     if (indices) {
@@ -143,7 +148,6 @@ void search_for_bad_combs(const std::vector<std::vector<fault_t>> &faults,
 std::optional<std::vector<std::pair<unsigned, unsigned>>>
 evaluate(const std::vector<std::vector<fault_t>> &faults, unsigned k,
          const eval_fn &g, unsigned n_worker_threads) {
-  // TODO Check all vectors in `faults` are non-empty
   unsigned n = faults.size();
   CombsGenerator cg(n, k);
   std::vector<std::optional<std::vector<unsigned>>> results(n_worker_threads);
