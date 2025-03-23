@@ -1,3 +1,5 @@
+#pragma once
+
 #include <stdint.h>
 
 #define ALL_FAULTS_GOOD 0
@@ -14,4 +16,5 @@ typedef void (*ft_iteration_updater)(int fault_combination_count);
 
 int ft_iteration_iterate(int s, int *m, int k, fault_t *propagated_faults,
                          int *bad_fault_array, ft_iteration_evaluator evaluator,
-                         ft_iteration_updater updater, int update_stride);
+                         ft_iteration_updater updater, int update_stride,
+                         unsigned n_worker_threads = 8);

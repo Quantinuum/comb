@@ -1,11 +1,12 @@
 #include "comb.hpp"
+#include <cstdint>
 #include <iostream>
 #include <vector>
 
-int g(fault_t x) { return x % 3 == 0; }
+int g(uint64_t x) { return x % 3 == 0; }
 
 int main() {
-  std::vector<std::vector<fault_t>> faults{{1, 1, 2}, {3}, {5, 8}};
+  std::vector<std::vector<uint64_t>> faults{{1, 1, 2}, {3}, {5, 8}};
   std::optional<std::vector<std::pair<unsigned, unsigned>>> bad_faults =
       evaluate(faults, 2, g);
   if (bad_faults) {

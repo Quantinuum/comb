@@ -5,7 +5,8 @@
 
 int ft_iteration_iterate(int s, int *m, int k, fault_t *propagated_faults,
                          int *bad_fault_array, ft_iteration_evaluator evaluator,
-                         ft_iteration_updater updater, int update_stride) {
+                         ft_iteration_updater updater, int update_stride,
+                         unsigned n_worker_threads) {
   if (updater) {
     std::cout << "Updater function not supported: ignoring." << std::endl;
   }
@@ -21,7 +22,7 @@ int ft_iteration_iterate(int s, int *m, int k, fault_t *propagated_faults,
     faults[i] = bucket;
   }
   std::optional<std::vector<std::pair<unsigned, unsigned>>> bad_faults =
-      evaluate(faults, k, evaluator);
+      evaluate(faults, k, evaluator, n_worker_threads);
   if (bad_faults) {
     std::vector<unsigned> r(s);
     r[0] = 0;

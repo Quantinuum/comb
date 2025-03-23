@@ -1,7 +1,10 @@
 #include "comb.hpp"
-#include <cassert>
+#include <cstdint>
+#include <future>
 #include <optional>
 #include <vector>
+
+using namespace std::chrono_literals;
 
 /// Class to generate all combinations of k distinct integers in the range
 /// [0,n).
@@ -111,19 +114,18 @@ private:
 
 /// Search for bad combinations of faults from the baskets indicated by their
 /// indices in `faults`.
-/// If a bad combination is found it is written to `result`, which should be
-/// `nullopt` on entry.
-void search_for_bad_combs(const std::vector<std::vector<fault_t>> &faults,
-                          const std::vector<unsigned> &baskets,
-                          const eval_fn &g,
-                          std::optional<std::vector<unsigned>> *result) {
-  assert(!*result);
+/// If a bad combination is found it is written to `result` and the function
+/// returns `true`. Otherwise the function returns `false`.
+static bool
+search_for_bad_combs(const std::vector<std::vector<uint64_t>> &faults,
+                     const std::vector<unsigned> &baskets, const eval_fn &g,
+                     std::vector<std::pair<unsigned, unsigned>> *result) {
   unsigned k = baskets.size();
   std::vector<unsigned> sizes(k);
   for (unsigned i = 0; i < k; i++) {
     unsigned basket_sz = faults[baskets[i]].size();
     if (basket_sz == 0) {
-      return;
+      return false;
     }
     sizes[i] = basket_sz;
   }
@@ -131,27 +133,75 @@ void search_for_bad_combs(const std::vector<std::vector<fault_t>> &faults,
   while (true) {
     std::optional<std::vector<unsigned>> indices = pg.next();
     if (indices) {
-      fault_t x = 0;
+      uint64_t x = 0;
       for (unsigned i = 0; i < k; i++) {
         x ^= faults[baskets[i]][indices->at(i)];
       }
       if (g(x)) {
-        *result = *indices;
-        return;
+        for (unsigned i = 0; i < k; i++) {
+          (*result)[i] = {baskets[i], indices->at(i)};
+        }
+        return true;
       }
     } else {
-      return;
+      return false;
     }
   }
 }
 
 std::optional<std::vector<std::pair<unsigned, unsigned>>>
-evaluate(const std::vector<std::vector<fault_t>> &faults, unsigned k,
+evaluate(const std::vector<std::vector<uint64_t>> &faults, unsigned k,
          const eval_fn &g, unsigned n_worker_threads) {
   unsigned n = faults.size();
   CombsGenerator cg(n, k);
-  std::vector<std::optional<std::vector<unsigned>>> results(n_worker_threads);
-
-  // TODO
-  return std::nullopt;
+  std::vector<std::vector<std::pair<unsigned, unsigned>>> results(
+      n_worker_threads);
+  for (unsigned j = 0; j < n_worker_threads; j++) {
+    results[j] = std::vector<std::pair<unsigned, unsigned>>(k);
+  }
+  std::vector<std::future<bool>> futures(n_worker_threads);
+  std::optional<std::vector<unsigned>> indices = cg.next();
+  std::vector<bool> busy(n_worker_threads);
+  while (true) {
+    // Poll all existing threads for completion. For each completed thread: if
+    // results were found, return them; otherwise empty the slot.
+    for (unsigned j = 0; j < n_worker_threads; j++) {
+      if (busy[j] && futures[j].wait_for(0ms) == std::future_status::ready) {
+        if (futures[j].get()) {
+          return results[j];
+        } else {
+          busy[j] = false;
+        }
+      }
+    }
+    if (indices.has_value()) {
+      // If any thread slot is empty, start a new thread in it with indices, and
+      // update indices.
+      for (unsigned j = 0; j < n_worker_threads; j++) {
+        if (!busy[j]) {
+          std::vector<std::pair<unsigned, unsigned>> *result =
+              &results.data()[j];
+          futures[j] =
+              std::async(std::launch::async, [faults, indices, g, result] {
+                return search_for_bad_combs(faults, *indices, g, result);
+              });
+          busy[j] = true;
+          indices = cg.next();
+          break;
+        }
+      }
+    } else {
+      // If all thread slots are free, return.
+      bool all_free = true;
+      for (unsigned j = 0; j < n_worker_threads; j++) {
+        if (busy[j]) {
+          all_free = false;
+          break;
+        }
+      }
+      if (all_free) {
+        return std::nullopt;
+      }
+    }
+  }
 }
