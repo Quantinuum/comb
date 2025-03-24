@@ -18,6 +18,7 @@ int ft_iteration_iterate(int s, int *m, int k, fault_t *propagated_faults,
       bucket[j] = propagated_faults[p];
       p++;
     }
+    faults[i] = bucket;
   }
   std::optional<std::vector<std::pair<unsigned, unsigned>>> bad_faults =
       evaluate(faults, k, evaluator);
