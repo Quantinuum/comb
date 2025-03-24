@@ -10,7 +10,7 @@ int main() {
   fault_t propagated_faults[6] = {1, 1, 2, 3, 5, 8};
   int bad_fault_array[2];
   int x = ft_iteration_iterate(s, m, k, propagated_faults, bad_fault_array, g,
-                               0, 5);
+                               0, 5, 8);
   switch (x) {
   case ALL_FAULTS_GOOD:
     printf("no bad fault combinations\n");
