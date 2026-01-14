@@ -1,12 +1,12 @@
-all: libft.so
+all: libcomb.so
 
-libft.so: ft_iteration.h ft_iteration.cpp comb.hpp comb.cpp
+libcomb.so: ft_iteration.h ft_iteration.cpp comb.hpp comb.cpp
 	g++ -O3 -c -Wall -Werror -fPIC ft_iteration.cpp comb.cpp
-	g++ -O3 -shared -o libft.so ft_iteration.o comb.o
+	g++ -O3 -shared -o libcomb.so ft_iteration.o comb.o
 
-test-libft: libft.so ft_iteration.h ft_iteration.cpp test-libft.c
-	g++ -O3 -Wall -Werror -Lft -o test-libft ft_iteration.cpp comb.cpp test-libft.c
-	./test-libft
+test-libcomb: libcomb.so ft_iteration.h ft_iteration.cpp test-libft.c
+	g++ -O3 -Wall -Werror -Lft -o test-libcomb ft_iteration.cpp comb.cpp test-libft.c
+	./test-libcomb
 
 test-comb: comb.hpp comb.cpp test-comb.cpp
 	g++ -O3 -Wall -Werror -o test-comb comb.cpp test-comb.cpp

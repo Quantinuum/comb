@@ -1,0 +1,8 @@
+#+AUTHOR: Selwyn Simsek
+* comb
+
+A library to aid in the verification of the fault tolerant properties of state preparation circuits.
+
+Focuses principally on the ~CNOT + T~ and Clifford gatesets.
+
+This branch is under development.
