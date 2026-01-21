@@ -1,4 +1,4 @@
-CFLAGS = -lpng -lc -lm
+CFLAGS = -lpng -lc -lm # -lm4ri for dynamic linking, and LD_LIBRARY_PATH=/usr/local/lib at runtime
 CC = gcc #g++?
 M4RI = /usr/local/lib/libm4ri.a
 
