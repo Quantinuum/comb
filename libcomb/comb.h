@@ -148,6 +148,25 @@ extern "C" {
 
   // use m4rie for matrix multiplication
   // no need to implement addition / multiplication etc.
+  typedef struct { // Stores a DCP operator as a Clifford tableau following Dehaene and Demoor.
+    mzd_t* c_bar;
+    mzd_t* h_bar;
+  } comb_dcp_tableau_t;
+
+  comb_dcp_tableau_t* tableau_init(size_t n); // n number of qubits
+  comb_dcp_tableau_t* tableau_free(comb_dcp_tableau_t* tableau); // frees it from memory
+  comb_dcp_tableau_t* tableau_multiply(comb_dcp_tableau_t* c1,
+                                       comb_dcp_tableau_t* c2,
+                                       comb_dcp_tableau_t* result);
+
+  typedef struct {
+    comb_pauli_z_t factor; // cannot be NULL
+    size_t k; // number of generators
+    comb_pauli_z_t* generators; // room for at least k of these
+  } comb_pauli_z_coset_t;
+
+  int coset_iterate(comb_pauli_z_coset_t* coset, comb_css_magic_state_t* state); // iterates over every element
+  // of the coset and checks that each error is good
 
 #ifdef __cplusplus
 }
