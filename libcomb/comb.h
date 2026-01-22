@@ -6,7 +6,8 @@ extern "C" {
 
 // need fixed width integers
 #include <stdint.h>
-
+#include <stdlib.h>
+#include <m4ri/m4ri.h>
 // Error codes
 
   typedef enum {ALL_FAULTS_GOOD = 0,
@@ -148,24 +149,40 @@ extern "C" {
 
   // use m4rie for matrix multiplication
   // no need to implement addition / multiplication etc.
-  typedef struct { // Stores a DCP operator as a Clifford tableau following Dehaene and Demoor.
-    mzd_t* c_bar;
-    mzd_t* h_bar;
-  } comb_dcp_tableau_t;
-
-  comb_dcp_tableau_t* tableau_init(size_t n); // n number of qubits
-  comb_dcp_tableau_t* tableau_free(comb_dcp_tableau_t* tableau); // frees it from memory
-  comb_dcp_tableau_t* tableau_multiply(comb_dcp_tableau_t* c1,
-                                       comb_dcp_tableau_t* c2,
-                                       comb_dcp_tableau_t* result);
+  typedef struct { // A Clifford tableau following Dehaene and Demoor.
+    mzd_t* c_bar; // 2n + 1 square matrix
+    mzd_t* h_bar; // 2n + 1 column vector
+  } clifford_tableau_t;
 
   typedef struct {
-    comb_pauli_z_t factor; // cannot be NULL
-    size_t k; // number of generators
-    comb_pauli_z_t* generators; // room for at least k of these
-  } comb_pauli_z_coset_t;
+    char sign_bit; // sign bit
+    mzd_t* data; // 2n + 1 column vector
+  } pauli_t; // A Pauli following Dehaene and Demoor.
 
-  int coset_iterate(comb_pauli_z_coset_t* coset, comb_css_magic_state_t* state); // iterates over every element
+  typedef struct {
+    mzd_t* data;
+  } stabiliser_state_t; // A stabiliser state following Dehaene and Demoor.
+
+  typedef struct {
+    mzd_t* factor; // n x 1 matrix representing a pauli
+    mzd_t* set_generators; // n x k matrix representing a set of pauli generators
+  } pauli_z_coset_t;
+
+  /* comb_dcp_tableau_t* tableau_init(size_t n); // n number of qubits */
+  /* void tableau_free(comb_dcp_tableau_t* tableau); // frees it from memory */
+  /* comb_dcp_tableau_t* tableau_multiply(comb_dcp_tableau_t* c1, */
+  /*                                      comb_dcp_tableau_t* c2, */
+  /*                                      comb_dcp_tableau_t* result); */
+  /* void* tableau_print(comb_dcp_tableau_t* tableau); */
+
+  /* comb_pauli_x_t* pauli_x_init(size_t n); */
+  /* comb_pauli_z_t* pauli_z_init(size_t n); */
+
+  /* void print_pauli_x(comb_pauli_x_t* p, char newline); */
+  /* void print_pauli_z(comb_pauli_z_t* p, char newline); */
+  /* comb_bit_array_t init_bit_array(size_t n); */
+
+  /* int coset_iterate(comb_pauli_z_coset_t* coset, comb_css_magic_state_t* state); // iterates over every element */
   // of the coset and checks that each error is good
 
 #ifdef __cplusplus
