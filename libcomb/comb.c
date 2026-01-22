@@ -4,73 +4,54 @@ extern "C" {
 #include "comb.h"
 
 
-  comb_dcp_tableau_t* tableau_init(size_t n){
-    comb_dcp_tableau_t* tableau = (comb_dcp_tableau_t*)
-      malloc(sizeof(comb_dcp_tableau_t));
+  clifford_t* init_clifford(size_t n){
+    clifford_t* tableau = (clifford_t*)malloc(sizeof(clifford_t));
     // follows demoor and dehaene
     tableau->c_bar=mzd_init(1+(2*n),1+(2*n));
     tableau->h_bar=mzd_init(1+(2*n),1);
     return tableau;
   }
-#define CLIFFORD_N(t) ((((t)->c_bar->nrows)-1)/2)
 
-
-  void* tableau_print(comb_dcp_tableau_t* tableau){
-    //printf("clifford tableau of size %d:\n",CLIFFORD_N(tableau));
-    //mzd_print(tableau->c_bar);
-    //printf("\n");
-    //mzd_print(tableau->h_bar);
-    //printf("\n");
-    int n = CLIFFORD_N(tableau);
-    for(int i = 0; i < n; i++){
-      comb_pauli_x_t* x = pauli_x_init(n);
-      comb_pauli_z_t* z = pauli_z_init(n);
-      SetBit(x->data,i);
-      SetBit(z->data,i);
-      print_pauli_x(x,1);
-      print_pauli_z(z,0);
-      printf(" -> ");
-      print_pauli_z(z,1);
-    }
+  pauli_t* init_pauli(size_t n){
+    pauli_t* pauli = (pauli_t*)malloc(sizeof(pauli_t));
+    pauli->sign_bit=0;
+    pauli->data=mzd_init(1+(2*n),1);
+    return pauli;
   }
-  void tableau_free(comb_dcp_tableau_t* tableau){
-    mzd_free(tableau->c_bar);
-    mzd_free(tableau->h_bar);
-    free(tableau);
+  stabiliser_state_t* init_stabiliser_state(size_t n){
+    stabiliser_state_t* state = (stabiliser_state_t*)malloc(sizeof(stabiliser_state_t));
+    state->data=mzd_init(n,1+(2*n));
+    state->h_bits=mzd_init(n,1);
+    return state;
+  }
+  pauli_z_coset_t* init_pauli_z_coset(size_t n, size_t k){
+    pauli_z_coset_t* coset = (pauli_z_coset_t*)malloc(sizeof(pauli_z_coset_t));
+    coset->factor=mzd_init(n,1);
+    coset->set_generators=mzd_init(n,k);
+    return coset;
   }
 
-  comb_pauli_z_t* pauli_z_init(size_t n){
-    comb_pauli_z_t* p = (comb_pauli_z_t*)malloc(sizeof(comb_pauli_z_t));
-    p->pauli_length = n;
-    p->data=init_bit_array(n);
-    return p;
+  void free_clifford(clifford_t* clifford){
+    mzd_free(clifford->c_bar);
+    mzd_free(clifford->h_bar);
+    free(clifford);
   }
-  comb_pauli_x_t* pauli_x_init(size_t n){
-    comb_pauli_x_t* p = (comb_pauli_x_t*)malloc(sizeof(comb_pauli_x_t));
-    p->pauli_length = n;
-    p->data=init_bit_array(n);
-    return p;
-    }
+  void free_pauli(pauli_t* pauli){
+    mzd_free(pauli->data);
+    free(pauli);
+  }
+  void free_stabiliser_state(stabiliser_state_t* state){
+    mzd_free(state->data);
+    mzd_free(state->h_bits);
+    free(state);
+  }
+  void free_pauli_z_coset(pauli_z_coset_t* coset){
+    mzd_free(coset->set_generators);
+    mzd_free(coset->factor);
+    free(coset);
+  }
 
-  comb_bit_array_t init_bit_array(size_t n){
-    comb_bit_array_t i = (comb_bit_array_t)malloc(1+(n/sizeof(comb_bit_word_t)));
-    for(int j = 0; j< (n/sizeof(comb_bit_word_t)); j++)
-      i[j]=0;
-    return i;
-  }
 
-  void print_pauli_x(comb_pauli_x_t* p, char newline){
-    for(int i = 0;i<p->pauli_length;i++){
-      printf(TestBit(p->data,i)?"X":"I");
-    }
-    if(newline)printf("\n");
-  }
-  void print_pauli_z(comb_pauli_z_t* p, char newline){
-    for(int i = 0;i<p->pauli_length;i++){
-      printf(TestBit(p->data,i)?"Z":"I");
-    }
-    if(newline)printf("\n");
-  }
 #ifdef __cplusplus
 }
 #endif
