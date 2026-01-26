@@ -1,0 +1,27 @@
+* Motivation
+We are designing circuits that are tolerant to a number k of faults.
+
+For the present purpose, faults may be thought of specific Pauli errors that can occur at given fault locations midway through a circuit to some leading order probability p.
+
+In order to check the fault tolerance properties of a circuit, one typically considers all possible combinations of up to k faults, and verifies that the overall combined effect of the faults is in some sense 'good' - usually, that the error that results by the end of the circuit has low weight, or that the error is detectable.
+
+One difficulty we have encountered is that while the set of faults that can occur in a circuit is often modest - perhaps in the hundreds to thousands - the number of combinations of faults that must be considered is extremely large, even for small k.
+
+This makes it a time consuming process to check the fault tolerance properties of a circuit, which makes designing them rather laborious.
+
+However, we are optimistic that we can perform the iteration very quickly, by paying careful attention to software engineering.
+
+In order to investigate this, we have written a very small C library that is capable of performing the iteration through combinations of faults very quickly, while still being general enough to tackle a reasonable variety of problems in fault tolerant circuit design. It has a very simple API consisting of a single header file with a single function declaration.
+
+Experiments indicate that it performs rather well, though we would welcome improvements, and are sure that they are possible. Our reference implementation is under 200 lines of C without any significant attention paid to optimising it thus far.
+
+The problem that the library solves is:
+Given a set of baskets labelled 1, ..., s (which may be thought of as fault locations), and, for all j from 1 to s, a number m_j of distinct balls (which may be thought of faults) with fixed-width bitstrings written on them that occupy the j-th basket, and a function g: bitstrings -> {0,1} (which may be thought of as determining whether a fault is good or bad):
+
+Determine whether or not there exist balls a_1, ..., a_k such that:
++ no two balls a_i and a_j belong to the same basket, and
++ g(b_1 + ... + b_k) = 1 (where b_i denotes the bitstring written on the ball a_i, and + denotes bitwise addition mod 2).
+
+In practice, the function g is often very simple, involving a few bitwise operations and lookups in modestly sized arrays in the kilobyte range.
+
+As such, we are hopeful that the entire problem and program can fit inside the L1 CPU cache, allowing for considerable speed. It may also be possible to use SIMD to obtain further benefits, once proper attention has been paid to memory alignment and such, or perhaps a GPU, though we are not experienced with any of these techniques and could benefit from assistance.

@@ -6,8 +6,7 @@ extern "C" {
 
 // need fixed width integers
 #include <stdint.h>
-#include <stdlib.h>
-#include <m4ri/m4ri.h>
+
 // Error codes
 
   typedef enum {ALL_FAULTS_GOOD = 0,
@@ -149,56 +148,6 @@ extern "C" {
 
   // use m4rie for matrix multiplication
   // no need to implement addition / multiplication etc.
-  typedef struct { // A Clifford tableau following Dehaene and Demoor.
-    mzd_t* c_bar; // 2n + 1 square matrix
-    mzd_t* h_bar; // 2n + 1 column vector
-  } clifford_t;
-
-  typedef struct {
-    char sign_bit; // sign bit
-    mzd_t* data; // 2n + 1 column vector
-  } pauli_t; // A Pauli following Dehaene and Demoor.
-
-  typedef struct {
-    mzd_t* data; // n x 2n + 1 matrix
-    mzd_t* h_bits; // n x 1 vector
-  } stabiliser_state_t; // A stabiliser state following Dehaene and Demoor.
-
-  typedef struct {
-    mzd_t* factor; // n x 1 matrix representing a pauli
-    mzd_t* set_generators; // n x k matrix representing a set of pauli generators
-  } pauli_z_coset_t;
-  // Useful macros
-
-#define CLIFFORD_N(t) ((((t)->c_bar->nrows)-1)/2)
-#define PAULI_N(t) ((((t)->data->nrows)-1)/2)
-#define STABILISER_N(t) ((((t)->data->nrows)-1)/2)
-#define COSET_N(t) ((t)->data->nrows)
-#define COSET_K(t) ((t)->set_generators->ncols)
-
-  // Creation
-  clifford_t* init_clifford(size_t n);
-  pauli_t* init_pauli(size_t n);
-  stabiliser_state_t* init_stabiliser_state(size_t n);
-  pauli_z_coset_t* init_pauli_z_coset(size_t n, size_t k);
-  // Freeing
-  void free_clifford(clifford_t* clifford);
-  void free_pauli(pauli_t* pauli);
-  void free_stabiliser_state(stabiliser_state_t* state);
-  void free_pauli_z_coset(pauli_z_coset_t* coset);
-  // Setting
-  // ? what to put here. they are structs so not that much point?
-  // Printing
-  void print_clifford(clifford_t *clifford, char print_newline_p);
-  void print_pauli(pauli_t *pauli, char print_newline_p);
-  void print_stabiliser_state(stabiliser_state_t *state, char print_newline_p);
-  void print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
-  // Manipulating
-  pauli_t *pauli_mul(pauli_t *result, pauli_t *p1, pauli_t *p2);
-  pauli_t *clifford_conjugate_pauli(pauli_t *result, clifford_t *clifford, pauli_t *pauli);
-  clifford_t *clifford_mul(clifford_t *result, clifford_t *c1, clifford_t *c2);
-  void* measure_state(stabiliser_state_t* state, pauli_t *measurement_pauli); // destructive!
-  pauli_z_coset_t *stabiliser_state_to_coset(stabiliser_state_t *state);
 
 #ifdef __cplusplus
 }
