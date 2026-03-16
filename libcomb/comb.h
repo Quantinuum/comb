@@ -193,11 +193,28 @@ extern "C" {
   void print_pauli(pauli_t *pauli, char print_newline_p);
   void print_stabiliser_state(stabiliser_state_t *state, char print_newline_p);
   void print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
+  // more convenient creation
+  pauli_t *pauli_x(size_t i, size_t n);
+  pauli_t *pauli_z(size_t i, size_t n);
+  clifford_t *cz(size_t i, size_t j, size_t n);
+  clifford_t *cnot(size_t i, size_t j, size_t n);
+
+  void* set_to_lows(mzd_t* matrix);
+  mzd_t* clifford_u_matrix(int n);
+  mzd_t* diag(mzd_t* matrix);
+
   // Manipulating
+  // Multiplies Paulis
   pauli_t *pauli_mul(pauli_t *result, pauli_t *p1, pauli_t *p2);
+  // Conjugates Clifford via Pauli
   pauli_t *clifford_conjugate_pauli(pauli_t *result, clifford_t *clifford, pauli_t *pauli);
+  // Multiplies Clifford
   clifford_t *clifford_mul(clifford_t *result, clifford_t *c1, clifford_t *c2);
-  void* measure_state(stabiliser_state_t* state, pauli_t *measurement_pauli); // destructive!
+  // Given a diagonal Clifford C, returns C|+>
+  stabiliser_state_t *clifford_to_stabiliser_state(clifford_t *clifford);
+  // Measures a Pauli on a stabiliser state. Returns non-zero if state vanishes. destructive
+  int measure_state(stabiliser_state_t* state, pauli_t *measurement_pauli); // destructive!
+  // Turns a stabiliser state corresponding to a diagonal Clifford to a coset.
   pauli_z_coset_t *stabiliser_state_to_coset(stabiliser_state_t *state);
 
 #ifdef __cplusplus

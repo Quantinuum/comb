@@ -2,9 +2,16 @@
 #include "comb.h"
 
 int main(int argv, char** args){
-  comb_dcp_tableau_t* tableau = tableau_init(3);
-  tableau_print(tableau);
-  tableau_free(tableau);
+  //comb_dcp_tableau_t* tableau = tableau_init(3);
+  //tableau_print(tableau);
+  //tableau_free(tableau);
+  pauli_t* p = pauli_x(3, 5);
+  print_pauli(p, 1);
+  mzd_write_bit(p->data, 7, 0, 1);
+  print_pauli(p, 1);
+  print_pauli(pauli_z(2, 6), 1);
+  clifford_t* c =clifford_mul(0, cz(0,2,4),cnot(0,2,4));
+  print_clifford(c,0);
   return 0;
 }
 
