@@ -2,8 +2,10 @@ CFLAGS = -lpng -lc -lm # -lm4ri for dynamic linking, and LD_LIBRARY_PATH=/usr/lo
 CC = gcc #g++?
 M4RI = /usr/local/lib/libm4ri.a
 
-demo: demo.c comb.c
-	$(CC) demo.c comb.c -o demo $(M4RI) $(CFLAGS)
+c_files := $(wildcard *.c)
+
+demo: comb.h lwlog.h $(c_files)
+	$(CC) $(c_files) -o demo $(M4RI) $(CFLAGS)
 	./demo 1111001010110000
 
 clean:

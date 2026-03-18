@@ -160,44 +160,37 @@ extern "C" {
   } pauli_t; // A Pauli following Dehaene and Demoor.
 
   typedef struct {
-    mzd_t* data; // n x 2n + 1 matrix
-    mzd_t* h_bits; // n x 1 vector
-  } stabiliser_state_t; // A stabiliser state following Dehaene and Demoor.
-
-  typedef struct {
-    mzd_t* factor; // n x 1 matrix representing a pauli
-    mzd_t* set_generators; // n x k matrix representing a set of pauli generators
+    pauli_t* factor; // factor
+    size_t k;
+    pauli_t** set_generators; // array of k generators
   } pauli_z_coset_t;
   // Useful macros
 
 #define CLIFFORD_N(t) ((((t)->c_bar->nrows)-1)/2)
 #define PAULI_N(t) ((((t)->data->nrows)-1)/2)
 #define STABILISER_N(t) ((((t)->data->nrows)-1)/2)
-#define COSET_N(t) ((t)->data->nrows)
-#define COSET_K(t) ((t)->set_generators->ncols)
 
   // Creation
   clifford_t* init_clifford(size_t n);
   pauli_t* init_pauli(size_t n);
-  stabiliser_state_t* init_stabiliser_state(size_t n);
   pauli_z_coset_t* init_pauli_z_coset(size_t n, size_t k);
   // Freeing
   void free_clifford(clifford_t* clifford);
   void free_pauli(pauli_t* pauli);
-  void free_stabiliser_state(stabiliser_state_t* state);
   void free_pauli_z_coset(pauli_z_coset_t* coset);
   // Setting
   // ? what to put here. they are structs so not that much point?
   // Printing
   void print_clifford(clifford_t *clifford, char print_newline_p);
   void print_pauli(pauli_t *pauli, char print_newline_p);
-  void print_stabiliser_state(stabiliser_state_t *state, char print_newline_p);
   void print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
   // more convenient creation
   pauli_t *pauli_x(size_t i, size_t n);
   pauli_t *pauli_z(size_t i, size_t n);
   clifford_t *cz(size_t i, size_t j, size_t n);
   clifford_t *cnot(size_t i, size_t j, size_t n);
+  clifford_t *pauli_to_clifford(pauli_t *pauli);
+  clifford_t *pauli_z_transvection(pauli_t *pauli, int coefficient);
 
   void* set_to_lows(mzd_t* matrix);
   mzd_t* clifford_u_matrix(int n);
@@ -210,12 +203,16 @@ extern "C" {
   pauli_t *clifford_conjugate_pauli(pauli_t *result, clifford_t *clifford, pauli_t *pauli);
   // Multiplies Clifford
   clifford_t *clifford_mul(clifford_t *result, clifford_t *c1, clifford_t *c2);
-  // Given a diagonal Clifford C, returns C|+>
-  stabiliser_state_t *clifford_to_stabiliser_state(clifford_t *clifford);
-  // Measures a Pauli on a stabiliser state. Returns non-zero if state vanishes. destructive
-  int measure_state(stabiliser_state_t* state, pauli_t *measurement_pauli); // destructive!
-  // Turns a stabiliser state corresponding to a diagonal Clifford to a coset.
-  pauli_z_coset_t *stabiliser_state_to_coset(stabiliser_state_t *state);
+  // applies the diagonal clifford structure theorem to express a clifford as a linear combination of a set of paulis.
+  pauli_z_coset_t *diagonal_clifford_to_coset(clifford_t *clifford);
+  // Postselects the diagonal clifford on measuring p to be +1. returns non-zero if the result vanishes.
+  int postselect_diagonal_clifford(clifford_t* result, clifford_t* clifford, pauli_t *p);
+  /* // Given a diagonal Clifford C, returns C|+> */
+  /* stabiliser_state_t *clifford_to_stabiliser_state(clifford_t *clifford); */
+  /* // Measures a Pauli on a stabiliser state. Returns non-zero if state vanishes. destructive */
+  /* int measure_state(stabiliser_state_t* state, pauli_t *measurement_pauli); // destructive! */
+  /* // Turns a stabiliser state corresponding to a diagonal Clifford to a coset. */
+  /* pauli_z_coset_t *stabiliser_state_to_coset(stabiliser_state_t *state); */
 
 #ifdef __cplusplus
 }
