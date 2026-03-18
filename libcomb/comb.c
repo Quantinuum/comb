@@ -18,17 +18,17 @@ extern "C" {
     mzd_t* z_parts = mzd_init(n,n);
     for(int i = 0; i< n; i++){
       for(int j = 0; j < n; j++){
-        mzd_write_bit(z_parts,i,j,mzd_read_bit(stabilisers[i],j,0));
+        mzd_write_bit(z_parts,i,j,mzd_read_bit(stabilisers[i]->data,j,0));
       }
     }
     // 2. Do the Gaussian elimination by performing a PLUQ decomposition
     mzp_t* p = mzp_init(n);
     mzp_t* q = mzp_init(n);
-    int rank = mzd_pluq(z_parts,p,q,0);
+    int k = mzd_pluq(z_parts,p,q,0);
     mzd_t* U  = mzd_init(n,n);
-    mzd_t* L  = mzd_init(m,n);
+    mzd_t* L  = mzd_init(n,n);
     // from m4ri examples
-    for (rci_t i = 0; i < m; ++i){
+    for (rci_t i = 0; i < n; ++i){
       for (rci_t j = 0; j < i && j < n;++j)
         mzd_write_bit(U,i,j, 0);
       for (rci_t j = i + 1; j < n; ++j)
@@ -38,12 +38,17 @@ extern "C" {
       mzd_write_bit(L,i,i, 1);
     }
     // 3. Work out the new stabilisers by applying the PLUQ decomposition
-    pauli_t** new_stabilisers=malloc(n*sizeof(pauli_t*));
-    for(int i = 0; i < n; i++){
-      new_stabilisers[i]=0;
+    pauli_t** new_stabilisers=malloc(k*sizeof(pauli_t*));
+    pauli_z_coset_t* coset = init_pauli_z_coset(n,k);
+
+    for(int i = 0; i < k; i++){
+      new_stabilisers[i]=init_pauli(n);
+      for(int j = 0; j < n; j++){
+        mzd_write_bit(new_stabilisers[i]->data,j,0,mzd_read_bit(U,i,j));
+      }
+      coset->set_generators[i]=new_stabilisers[i];
     }
-    
-    return 0;
+    return coset;
   }
 
 

@@ -2,17 +2,15 @@
 #include "comb.h"
 
 int main(int argv, char** args){
-  pauli_t* p[] = {pauli_z(0, 1),
-                  pauli_mul(0,pauli_z(0, 2),pauli_z(1, 2)),
-                  pauli_z(0, 2)};
+  clifford_t* cs[] = {pauli_z_transvection(pauli_z(0,1),1),
+                     cz(0,1,2),
+                     clifford_mul(0,pauli_z_transvection(pauli_z(1,2),1),pauli_z_transvection(pauli_z(0,2),1))};
   for(int i =0 ; i< 3; i++){
-    pauli_t* pt = p[i];
+     clifford_t* c = cs[i];
     printf("%d: ",i);
-    print_clifford(pauli_z_transvection(pt,1),1);
-    printf("\n");
-    print_clifford(pauli_z_transvection(pt,2),1);
-    print_pauli(pt,1);
-    printf("\n");
+    print_clifford(c,1);
+    pauli_z_coset_t* coset = diagonal_clifford_to_coset(c);
+    if(coset)print_pauli_z_coset(coset,1);
   }
 
   return 0;
