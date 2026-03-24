@@ -4,8 +4,11 @@
 int main(int argv, char** args){
   clifford_t* cs[] = {pauli_z_transvection(pauli_z(0,1),1),
                      cz(0,1,2),
-                     clifford_mul(0,pauli_z_transvection(pauli_z(1,2),1),pauli_z_transvection(pauli_z(0,2),1))};
-  for(int i =0 ; i< 3; i++){
+                     clifford_mul(0,pauli_z_transvection(pauli_z(1,2),1),
+                                  pauli_z_transvection(pauli_z(0,2),1)),
+                     clifford_mul(0,cz(0,1,3),cz(1,2,3)),
+                     clifford_mul(0,clifford_mul(0,cz(0,1,3),cz(1,2,3)),cz(2,0,3))};
+  for(int i =0 ; i< 5; i++){
      clifford_t* c = cs[i];
     printf("%d: ",i);
     print_clifford(c,1);

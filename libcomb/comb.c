@@ -21,10 +21,12 @@ extern "C" {
         mzd_write_bit(z_parts,i,j,mzd_read_bit(stabilisers[i]->data,j,0));
       }
     }
+    mzd_print(z_parts);
+    printf("\n");
     // 2. Do the Gaussian elimination by performing a PLUQ decomposition
     mzp_t* p = mzp_init(n);
     mzp_t* q = mzp_init(n);
-    int k = mzd_pluq(z_parts,p,q,0);
+    int r = mzd_pluq(z_parts,p,q,0);
     mzd_t* U  = mzd_init(n,n);
     mzd_t* L  = mzd_init(n,n);
     // from m4ri examples
@@ -38,16 +40,25 @@ extern "C" {
       mzd_write_bit(L,i,i, 1);
     }
     // 3. Work out the new stabilisers by applying the PLUQ decomposition
-    pauli_t** new_stabilisers=malloc(k*sizeof(pauli_t*));
+    // UQ is the reduced row echelon form
+    mzd_apply_p_right(U,q); // replace U with UQ
+    mzd_print(U);
+    printf("\n");
+    pauli_t** new_stabilisers=malloc((n-r)*sizeof(pauli_t*));
     pauli_z_coset_t* coset = init_pauli_z_coset(n,k);
 
-    for(int i = 0; i < k; i++){
+    for(int i = 0; i < n; i++){
       new_stabilisers[i]=init_pauli(n);
       for(int j = 0; j < n; j++){
         mzd_write_bit(new_stabilisers[i]->data,j,0,mzd_read_bit(U,i,j));
       }
       coset->set_generators[i]=new_stabilisers[i];
     }
+    // 4. TODO work out coset element properly
+    // first multiply all the stabilisers by the row reduction
+    // or is there a better way?
+    // also cz signs not right when printed out. bug with clifford multiplication?
+
     return coset;
   }
 
