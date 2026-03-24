@@ -188,6 +188,7 @@ extern "C" {
   pauli_t *pauli_x(size_t i, size_t n);
   pauli_t *pauli_z(size_t i, size_t n);
   clifford_t *cz(size_t i, size_t j, size_t n);
+  clifford_t *czs(size_t n, int k,int* indices);
   clifford_t *cnot(size_t i, size_t j, size_t n);
   clifford_t *pauli_to_clifford(pauli_t *pauli);
   clifford_t *pauli_z_transvection(pauli_t *pauli, int coefficient);

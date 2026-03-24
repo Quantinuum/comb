@@ -32,7 +32,7 @@ extern "C" {
     mzd_t* t2= mzd_mul_naive(0,c1_bar_transpose,c2->h_bar);
     mzd_t* c2_bar_transpose=mzd_transpose(0,c2->c_bar);
     mzd_t* u = clifford_u_matrix(n);
-    mzd_t* uc2 = mzd_mul_naive(0,u,c2_bar_transpose);
+    mzd_t* uc2 = mzd_mul_naive(0,u,c2->c_bar);
     mzd_t* lows = mzd_mul_naive(0,c2_bar_transpose,uc2);
     set_to_lows(lows);
     mzd_t* lows_c1 = mzd_mul_naive(0,lows,c1->c_bar);

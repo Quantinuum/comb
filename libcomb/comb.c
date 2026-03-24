@@ -111,6 +111,17 @@ extern "C" {
     return coset;
   }
 
+  clifford_t *czs(size_t n, int k,int* indices){
+    //usage e.g. czs(5,4,{{0, 1},{0,2}})
+    clifford_t* return_clifford=init_clifford(n);
+    for(int i = 0 ; i < k ; i++){
+      clifford_t* cze = cz(indices[2*i],indices[(2*i) + 1],n);
+      return_clifford=clifford_mul(0,cze,return_clifford);
+
+    }
+    return return_clifford;
+  }
+
 
 
 #ifdef __cplusplus
