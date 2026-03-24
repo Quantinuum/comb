@@ -4,9 +4,11 @@
 int main(int argv, char** args){
   int i1[] = {0,1};
   int i2[] = {0, 1, 1, 2, 2, 0};
+  int i3[]={1, 0 ,2, 0, 3, 0, 4, 0 ,4, 1, 4, 2 ,4, 3} ;
   clifford_t* cs[] = {czs(2,1,i1),
-                      czs(3,3,i2)};
-  for(int i =0 ; i< 2; i++){
+                      czs(3,3,i2),
+                      czs(5,7,i3)};
+  for(int i =0 ; i< 3; i++){
      clifford_t* c = cs[i];
     printf("%d: ",i);
     print_clifford(c,1);
