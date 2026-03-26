@@ -4,126 +4,104 @@ extern "C" {
 #include "comb.h"
 
 
-  pauli_z_coset_t *diagonal_clifford_to_coset(clifford_t *clifford){
+
+  int postselect_diagonal_clifford(clifford_t* result, clifford_t* clifford, pauli_t *p){
+    // assume that p is of x type.
     int n = CLIFFORD_N(clifford);
     pauli_t** old_stabilisers=malloc(n*sizeof(pauli_t*));
     for(int i = 0 ; i< n; i++){
       pauli_t* x_i = pauli_x(i,n);
       old_stabilisers[i] = clifford_conjugate_pauli(0,clifford,x_i);
       free_pauli(x_i);
-    }
-    mzd_t* z_parts = mzd_init(n,n);
-    for(int i = 0; i< n; i++){
-      for(int j = 0; j < n; j++){
-        mzd_write_bit(z_parts,i,j,mzd_read_bit(old_stabilisers[i]->data,j,0));
-      }
-    }
-    mzp_t* p = mzp_init(n);
-    mzp_t* q = mzp_init(n);
-    int r = mzd_pluq(z_parts,p,q,0);
-    mzd_t* u  = mzd_init(n,n);
-    mzd_t* l  = mzd_init(n,n);
-    // from m4ri examples
-    for (rci_t i = 0; i < r; ++i){
-      for (rci_t j = 0; j < i; ++j)
-        mzd_write_bit(l, i, j, mzd_read_bit(z_parts,i,j));
-      for (rci_t j = i + 1; j < n; ++j)
-        mzd_write_bit(u, i, j, mzd_read_bit(z_parts,i,j));
-    }
-
-    for (rci_t i = r; i < n; ++i)
-      for (rci_t j = 0; j < r; ++j)
-        mzd_write_bit(l, i, j, mzd_read_bit(z_parts,i,j));
-    for (rci_t i = 0; i < r; ++i){
-      mzd_write_bit(l,i,i, 1);
-      mzd_write_bit(u,i,i, 1);
-    }
-    mzd_t* rref = u;
-    mzd_apply_p_right(rref,q); // warning: cannot later on refer to u
-    u=0;
-
-    mzd_t* row_ops_t = mzd_init(n,n);
-    // set row_ops_t = L^T to invert
-    for(int i = 0 ; i< n; i++){
-      
-        for(int j = 0 ; j <n; j++){
-          mzd_write_bit(row_ops_t,i,j,mzd_read_bit(l,j,i));
-        }
-        mzd_write_bit(row_ops_t,i,i,1);
-      
-    }
-    mzd_trtri_upper(row_ops_t); // row_ops_t = L^T^-1
-    mzd_t* row_ops = mzd_transpose(0,row_ops_t); // row_ops = L^-1 (extended)
-
-    mzd_apply_p_right_trans(row_ops,p); // row_ops = L^-1 P^T
-    //mzd_print(row_ops_t);
-    //mzd_print(row_ops);
-
-    // Apply the row_ops to get the new stabilisers
-
-    pauli_t** new_stabilisers=malloc(n*sizeof(pauli_t*));
-    for(int i = 0 ; i< n; i++){
-      new_stabilisers[i]=init_pauli(n);
-      for(int j = 0 ; j < n; j++){
-        if(mzd_read_bit(row_ops,i,j)){
-          new_stabilisers[i]=pauli_mul(0,new_stabilisers[i],old_stabilisers[j]);
-        }
-      }
-    }
-    printf("old stabilisers:\n");
-    for(int i = 0; i < n; i++){
       print_pauli(old_stabilisers[i],1);
     }
-    printf("new stabilisers:\n");
+    // case 1: p is in the stabiliser group. in this case, measuring is always +1 (in which case no effect) or -1 in which case always detected, and we return non-zero.
+    // case 2: p in the normaliser (commutes with all stabilisers) yet does not lie in the stabiliser group. in this case, p measures some of the data. this case is not possible for stabiliser states, as the normaliser equals the stabiliser group, so we neglect it.
+    // case 3: p not in the normaliser. in this case, we take one elt S' which does not commute with P, add P as a stabiliser, and for all S not equal to S', we add S if it commutes with P and PS'S otherwise.
+    // seeing as how for us diagonal cliffords enter into the picture solely through the images of the x_i bases might not be an issue. probably want a stabiliser state after all though
+    int anticommutes_with_some_pauli_p=0;
+    int anti_commuting_index=0;
     for(int i = 0; i < n; i++){
-      print_pauli(new_stabilisers[i],1);
-    }
-    // set up system solving
-    mzd_t* coefficient_matrix = mzd_init(n,n);
-    mzd_t* coefficient_vector = mzd_init(n,1);
-    for(int i = r; i< n; i++){
-      mzd_write_bit(coefficient_vector,i-r,0,new_stabilisers[i]->sign_bit);
-      for(int j = 0; j< n; j++){
-        mzd_write_bit(coefficient_matrix,i-r,j,mzd_read_bit(new_stabilisers[i]->data,j+n,0));
+      if(!pauli_commute_p(p,old_stabilisers[i])){
+        anti_commuting_index=i;
+        anticommutes_with_some_pauli_p=1;
       }
     }
-    mzd_print(coefficient_matrix);
-    mzd_print(coefficient_vector);
-    if(0==mzd_solve_left(coefficient_matrix,coefficient_vector,0,1)){
-      printf("solution found \n"); // unsure if working.
-      mzd_print(coefficient_matrix);
-      mzd_print(coefficient_vector);
+    if(anticommutes_with_some_pauli_p){
+      // case 3
+      printf("case 3\n");
+      pauli_t* anticommuter = old_stabilisers[anti_commuting_index];
+      pauli_t** new_stabilisers=malloc(n*sizeof(pauli_t*));
+      for(int i =0 ; i< n; i++){
+        if(i== anti_commuting_index){
+          new_stabilisers[i]=p;
+        }
+        else{
+          if(pauli_commute_p(p,old_stabilisers[i])){
+            new_stabilisers[i]=old_stabilisers[i];
+          }
+          else new_stabilisers[i]=pauli_mul(0,old_stabilisers[i],anticommuter);
+        }
+      }
+      printf("new stabilisers:\n");
+      for(int i =0;i<n;i++){
+        printf("%d: ",i);
+        print_pauli(new_stabilisers[i],1);
+      }
+      // set the images of the x_i in result to the new_stabilisers
+      for(int i = 0; i< n; i++){
+        mzd_write_bit(result->h_bar,i,0,new_stabilisers[i]->sign_bit);
+        mzd_write_bit(result->h_bar,i+n,0,0);
+        for(int j = 0; j < 2*n; j++){
+          mzd_write_bit(result->c_bar,i+n,j,mzd_read_bit(new_stabilisers[i]->data,j,0));
+          mzd_write_bit(result->c_bar,i+n,j,0);
+        }
+      }
+      return 0;
+    }
+    else{
+      //case 1
+      // try to figure out if you can create -1 from it.
+      // can try from the x patterns of the images of the x_i?
+      // won't generalise to multiple postselections...
+      pauli_t* r = p;
+      printf("case 1\n");
+      for(int i = 0 ; i < n; i ++){
+        if(mzd_read_bit(p->data,i+n,0))
+          r = pauli_mul(0,r,old_stabilisers[i]);
+      }
+      printf("result:\n");
+      print_pauli(r,1);
+      if(r->sign_bit){
+        return 1; // -I so always detected; state vanishes
+      }
+      else{ // set result = input clifford
+        result->c_bar=clifford->c_bar;
+        result->h_bar=clifford->h_bar;
+        return 0;
+      }
     }
 
 
-    pauli_z_coset_t* coset = init_pauli_z_coset(n,r);
-
-    for(int i = 0; i < n; i++){
-      new_stabilisers[i]=init_pauli(n);
-      for(int j = 0; j < n; j++){
-        mzd_write_bit(new_stabilisers[i]->data,j,0,mzd_read_bit(rref,i,j));
-      }
-      coset->set_generators[i]=new_stabilisers[i];
-    }
-    for(int i = 0; i < n; i++){
-      mzd_write_bit(coset->factor->data,i,0,mzd_read_bit(coefficient_vector,i,0));
-      }
-    return coset;
+    return 0;
   }
 
-  clifford_t *czs(size_t n, int k,int* indices){
-    //usage e.g. czs(5,4,{{0, 1},{0,2}})
-    clifford_t* return_clifford=init_clifford(n);
-    for(int i = 0 ; i < k ; i++){
-      clifford_t* cze = cz(indices[2*i],indices[(2*i) + 1],n);
-      return_clifford=clifford_mul(0,cze,return_clifford);
-
+  int pauli_commute_p(pauli_t *p1, pauli_t *p2){
+    int commute_p=1;
+    int n = PAULI_N(p1);
+    for(int i =0 ; i < n; i++){
+      if(mzd_read_bit(p1->data,i,0) && mzd_read_bit(p2->data,i+n,0))commute_p=1-commute_p;
+      if(mzd_read_bit(p1->data,i+n,0) && mzd_read_bit(p2->data,i,0))commute_p=1-commute_p;
     }
-    return return_clifford;
+    //print_pauli(p1,0);
+    //printf(commute_p?" commutes with ": " anticommutes with ");
+    //print_pauli(p2,1);
+    return commute_p;
   }
 
-
-
+  int postselect_pauli_z_coset(pauli_z_coset_t* result, pauli_z_coset_t* coset, int k, pauli_t **measurement_operators){
+    return 0;
+  }
 #ifdef __cplusplus
 }
 #endif

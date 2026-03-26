@@ -198,6 +198,7 @@ extern "C" {
   mzd_t* diag(mzd_t* matrix);
 
   // Manipulating
+  int pauli_commute_p(pauli_t *p1, pauli_t *p2);
   // Multiplies Paulis
   pauli_t *pauli_mul(pauli_t *result, pauli_t *p1, pauli_t *p2);
   // Conjugates Clifford via Pauli
@@ -214,6 +215,8 @@ extern "C" {
   /* int measure_state(stabiliser_state_t* state, pauli_t *measurement_pauli); // destructive! */
   /* // Turns a stabiliser state corresponding to a diagonal Clifford to a coset. */
   /* pauli_z_coset_t *stabiliser_state_to_coset(stabiliser_state_t *state); */
+
+  int postselect_pauli_z_coset(pauli_z_coset_t* result, pauli_z_coset_t* coset, int k, pauli_t **measurement_operators);
 
 #ifdef __cplusplus
 }
