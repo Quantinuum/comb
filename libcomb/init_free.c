@@ -4,12 +4,12 @@ extern "C" {
 #include "comb.h"
 
 
-  clifford_t* init_clifford(size_t n){
-    clifford_t* tableau = (clifford_t*)malloc(sizeof(clifford_t));
+  dcp_t* init_dcp(size_t n){
+    dcp_t* tableau = (dcp_t*)malloc(sizeof(dcp_t));
     // follows demoor and dehaene
-    tableau->c_bar=mzd_init(1+(2*n),1+(2*n));
-    tableau->h_bar=mzd_init(1+(2*n),1);
-    for(int i = 0 ;i< 1+ (2*n);i++)mzd_write_bit(tableau->c_bar,i,i,1);
+    tableau->F=mzd_init(n,n);
+    tableau->h_x=mzd_init(n,1);
+    tableau->h_z=mzd_init(n,1);
     return tableau;
   }
 
@@ -30,10 +30,11 @@ extern "C" {
     return coset;
   }
 
-  void free_clifford(clifford_t* clifford){
-    mzd_free(clifford->c_bar);
-    mzd_free(clifford->h_bar);
-    free(clifford);
+  void free_dcp(dcp_t* dcp){
+    mzd_free(dcp->F);
+    mzd_free(dcp->h_x);
+    mzd_free(dcp->h_z);
+    free(dcp);
   }
   void free_pauli(pauli_t* pauli){
     mzd_free(pauli->data);
@@ -45,6 +46,29 @@ extern "C" {
     }
     free_pauli(coset->factor);
     free(coset);
+  }
+
+  dcp_t* dcp_pauli_x(size_t i, size_t n){
+    dcp_t* dcp = init_dcp(n);
+    mzd_write_bit(dcp->h_z,i,0,1);
+    return dcp;
+  }
+  dcp_t* dcp_pauli_z(size_t i, size_t n){
+    dcp_t* dcp = init_dcp(n);
+    mzd_write_bit(dcp->h_x,i,0,1);
+    return dcp;
+  }
+  dcp_t* dcp_cz(size_t i, size_t j,size_t n){
+    dcp_t* dcp = init_dcp(n);
+    mzd_write_bit(dcp->F,i,j,1);
+    mzd_write_bit(dcp->F,j,i,1);
+    return dcp;
+  }
+  dcp_t* dcp_s(size_t i, size_t n){
+    dcp_t* dcp = init_dcp(n);
+    mzd_write_bit(dcp->F,i,i,1);
+    mzd_write_bit(dcp->h_x,i,0,1);
+    return dcp;
   }
 
 #ifdef __cplusplus
