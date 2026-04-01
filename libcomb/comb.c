@@ -216,7 +216,7 @@ uint32_t mzd_data(mzd_t* mzd){
     pauli_t* temp_pauli = init_pauli(n);
     for(int i =0; i < comb->exponent_sum.term_count; i ++){
       int coefficient = comb->exponent_sum.coefficients[i];
-      comb_pauli_z_t* pauli= &(comb->exponent_sum[i]);
+      comb_pauli_z_t* pauli= &(comb->exponent_sum.terms[i]);
       while(coefficient < 0)coefficient +=8;
       while(coefficient > 8)coefficient -=8;
       for(int j = 0; j < coefficient; j++){
@@ -231,9 +231,9 @@ uint32_t mzd_data(mzd_t* mzd){
     for(int i =0 ; i< n; i++){
       mzd_write_bit(dcp->h_z,i,0,TestBit(comb->pauli_x_part.data,i));
     }
-    free_dcp(&temp1);
-    free_dcp(&temp2);
-    free_pauli(&temp_pauli);
+    free_dcp(temp1);
+    free_dcp(temp2);
+    free_pauli(temp_pauli);
 
   }
 
