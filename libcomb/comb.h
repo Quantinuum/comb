@@ -22,6 +22,9 @@ extern "C" {
   typedef uint64_t comb_bit_word_t;
   typedef comb_bit_word_t* comb_bit_array_t; // maybe not needed?
 
+
+#define MAX_SIZE_COUNT 1024
+
 #define SetBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] |= (1U << ((k) % sizeof(comb_bit_word_t))))
 #define ClearBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] &= ~(1U << ((k) % sizeof(comb_bit_word_t))))
 #define TestBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] & (1U << ((k) % sizeof(comb_bit_word_t))))
@@ -105,8 +108,8 @@ extern "C" {
   // Functions
 
   /* Verifies the fault tolerance of a circuit that prepares a magic state of a CSS code with a CNOT + T circuit by checking that all possible combinations of faults are detected or sufficiently low weight
-     `s' is the number of fault locations.
-     `m' is a pointer to an array of size at least s, and m[i] is the number of faults in the i-th location.
+     `n' is the number of fault locations.
+     `m' is a pointer to an array of size at least n, and m[i] is the number of faults in the i-th location.
      `k' is the number of faults to which the circuit should be resilient to.
      `bad_fault_array` is a pointer to an array of at least k elements, to which the indices of any bad faults will be written if any are found.
      `state' is the magic state being prepared.
@@ -118,7 +121,7 @@ extern "C" {
      `z_measurement_paulis' is a pointer to at least `z_measurement_count` measurement paulis.
      The x_measurement_paulis and z_measurement_paulis must have entirely disjoint support, else an error is returned.
   */
-  comb_code_t comb_verify_css_magic_state(int s, int *m, int k,
+  comb_code_t comb_verify_css_magic_state(int n, int *m, int k,
                                           size_t *bad_fault_array,
                                           comb_css_magic_state_t* state,
                                           size_t output_error_count, comb_dcp_t* output_errors,
@@ -160,11 +163,15 @@ extern "C" {
     mzd_t* h_z;
   } dcp_t;
 
-
   typedef struct {
     char sign_bit; // sign bit
     mzd_t* data; // 2n + 1 column vector
   } pauli_t; // A Pauli following Dehaene and Demoor.
+
+  typedef struct {
+    int n;
+    pauli_t** generators;
+  } stabiliser_state_t; // A stabiliser state
 
   typedef struct {
     pauli_t* factor; // factor
@@ -173,6 +180,7 @@ extern "C" {
   } pauli_z_coset_t;
   // Useful macros
 
+  uint32_t gray_bit_to_switch(uint32_t n);
 #define DCP_N(t) ((t)->F->nrows)
 #define PAULI_N(t) ((((t)->data->nrows)-1)/2)
 #define STABILISER_N(t) ((((t)->data->nrows)-1)/2)
@@ -193,10 +201,12 @@ extern "C" {
   void free_pauli_z_coset(pauli_z_coset_t* coset);
   // Setting
   // ? what to put here. they are structs so not that much point?
+  void set_dcp_to(dcp_t *a, dcp_t* b); // assigns b to a: a = b.
   // Printing
   void print_dcp(dcp_t *dcp, char print_newline_p);
   void print_pauli(pauli_t *pauli, char print_newline_p);
   void print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
+  void print_stabiliser_state(stabiliser_state_t *coset, char print_newline_p);
   // more convenient creation
   pauli_t *pauli_x(size_t i, size_t n);
   pauli_t *pauli_z(size_t i, size_t n);
@@ -206,14 +216,26 @@ extern "C" {
 
   // Manipulating
   int pauli_commute_p(pauli_t *p1, pauli_t *p2);
+  // Converting
+  void convert_dcp(dcp_t* dcp, comb_dcp_t* comb);
   // Multiplies Paulis
   pauli_t *pauli_mul(pauli_t *result, pauli_t *p1, pauli_t *p2);
   // Conjugates Clifford via Pauli
   pauli_t *dcp_conjugate_pauli(pauli_t *result, dcp_t *clifford, pauli_t *pauli);
-  // Multiplies Clifford
+  // for algorithm:
+  // 1. Multiplies DCP operators
   dcp_t *dcp_mul(dcp_t *result, dcp_t *c1, dcp_t *c2);
-  // applies the diagonal clifford structure theorem to express a clifford as a linear combination of a set of paulis.
-  pauli_z_coset_t *diagonal_clifford_to_coset(dcp_t *clifford);
+
+  pauli_t* dcp_image_x(dcp_t *dcp, size_t i);
+  // 2. converts a diagonal clifford to a stabiliser state (operator state duality)
+  stabiliser_state_t* dcp_to_stabiliser_state(dcp_t* dcp);
+
+  // 3. Postselects on a stabiliser state (destructive). Can be used to canonicalise too...
+  int postselect_on_measuring_plus_one(stabiliser_state_t* state, pauli_t* measurement_operator);
+
+  // 4. Applies the diagonal clifford structure theorem to express a clifford as a linear combination of a set of paulis.
+  pauli_z_coset_t *diagonal_clifford_to_coset(stabiliser_state_t *state);
+
   // Postselects the diagonal clifford on measuring p to be +1. returns non-zero if the result vanishes.
   int postselect_diagonal_clifford(dcp_t* result, dcp_t* clifford, pauli_t *p);
   /* // Given a diagonal Clifford C, returns C|+> */
@@ -225,6 +247,21 @@ extern "C" {
 
   int postselect_pauli_z_coset(pauli_z_coset_t* result, pauli_z_coset_t* coset, int k, pauli_t **measurement_operators);
 
+  // iteration
+
+  int ft_iteration_combination_incf(int k, int *sizes, int n, int *first_balls,
+                                    int *last_balls, int *current_combination);
+
+  void init_dcp_to_size(dcp_t* tableau, size_t n);
+
+  int dcp_fault_bad_p_css(dcp_t *error, comb_css_magic_state_t* state, pauli_t* p, int count);
+
+  uint32_t mzd_data(mzd_t* mzd);
+  void  permute_qubits(pauli_z_coset_t* coset,int n, size_t* c);
+  void set_to_pauli(pauli_t* a, pauli_t* b);
+  void init_pauli_to_size(pauli_t* a, int size);
+  void set_dcp_to_transvection(dcp_t* dcp, pauli_t* z_pauli);
+  void convert_pauli(pauli_t* temp_pauli,comb_pauli_z_t* pauli);
 #ifdef __cplusplus
 }
 #endif

@@ -13,14 +13,8 @@ extern "C" {
 
       print_pauli(p_x,0);
       printf(" -> ");
-
-      pauli_t* p_z_parts = init_pauli(n);
-
-      for(int j = 0;j<n;j++)mzd_write_bit(p_z_parts->data,j,0,mzd_read_bit(dcp->F,i,j));
-      p_z_parts->sign_bit=mzd_read_bit(dcp->h_x,i,0);
-      pauli_t* result = init_pauli(n);
-      pauli_mul(result,p_x,p_z_parts);
-      print_pauli(result,1);
+      pauli_t* p_z_parts=dcp_image_x(dcp,i);
+      print_pauli(p_z_parts,1);
 
       print_pauli(p_z,0);
       printf(" -> ");
@@ -32,6 +26,15 @@ extern "C" {
       free_pauli(p_z);
     }
     if(print_newline_p)printf("\n");
+  }
+
+  void print_stabiliser_state(stabiliser_state_t *coset, char print_newline_p){
+    printf("{");
+    for(int i = 0 ; i< coset->n; i++){
+      print_pauli(coset->generators[i],0);
+        if(i +1 != coset->n)printf(", ");
+    }
+      printf(print_newline_p?"}\n":"}");
   }
 
   void print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p){
