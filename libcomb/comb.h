@@ -262,6 +262,7 @@ extern "C" {
   void init_pauli_to_size(pauli_t* a, int size);
   void set_dcp_to_transvection(dcp_t* dcp, pauli_t* z_pauli);
   void convert_pauli(pauli_t* temp_pauli,comb_pauli_z_t* pauli);
+  void print_magic_state(comb_css_magic_state_t* state);
 #ifdef __cplusplus
 }
 #endif

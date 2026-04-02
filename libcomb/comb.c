@@ -171,7 +171,7 @@ extern "C" {
   uint32_t gray_bit_to_switch(uint32_t n)
 {
   uint32_t n_add_one = n + 1;
-  uint32_t diff = n ^ (n + 1) ^ (n >> 1) ^ (n_add_one >> 1);
+  uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
   return n ? 31 - __builtin_clz(diff) : 0;
 }
 

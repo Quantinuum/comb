@@ -73,6 +73,10 @@ extern "C" {
     if(print_newline_p)printf("\n");
   }
 
+  void print_magic_state(comb_css_magic_state_t* state){
+    printf("n: %d\nn_x: %d\nn_z: %d\n",state->n,state->n_x,state->n_z);
+
+  }
 
 #ifdef __cplusplus
 }
