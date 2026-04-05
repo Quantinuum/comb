@@ -49,6 +49,7 @@ extern "C" {
     lwlog_info("converting objects");
     printf("stabilisers: \n");
     for(int i = 0; i < n_x; i++){
+      //lwlog_debug("converting x stabiliser %d",i);
       convert_pauli_x(&(x_stabilisers[i]),&(_x_stabilisers[i]));
       print_pauli(&(x_stabilisers[i]),1);
     }
@@ -99,7 +100,13 @@ extern "C" {
   return ALL_FAULTS_GOOD;
   }
 
-  void convert_dcp(dcp_t* dcp, comb_dcp_t* value){}
+  void convert_dcp(dcp_t* dcp, comb_dcp_t* value)
+  {
+    int n = value->h_x.n;
+    dcp->F=mzd_init(n,n);
+    dcp->h_x=mzd_init(n,1);
+    dcp->h_z=mzd_init(n,1);
+  }
   void convert_pauli_x(pauli_t* pauli, comb_pauli_x_t* value)
   {
     int n = value->n;
@@ -126,8 +133,51 @@ extern "C" {
     }
   }
   void convert_permutation(mzp_t* permutation, comb_permutation_t* value){}
+  comb_bit_array_t comb_alloc_bit_array(int n){
+    //lwlog_debug("allocating bit array of size %d",n);
+    return (comb_bit_array_t)malloc((n/sizeof(comb_bit_word_t)) + 1);
+  }
+  void comb_free_bit_array(comb_bit_array_t p){
+    free(p);
+  }
+  comb_dcp_t *comb_calloc_dcp(int count, int n){
+    comb_dcp_t* pointer = malloc(count * sizeof(comb_dcp_t));
+    for(int i =0; i <count; i++){
+      pointer[i].F.m=n;
+      pointer[i].F.n=n;
+      pointer[i].F.data=comb_alloc_bit_array(n*n);
+      pointer[i].h_x.n=n;
+      pointer[i].h_x.data=comb_alloc_bit_array(n);
+      pointer[i].h_z.n=n;
+      pointer[i].h_z.data=comb_alloc_bit_array(n);
+    }
+    return pointer;
+  }
+  void comb_cfree_dcp(int count, comb_dcp_t* pointer){
+    for(int i =0; i < count; i++){
+      comb_free_bit_array(pointer[i].F.data);
+      comb_free_bit_array(pointer[i].h_x.data);
+      comb_free_bit_array(pointer[i].h_z.data);
+    }
+    free(pointer);
+  }
+  comb_vector_t *comb_calloc_vector(int count, int n){
+    lwlog_debug("in comb_calloc_vector %d, %d",count,n);
+    comb_vector_t* pointer = (comb_vector_t*)malloc(count * sizeof(comb_vector_t));
+    for(int i =0; i < count; i++){
+      pointer[i].n=n;
+      pointer[i].data=comb_alloc_bit_array(n);
+    }
+    return pointer;
+  }
 
-
+  comb_permutation_t *comb_alloc_permutation(int n){
+    comb_permutation_t* pointer = (comb_permutation_t*)malloc(sizeof(comb_permutation_t));
+    pointer->n=n;
+    pointer->indices=(uint32_t*)malloc(sizeof(uint32_t)*n);
+    for(int i = 0; i < n; i++)pointer->indices[i]=i;
+    return pointer;
+  }
 #ifdef __cplusplus
 }
 #endif
