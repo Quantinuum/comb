@@ -7,6 +7,7 @@ extern "C" {
 // need fixed width integers
 #include "comb_external.h"
 #include <m4ri/m4ri.h>
+#include "lwlog.h"
 
   // Functions
 
@@ -120,7 +121,6 @@ extern "C" {
 
   void init_dcp_to_size(dcp_t* tableau, uint32_t n);
 
-  int dcp_fault_bad_p_css(dcp_t *error, comb_css_magic_state_t* state, pauli_t* p, int count);
 
   uint32_t mzd_data(mzd_t* mzd);
   void  permute_qubits(pauli_z_coset_t* coset,int n, uint32_t* c);
@@ -128,12 +128,11 @@ extern "C" {
   void init_pauli_to_size(pauli_t* a, int size);
   void set_dcp_to_transvection(dcp_t* dcp, pauli_t* z_pauli);
   void convert_pauli(pauli_t* temp_pauli,comb_pauli_z_t* pauli);
-  void print_magic_state(comb_css_magic_state_t* state);
   // conversion
   void convert_dcp(dcp_t* dcp, comb_dcp_t* value);
   void convert_pauli_x(pauli_t* pauli, comb_pauli_x_t* value);
   void convert_pauli_z(pauli_t* pauli, comb_pauli_z_t* value);
-  void convert_permutation(mzp_t* permutation, comb_permutation_t* permutation);
+  void convert_permutation(mzp_t* permutation, comb_permutation_t* value);
 
 #ifdef __cplusplus
 }

@@ -12,264 +12,122 @@ extern "C" {
                                            uint32_t n_x, // number of independent x stabiliser generators in code
                                            uint32_t n_z, // number of independent z stabiliser generators in code
                                            uint32_t k, // number of logical qubits in code. equivalently, number of logical dcp operators that stabilise the code
-                                           comb_pauli_x_t* x_stabilisers, // n-x of these
-                                           comb_permutation_t* x_permutation, //permutation that puts x_stabilisers in rref form
+                                           comb_pauli_x_t* _x_stabilisers, // n-x of these
+                                           comb_permutation_t* _x_permutation, //permutation that puts x_stabilisers in rref form
                                            comb_bit_array_t x_lookup_table, // x lookup table. of size 2^(n-n_x)
-                                           comb_pauli_z_t* z_stabilisers,
-                                           comb_permutation_t* z_permutation, // permutation that puts z_stabilisers in rref form
+                                           comb_pauli_z_t* _z_stabilisers,
+                                           comb_permutation_t* _z_permutation, // permutation that puts z_stabilisers in rref form
                                            comb_bit_array_t z_lookup_table,
-                                           comb_dcp_t* dcp_stabilisers, // k of these
+                                           comb_dcp_t* _dcp_stabilisers, // k of these
 
-                                           int fault_location_count, // number of fault locations
-                                           int *fault_location_partitions, // at least fault_location_count of these. number of faults at each location
-                                           int s, // number of faults to which circuit should be resilient to
+                                           uint32_t fault_location_count, // number of fault locations
+                                           uint32_t *fault_location_partitions, // at least fault_location_count of these. number of faults at each location
+                                           uint32_t s, // number of faults to which circuit should be resilient to
                                            uint32_t *bad_fault_array, // where to store indices of bad_faults
                                            uint32_t output_error_count, // number of output errors that result from propagating all the faults. should be at least sum(fault_location_partitions)
-                                           comb_dcp_t* output_errors, // at least output_error_count of these
+                                           comb_dcp_t* _output_errors, // at least output_error_count of these
                                            uint32_t x_measurement_count, // number of x measurement paulis
-                                           comb_pauli_x_t* x_measurement_paulis, // postselections made in x basis. at least x_measurement_count of these
+                                           comb_pauli_x_t* _x_measurement_paulis, // postselections made in x basis. at least x_measurement_count of these
                                            uint32_t z_measurement_count, // number of z measurement paulis
-                                           comb_pauli_z_t* z_measurement_paulis){
+                                           comb_pauli_z_t* _z_measurement_paulis){
     lwlog_info("start timing \n");
     // Start timing
     int fault_counter=0;
     struct timespec start, finish;
     clock_gettime( CLOCK_MONOTONIC, &start );
+    lwlog_debug("n_all=%d, n=%d, n_x = %d, n_z = %d, k = %d,fault_location_count = %d, s = %d, output_error_count = %d, x_measurement_count = %d, z_measurement_count = %d",n_all,n,n_x,n_z,k,fault_location_count,s,output_error_count,x_measurement_count,z_measurement_count);
+    lwlog_info("allocating objects");
+    dcp_t* dcp_stabilisers = malloc(k * sizeof(dcp_t));
+    dcp_t* output_errors = malloc(output_error_count * sizeof(dcp_t));
+    pauli_t* x_measurement_paulis = malloc(x_measurement_count * sizeof(pauli_t));
+    pauli_t* z_measurement_paulis = malloc(z_measurement_count * sizeof(pauli_t));
+    pauli_t* x_stabilisers = malloc(n_x * sizeof(pauli_t));
+    pauli_t* z_stabilisers = malloc(n_z * sizeof(pauli_t));
+    mzp_t* x_permutation = mzp_init(n);
+    mzp_t* z_permutation = mzp_init(n);
 
-    lwlog_info("convert %d output errors to dcp",output_error_count);
-    dcp_t* dcp_output_errors = malloc(output_error_count * sizeof(dcp_t));
-    for(int i = 0 ; i < output_error_count ; i++){
-      convert_dcp(&(dcp_output_errors[i]),&(output_errors[i])); // TODO write convert_dcp
+    lwlog_info("converting objects");
+    printf("stabilisers: \n");
+    for(int i = 0; i < n_x; i++){
+      convert_pauli_x(&(x_stabilisers[i]),&(_x_stabilisers[i]));
+      print_pauli(&(x_stabilisers[i]),1);
     }
-    lwlog_info("convert %d logical stabilisers to dcp", k);
-    dcp_t* logical_stabilisers = malloc(k * sizeof(dcp_t));
-    for(int i = 0 ; i < state->k ; i++){
-      convert_dcp(&(logical_stabilisers[i]),&(state->dcp_stabilisers[i]));
+    for(int i = 0; i < n_z; i++){
+      convert_pauli_z(&(z_stabilisers[i]),&(_z_stabilisers[i]));
+      print_pauli(&(z_stabilisers[i]),1);
     }
-
-    lwlog_info("check that the number of faults is not too large \n");
-    // Check that the number of faults is not too large
-    uint32_t fault_count = 0;
-    for(int i = 0;i<n; i++){
-      fault_count+=sizes[i];
+    for(int i = 0; i < k; i++){
+      convert_dcp(&(dcp_stabilisers[i]),&(_dcp_stabilisers[i]));
+      printf("logical stabiliser %d: ",i);
+      print_dcp(&(dcp_stabilisers[i]),1);
     }
-    if (n > MAX_SIZE_COUNT) {
-      lwlog_info("problem too large: %i > %i\n", n, MAX_SIZE_COUNT);
-      return PROBLEM_TOO_LARGE;
+    for(int i = 0; i < output_error_count; i++){
+      convert_dcp(&(output_errors[i]),&(_output_errors[i]));
+      printf("output error %d: ",i);
+      print_dcp(&(output_errors[i]),1);
     }
-
-    // Allocate space for multiplying dcp errors together in the iteration
-    int qubit_count = n_all;
-    dcp_t current_dcp_output_combination;
-    dcp_t temp;
-    dcp_t error_with_stabilisers;
-    init_dcp_to_size(&temp,qubit_count);
-    init_dcp_to_size(&current_dcp_output_combination,qubit_count);
-    init_dcp_to_size(&error_with_stabilisers,qubit_count);
-
-    // Construct the sequence of measurements that postselect and canonicalise all dcp errors
-    int measurement_sequence_count = 0;
-    pauli_t* measurement_sequence = malloc(measurement_sequence_count*sizeof(pauli_t));
-    // TODO construct the sequence
-    // Set up the iteration
-    int current_combination[MAX_SIZE_COUNT];
-    int first_balls[MAX_SIZE_COUNT];
-    int last_balls[MAX_SIZE_COUNT];
-    for (int i = 0; i < k; i++) {
-      current_combination[i] = 0;
-      for (int j = 0; j < i; j++) {
-        current_combination[i] += sizes[j];
-      }
+    printf("measurements: \n");
+    for(int i = 0; i < x_measurement_count; i++){
+      convert_pauli_x(&(x_measurement_paulis[i]),&(_x_measurement_paulis[i]));
+      print_pauli(&(x_measurement_paulis[i]),1);
     }
-    for (int i = 0; i < n; i++) {
-      first_balls[i] = 0;
-      for (int j = 0; j < i; j++) {
-        first_balls[i] += sizes[j];
-      }
+    for(int i = 0; i < z_measurement_count; i++){
+      convert_pauli_z(&(z_measurement_paulis[i]),&(_z_measurement_paulis[i]));
+      print_pauli(&(z_measurement_paulis[i]),1);
     }
-    for (int i = 0; i < n; i++) {
-      last_balls[i] = 0;
-      for (int j = 0; j < i + 1; j++) {
-        last_balls[i] += sizes[j];
-      }
-      last_balls[i]--;
-    }
-    // do the iteration
-    unsigned long long c = 0;
-    if(output_error_count) // only do if there is at least one fault
-    do {
-      if(fault_counter%10000 == 0)printf("checking fault number %d\n",fault_counter++);
-      // Multiply DCP errors together. TODO verify that order is correct
-      set_dcp_to(&current_dcp_output_combination,&(dcp_output_errors[current_combination[0]]));
-      for(int i = 1 ; i < k ; i++){
-        dcp_mul(&temp,&current_dcp_output_combination,&(dcp_output_errors[current_combination[i]]));
-        current_dcp_output_combination=temp;
-      }
-      // output errors multiplied. now, multiply by all combinations of logical operators and test them:
-      // TODO they all commute (i think) so a gray code should be fine here really
-      // loop over all combinations of dcp stabilisers
-      int good_combination_found=0;
-      for(uint32_t dcp_index=0;dcp_index < (1 << state->k)  && !good_combination_found;
-          dcp_index++){
-        set_dcp_to(&error_with_stabilisers,&current_dcp_output_combination);
-        //
-        for(int i = 0 ; i < state->k && !good_combination_found; i++){
-          if(dcp_index & (1 << i)){
-            // multiply the output error by dcp stabilisers
-            dcp_mul(&temp,&error_with_stabilisers,&(logical_stabilisers[i]));
-            set_dcp_to(&error_with_stabilisers,&temp);
-          }
-
+    printf("x lookup table: ");
+    for(int i = 0; i < (1 << (n-n_x)); i++){
+      printf("%d",TestBit(x_lookup_table,i));
         }
-        // now check to see if it is good or not.
-        if(!dcp_fault_bad_p_css(&error_with_stabilisers,state,measurement_sequence,measurement_sequence_count)){
-          // a good one was found after multiplying by a choice of logicals, set the flag
-          good_combination_found=1;
-          //break outer;
-        }
-        //error_with_stabilisers=0; //error_with_stabilisers is now bad after the destructive operation
-      }
-      if (!good_combination_found) {
-        // need to return a fault
-        for (int i = 0; i < k; i++) {
-          bad_fault_array[i] = current_combination[i];
-        }
-        fflush(stdout);
-        clock_gettime( CLOCK_MONOTONIC, &finish );
-        double seconds = (finish.tv_sec - start.tv_sec) + 1.0e-9 * (finish.tv_nsec - start.tv_nsec);
-        printf("Took %f seconds.\n", seconds);
-        return BAD_FAULT_FOUND;
-      }
-
-    c++;
-  } while (ft_iteration_combination_incf(k, sizes, n, first_balls, last_balls,
-                                         current_combination));
-  printf("%llu faults processed.\n", c);
-  fflush(stdout);
+    printf("\n");
+    printf("z lookup table: ");
+    for(int i = 0; i < (1 << (n-n_z)); i++){
+      printf("%d",TestBit(z_lookup_table,i));
+    }
+    printf("\n");
+    convert_permutation(x_permutation,_x_permutation);
+    convert_permutation(z_permutation,_z_permutation);
+    mzp_print(x_permutation);
+    mzp_print(z_permutation);
 
   // Stop timing
   clock_gettime( CLOCK_MONOTONIC, &finish );
   double seconds = (finish.tv_sec - start.tv_sec) + 1.0e-9 * (finish.tv_nsec - start.tv_nsec);
   printf("Took %f seconds.\n", seconds);
+  // TODO free everything
 
   return ALL_FAULTS_GOOD;
   }
-  int dcp_fault_bad_p_css(dcp_t *error, comb_css_magic_state_t* magic_state, pauli_t* p, int count){
-    // TODO implement these
-    // First, check the X part of the error, as this is easier to deal with.
 
-    // Does it anticommute with any Z basis postselections? If so, the error is always detected, so the entire error is good
-    // Is it low weight? If so, it is good, but we must check the rest of the error. If it is not low weight, then the whole error is bad
-    // Now we do the more expensive Z check.
-    // Convert the dcp into a stabiliser state:
-    stabiliser_state_t* state = dcp_to_stabiliser_state(error);
-    // Do all postselections and canonicalisations by measuring all the Paulis on the state.
-    // If the state ever vanishes, the error is good, so return.
-    for(int i =0 ; i< count; i++){
-      if(postselect_on_measuring_plus_one(state,&(p[i])))return 0; // vanishes so return good
-    }
-    // State now postselected and canonicalised. Expand the resulting state as a coset
-    pauli_z_coset_t *coset = diagonal_clifford_to_coset(state);
-    // Apply the qubit permutation:
-    permute_qubits(coset,magic_state->n,magic_state->z_permutation);
-
-    pauli_t current_element;
-    pauli_t temp;
-    set_to_pauli(&current_element,coset->factor);
-    init_pauli_to_size(&temp,PAULI_N(coset->factor));
-    // Iterate over every element in the coset using a gray code
-    for(int i = 0 ; i < (1 << coset->k); i++){
-      // If any term is bad, the error is bad, otherwise it is good.
-      pauli_mul(&temp,&current_element,coset->set_generators[gray_bit_to_switch(i)]);
-      if(!TestBit(magic_state->z_lookup_table,mzd_data(temp.data))) {
-        // it's bad so return, otherwise check the other ones
-        return 1;
-      }
-      current_element=temp;
-    }
-  // all elements in the coset were good so return
-    return 0;
-  }
-  uint32_t gray_bit_to_switch(uint32_t n)
-{
-  uint32_t n_add_one = n + 1;
-  uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
-  return n ? 31 - __builtin_clz(diff) : 0;
-}
-
-uint32_t mzd_data(mzd_t* mzd){
-  int n = mzd->nrows;
-  int m = mzd->ncols;
-  uint32_t elt=0;
-  int count = 0;
-  for(int i = 0; i < n; i++){
-    for(int j = 0; j < m; j++){
-      if(mzd_read_bit(mzd,i,j))elt|=(1<< count);
-      count++;
-    }
-  }
-  return elt;
-}
-
-
-  void  permute_qubits(pauli_z_coset_t* coset,int n, uint32_t* c){
-  mzp_t* perm = mzp_init(2*n+1);
-  for(int i =0; i < n; i++)
-    perm->values[i]=c[i]; // only need to permute zs
-  mzd_apply_p_left(coset->factor->data,perm);
-  for(int i =0 ; i< coset->k; i++)
-    mzd_apply_p_left(coset->set_generators[i]->data,perm);
-}
-
-  void set_to_pauli(pauli_t* a, pauli_t* b){
-    a->sign_bit=b->sign_bit;
-    mzd_copy(a->data,b->data);
-  }
-  void init_pauli_to_size(pauli_t* a, int n){
-    a->sign_bit=0;
-    a->data=mzd_init(1+(2*n),1);
-  }
-
-  void convert_dcp(dcp_t* dcp, comb_dcp_t* comb){
-    int n = comb->pauli_x_part.pauli_length;
-    dcp_t* temp1 = init_dcp(n);
-    dcp_t* temp2 = init_dcp(n);
-    pauli_t* temp_pauli = init_pauli(n);
-    for(int i =0; i < comb->exponent_sum.term_count; i ++){
-      int coefficient = comb->exponent_sum.coefficients[i];
-      comb_pauli_z_t* pauli= &(comb->exponent_sum.terms[i]);
-      while(coefficient < 0)coefficient +=8;
-      while(coefficient > 8)coefficient -=8;
-      for(int j = 0; j < coefficient; j++){
-        convert_pauli(temp_pauli,pauli);
-        set_dcp_to_transvection(temp1,temp_pauli);
-        dcp_mul(temp2, temp1, dcp);
-        set_dcp_to(dcp,temp2);
+  void convert_dcp(dcp_t* dcp, comb_dcp_t* value){}
+  void convert_pauli_x(pauli_t* pauli, comb_pauli_x_t* value)
+  {
+    int n = value->n;
+    pauli->data=mzd_init(1+(2*n),1);
+    pauli->sign_bit=0;
+    for(int i = 0; i < n;i++){
+      //printf("bit %d=%d\n",i,TestBit(value->data,i));
+      if(TestBit(value->data,i)){
+        //printf("writing bit %d\n",i);
+      mzd_write_bit(pauli->data,i+n,0,1);
       }
     }
-
-    // finally write the x part
-    for(int i =0 ; i< n; i++){
-      mzd_write_bit(dcp->h_z,i,0,TestBit(comb->pauli_x_part.data,i));
+  }
+  void convert_pauli_z(pauli_t* pauli, comb_pauli_z_t* value){
+    int n = value->n;
+    pauli->data=mzd_init(1+(2*n),1);
+    pauli->sign_bit=0;
+    for(int i = 0; i < n;i++){
+      //printf("bit %d=%d\n",i,TestBit(value->data,i));
+      if(TestBit(value->data,i)){
+        //printf("writing bit %d\n",i);
+        mzd_write_bit(pauli->data,i,0,1);
+      }
     }
-    free_dcp(temp1);
-    free_dcp(temp2);
-    free_pauli(temp_pauli);
-
   }
+  void convert_permutation(mzp_t* permutation, comb_permutation_t* value){}
 
 
-  void convert_pauli(pauli_t* temp_pauli,comb_pauli_z_t* pauli){
-    int n = PAULI_N(temp_pauli);
-    for(int i =0 ; i< n; i++)mzd_write_bit(temp_pauli->data, i,0,TestBit(pauli->data,i));
-  }
-
-  void comb_demo(){
-    // bit of a nonsensical example
-    //dcp_t* dcp = dcp_cz(0,1);//dcp_mul(0, dcp_cz(0,1,3), dcp_mul(0, dcp_cz(0,2,3), dcp_cz(1,2,3) ));
-
-    //comb_css_magic_state_t state = {1,1,1,0,&x_stabiliser,};
-  }
 #ifdef __cplusplus
 }
 #endif

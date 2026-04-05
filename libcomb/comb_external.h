@@ -17,7 +17,7 @@ typedef enum {ALL_FAULTS_GOOD = 0,
 
 typedef uint64_t comb_bit_word_t;
 typedef comb_bit_word_t* comb_bit_array_t; // maybe not needed?
-
+#define MAX_SIZE_COUNT 1024
 //#define MAX_BIT_VECTOR_LENGTH 64
 //#define MAX_BIT_VECTOR_WORD_LENGTH (MAX_BIT_VECTOR_LENGTH / sizeof(comb_bit_word_t))
 //#define MAX_BIT_MATRIX_LENGTH (MAX_BIT_VECTOR_LENGTH * MAX_BIT_VECTOR_LENGTH )
@@ -81,9 +81,9 @@ comb_code_t comb_verify_css_magic_state( // describing the magic state
                                            comb_dcp_t* dcp_stabilisers, // k of these
 
                                            // other parameters to the problem
-                                           int fault_location_count, // number of fault locations
-                                           int *fault_location_partitions, // at least fault_location_count of these. number of faults at each location
-                                           int s, // number of faults to which circuit should be resilient to
+                                           uint32_t fault_location_count, // number of fault locations
+                                           uint32_t *fault_location_partitions, // at least fault_location_count of these. number of faults at each location
+                                           uint32_t s, // number of faults to which circuit should be resilient to
                                            uint32_t *bad_fault_array, // where to store indices of bad faults. must have enough space for s elements.
                                            uint32_t output_error_count, // number of output errors that result from propagating all the faults. should be at least sum(fault_location_partitions)
                                            comb_dcp_t* output_errors, // at least output_error_count of these
