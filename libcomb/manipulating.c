@@ -67,7 +67,7 @@ extern "C" {
   }
 
 
-  pauli_t* dcp_image_x(dcp_t *dcp, size_t i){
+  pauli_t* dcp_image_x(dcp_t *dcp, uint32_t i){
     int n = DCP_N(dcp);
     pauli_t* p_z_parts = init_pauli(n);
     mzd_write_bit(p_z_parts->data,i+n,0,1);
@@ -88,12 +88,12 @@ extern "C" {
     return state;
   }
 
-  pauli_t* pauli_x(size_t i, size_t n){
+  pauli_t* pauli_x(uint32_t i, uint32_t n){
     pauli_t* p = init_pauli(n);
     mzd_write_bit(p->data,i + n,0,1);
     return p;
   }
-  pauli_t* pauli_z(size_t i,size_t n){
+  pauli_t* pauli_z(uint32_t i,uint32_t n){
     pauli_t* p = init_pauli(n);
     mzd_write_bit(p->data,i,0,1);
     return p;

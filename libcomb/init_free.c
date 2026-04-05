@@ -4,7 +4,7 @@ extern "C" {
 #include "comb.h"
 
 
-  dcp_t* init_dcp(size_t n){
+  dcp_t* init_dcp(uint32_t n){
     dcp_t* tableau = (dcp_t*)malloc(sizeof(dcp_t));
     // follows demoor and dehaene
     tableau->F=mzd_init(n,n);
@@ -13,19 +13,19 @@ extern "C" {
     return tableau;
   }
 
-  void init_dcp_to_size(dcp_t* tableau, size_t n){
+  void init_dcp_to_size(dcp_t* tableau, uint32_t n){
     tableau->F=mzd_init(n,n);
     tableau->h_x=mzd_init(n,1);
     tableau->h_z=mzd_init(n,1);
   }
 
-  pauli_t* init_pauli(size_t n){
+  pauli_t* init_pauli(uint32_t n){
     pauli_t* pauli = (pauli_t*)malloc(sizeof(pauli_t));
     pauli->sign_bit=0;
     pauli->data=mzd_init(1+(2*n),1);
     return pauli;
   }
-  pauli_z_coset_t* init_pauli_z_coset(size_t n, size_t k){
+  pauli_z_coset_t* init_pauli_z_coset(uint32_t n, uint32_t k){
     pauli_z_coset_t* coset = (pauli_z_coset_t*)malloc(sizeof(pauli_z_coset_t));
     coset->factor=init_pauli(n);
     coset->k=k;
@@ -54,29 +54,29 @@ extern "C" {
     free(coset);
   }
 
-  dcp_t* dcp_pauli_x(size_t i, size_t n){
+  dcp_t* dcp_pauli_x(uint32_t i, uint32_t n){
     dcp_t* dcp = init_dcp(n);
     mzd_write_bit(dcp->h_z,i,0,1);
     return dcp;
   }
-  dcp_t* dcp_pauli_z(size_t i, size_t n){
+  dcp_t* dcp_pauli_z(uint32_t i, uint32_t n){
     dcp_t* dcp = init_dcp(n);
     mzd_write_bit(dcp->h_x,i,0,1);
     return dcp;
   }
-  dcp_t* dcp_cz(size_t i, size_t j,size_t n){
+  dcp_t* dcp_cz(uint32_t i, uint32_t j,uint32_t n){
     dcp_t* dcp = init_dcp(n);
     mzd_write_bit(dcp->F,i,j,1);
     mzd_write_bit(dcp->F,j,i,1);
     return dcp;
   }
-  dcp_t* dcp_s(size_t i, size_t n){
+  dcp_t* dcp_s(uint32_t i, uint32_t n){
     dcp_t* dcp = init_dcp(n);
     mzd_write_bit(dcp->F,i,i,1);
     mzd_write_bit(dcp->h_x,i,0,1);
     return dcp;
   }
-  dcp_t* dcp_transvection(pauli_t* z_pauli,size_t n){
+  dcp_t* dcp_transvection(pauli_t* z_pauli,uint32_t n){
     // z_pauli assumed to be of z type.
     // Proved in dehaene and demoor in the appendix.
     dcp_t* dcp = init_dcp(n);

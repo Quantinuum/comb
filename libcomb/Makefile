@@ -3,10 +3,13 @@ CC = gcc #g++?
 M4RI = /usr/local/lib/libm4ri.a
 
 c_files := $(wildcard *.c)
+obj_files := $(c_files:.c=.o)
 
-demo: comb.h lwlog.h $(c_files)
-	$(CC) $(c_files) -o demo $(M4RI) $(CFLAGS)
-	./demo 1111001010110000
+%.o : %.c
+	$(CC) -fPIC -c $^ -o $@
+
+libcomb.so: $(obj_files)
+	gcc -O3 -shared -o libcomb.so $(CFLAGS) -rdynamic $(obj_files) $(M4RI)
 
 clean:
 	rm -f demo

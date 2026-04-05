@@ -8,16 +8,17 @@ extern "C" {
 #include "comb.h"
 
   comb_code_t comb_verify_css_magic_state(int n, int *sizes, int k,
-                                          size_t *bad_fault_array,
+                                          uint32_t *bad_fault_array,
                                           comb_css_magic_state_t* state,
-                                          size_t output_error_count, comb_dcp_t* output_errors,
-                                          size_t x_measurement_count, comb_pauli_x_t* x_measurement_paulis,
-                                          size_t z_measurement_count, comb_pauli_z_t* z_measurement_paulis){
+                                          uint32_t output_error_count, comb_dcp_t* output_errors,
+                                          uint32_t x_measurement_count, comb_pauli_x_t* x_measurement_paulis,
+                                          uint32_t z_measurement_count, comb_pauli_z_t* z_measurement_paulis){
+    printf("hello from verify css magic state \n");
     // Start timing
     int fault_counter=0;
     struct timespec start, finish;
     clock_gettime( CLOCK_MONOTONIC, &start );
-
+    printf("convert output errors to dcp \n");
     // Convert the output errors to dcp.
     dcp_t* dcp_output_errors = malloc(output_error_count * sizeof(dcp_t));
     for(int i = 0 ; i < output_error_count ; i++){
@@ -28,6 +29,7 @@ extern "C" {
       convert_dcp(&(logical_stabilisers[i]),&(state->dcp_stabilisers[i]));
     }
 
+    printf("check that the number of faults is not too large \n");
     // Check that the number of faults is not too large
     uint32_t fault_count = 0;
     for(int i = 0;i<n; i++){
@@ -41,7 +43,7 @@ extern "C" {
 
 
     // Allocate space for multiplying dcp errors together in the iteration
-    int qubit_count = output_errors[0].pauli_x_part.pauli_length;
+    int qubit_count = (output_error_count>0)?output_errors[0].pauli_x_part.pauli_length:0;
     dcp_t current_dcp_output_combination;
     dcp_t temp;
     dcp_t error_with_stabilisers;
@@ -77,6 +79,7 @@ extern "C" {
     }
     // do the iteration
     unsigned long long c = 0;
+    if(fault_count) // only do if there is at least one fault
     do {
       if(fault_counter%10000 == 0)printf("checking fault number %d\n",fault_counter++);
       // Multiply DCP errors together. TODO verify that order is correct
@@ -135,7 +138,9 @@ extern "C" {
   return ALL_FAULTS_GOOD;
   }
   int dcp_fault_bad_p_css(dcp_t *error, comb_css_magic_state_t* magic_state, pauli_t* p, int count){
+    // TODO implement these
     // First, check the X part of the error, as this is easier to deal with.
+
     // Does it anticommute with any Z basis postselections? If so, the error is always detected, so the entire error is good
     // Is it low weight? If so, it is good, but we must check the rest of the error. If it is not low weight, then the whole error is bad
     // Now we do the more expensive Z check.
@@ -190,7 +195,7 @@ uint32_t mzd_data(mzd_t* mzd){
 }
 
 
-  void  permute_qubits(pauli_z_coset_t* coset,int n, size_t* c){
+  void  permute_qubits(pauli_z_coset_t* coset,int n, uint32_t* c){
   mzp_t* perm = mzp_init(2*n+1);
   for(int i =0; i < n; i++)
     perm->values[i]=c[i]; // only need to permute zs
@@ -209,7 +214,6 @@ uint32_t mzd_data(mzd_t* mzd){
   }
 
   void convert_dcp(dcp_t* dcp, comb_dcp_t* comb){
-    // TODO do something
     int n = comb->pauli_x_part.pauli_length;
     dcp_t* temp1 = init_dcp(n);
     dcp_t* temp2 = init_dcp(n);
@@ -241,6 +245,13 @@ uint32_t mzd_data(mzd_t* mzd){
   void convert_pauli(pauli_t* temp_pauli,comb_pauli_z_t* pauli){
     int n = PAULI_N(temp_pauli);
     for(int i =0 ; i< n; i++)mzd_write_bit(temp_pauli->data, i,0,TestBit(pauli->data,i));
+  }
+
+  void comb_demo(){
+    // bit of a nonsensical example
+    //dcp_t* dcp = dcp_cz(0,1);//dcp_mul(0, dcp_cz(0,1,3), dcp_mul(0, dcp_cz(0,2,3), dcp_cz(1,2,3) ));
+
+    //comb_css_magic_state_t state = {1,1,1,0,&x_stabiliser,};
   }
 #ifdef __cplusplus
 }

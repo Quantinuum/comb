@@ -5,46 +5,28 @@ extern "C" {
 #endif
 
 // need fixed width integers
-#include <stdint.h>
-#include <stdlib.h>
-#include <m4ri/m4ri.h>
-// Error codes
+#include "comb_external.h"
 
-  typedef enum {ALL_FAULTS_GOOD = 0,
-                BAD_FAULT_FOUND = 1,
-                INVALID_INPUT = 2,
-                PROBLEM_TOO_LARGE = 3,
-                INTERNAL_ERROR = 4,
-                OTHER_ERROR = 5} comb_code_t;
-
-  // A bit vector is an array of words
-
-  typedef uint64_t comb_bit_word_t;
-  typedef comb_bit_word_t* comb_bit_array_t; // maybe not needed?
 
 
 #define MAX_SIZE_COUNT 1024
 
-#define SetBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] |= (1U << ((k) % sizeof(comb_bit_word_t))))
-#define ClearBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] &= ~(1U << ((k) % sizeof(comb_bit_word_t))))
-#define TestBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] & (1U << ((k) % sizeof(comb_bit_word_t))))
-
   // External interface
 
   typedef struct {
-    size_t pauli_length; // number of qubits in the pauli
+    uint32_t pauli_length; // number of qubits in the pauli
     // convention is: bits 0 - n-1 z parts
     comb_bit_array_t data; // bit array. must have enough space to store pauli_length bits
   } comb_pauli_z_t;
 
   typedef struct {
-    size_t pauli_length; // number of qubits in the pauli
+    uint32_t pauli_length; // number of qubits in the pauli
     // convention is: bits 0 - n-1 x parts
     comb_bit_array_t data; // bit array. must have enough space to store pauli_length bits
   } comb_pauli_x_t;
 
   typedef struct {
-    size_t pauli_length; // number of qubits in the pauli
+    uint32_t pauli_length; // number of qubits in the pauli
     // convention is: bits 0 - n-1 z parts, n - 2n-1 x parts, 2n is the `phase'` bit, 2n+1 sign bit
     comb_bit_array_t x_data; // bit array. must have enough space to store pauli_length bits
     comb_bit_array_t z_data; // bit array. must have enough space to store pauli_length bits
@@ -75,15 +57,15 @@ extern "C" {
   // Specifies magic states of CSS codes prepared by the CNOT + T gate set.
   // It includes lookup tables to check the weight of operators
   typedef struct {
-    size_t n; // number of qubits
-    size_t n_x; // number of independent x stabiliser generators
-    size_t n_z; // number of independent z stabiliser generators
-    size_t k; // number of dcp stabilisers
+    uint32_t n; // number of qubits
+    uint32_t n_x; // number of independent x stabiliser generators
+    uint32_t n_z; // number of independent z stabiliser generators
+    uint32_t k; // number of dcp stabilisers
     comb_pauli_x_t* x_stabilisers; // n-x of these. they are also in rref; after a permutation, they are in the appropriate diagonal form in the final n-x entries
-    size_t* x_permutation; // permutation to apply to qubits to get into canonical form needed for x weight lookup
+    uint32_t* x_permutation; // permutation to apply to qubits to get into canonical form needed for x weight lookup
     comb_bit_array_t x_lookup_table; // z weight lookup table. of size 2^(n - n_x)
     comb_pauli_z_t* z_stabilisers; // n-z of these. they are also in rref; after a permutation, they are in the appropriate diagonal form in the final n-z entries
-    size_t* z_permutation;  // permutation to apply to qubits to get into canonical form needed for z weight lookup
+    uint32_t* z_permutation;  // permutation to apply to qubits to get into canonical form needed for z weight lookup
     comb_bit_array_t z_lookup_table; // z weight lookup table. of size 2^(n - n_z)
     comb_dcp_t* dcp_stabilisers; // k of these
     comb_ft_iteration_x_evaluator x_evaluator; // optional. if not NULL, it is called instead of dealing with lookup tables.
@@ -106,44 +88,6 @@ extern "C" {
   } comb_pauli_eigenstate_t; // a general stabiliser code.
 
   // Functions
-
-  /* Verifies the fault tolerance of a circuit that prepares a magic state of a CSS code with a CNOT + T circuit by checking that all possible combinations of faults are detected or sufficiently low weight
-     `n' is the number of fault locations.
-     `m' is a pointer to an array of size at least n, and m[i] is the number of faults in the i-th location.
-     `k' is the number of faults to which the circuit should be resilient to.
-     `bad_fault_array` is a pointer to an array of at least k elements, to which the indices of any bad faults will be written if any are found.
-     `state' is the magic state being prepared.
-     `output_error_count` is the number of propagated output errors. It must be at least m[0]+...m[s-1] else an error is returned.
-     `output_errors` is a pointer to at least `output_error_count` number of errors.
-     `x_measurement_count' is the number of independent postselections made on ancilla measurements of purely X type
-     `x_measurement_paulis' is a pointer to at least `x_measurement_count` measurement paulis.
-     `z_measurement_count' is the number of independent postselections made on ancilla measurements of purely Z type
-     `z_measurement_paulis' is a pointer to at least `z_measurement_count` measurement paulis.
-     The x_measurement_paulis and z_measurement_paulis must have entirely disjoint support, else an error is returned.
-  */
-  comb_code_t comb_verify_css_magic_state(int n, int *m, int k,
-                                          size_t *bad_fault_array,
-                                          comb_css_magic_state_t* state,
-                                          size_t output_error_count, comb_dcp_t* output_errors,
-                                          size_t x_measurement_count, comb_pauli_x_t* x_measurement_paulis,
-                                          size_t z_measurement_count, comb_pauli_z_t* z_measurement_paulis);
-
-  comb_code_t comb_verify_css_pauli_eigenstate(int s, int *m, int k,
-                                               size_t *bad_fault_array,
-                                               comb_css_pauli_eigenstate_t* state,
-                                               size_t output_error_count, comb_pauli_z_t* output_errors,
-                                               size_t x_measurement_count, comb_pauli_x_t* x_measurement_paulis);
-
-  comb_code_t comb_verify_pauli_eigenstate(int s, int *m, int k,
-                                           size_t *bad_fault_array,
-                                           comb_pauli_eigenstate_t* state,
-                                           size_t output_error_count, comb_pauli_t* output_errors,
-                                           size_t x_measurement_count, comb_pauli_x_t* x_measurement_paulis,
-                                           size_t z_measurement_count, comb_pauli_z_t* z_measurement_paulis);
-
-  // Some legacy methods here.. they are faster for some things
-
-
 
   // idea. do rref in c? maybe a todo later. people should do it themselves...
   // it goes against the philosophy of the library
@@ -175,7 +119,7 @@ extern "C" {
 
   typedef struct {
     pauli_t* factor; // factor
-    size_t k;
+    uint32_t k;
     pauli_t** set_generators; // array of k generators
   } pauli_z_coset_t;
   // Useful macros
@@ -186,14 +130,14 @@ extern "C" {
 #define STABILISER_N(t) ((((t)->data->nrows)-1)/2)
 
   // Creation
-  clifford_t* init_clifford(size_t n);
-  dcp_t* init_dcp(size_t n);
-  pauli_t* init_pauli(size_t n);
-  pauli_z_coset_t* init_pauli_z_coset(size_t n, size_t k);
-  dcp_t* dcp_pauli_x(size_t i, size_t n);
-  dcp_t* dcp_pauli_z(size_t i, size_t n);
-  dcp_t* dcp_cz(size_t i, size_t j,size_t n);
-  dcp_t* dcp_s(size_t i, size_t n);
+  clifford_t* init_clifford(uint32_t n);
+  dcp_t* init_dcp(uint32_t n);
+  pauli_t* init_pauli(uint32_t n);
+  pauli_z_coset_t* init_pauli_z_coset(uint32_t n, uint32_t k);
+  dcp_t* dcp_pauli_x(uint32_t i, uint32_t n);
+  dcp_t* dcp_pauli_z(uint32_t i, uint32_t n);
+  dcp_t* dcp_cz(uint32_t i, uint32_t j,uint32_t n);
+  dcp_t* dcp_s(uint32_t i, uint32_t n);
   // Freeing
   void free_clifford(clifford_t* clifford);
   void free_pauli(pauli_t* pauli);
@@ -208,8 +152,8 @@ extern "C" {
   void print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
   void print_stabiliser_state(stabiliser_state_t *coset, char print_newline_p);
   // more convenient creation
-  pauli_t *pauli_x(size_t i, size_t n);
-  pauli_t *pauli_z(size_t i, size_t n);
+  pauli_t *pauli_x(uint32_t i, uint32_t n);
+  pauli_t *pauli_z(uint32_t i, uint32_t n);
 
   mzd_t* diag(mzd_t* matrix);
   void add_and(mzd_t* result, mzd_t* F1,mzd_t* F2);
@@ -226,7 +170,7 @@ extern "C" {
   // 1. Multiplies DCP operators
   dcp_t *dcp_mul(dcp_t *result, dcp_t *c1, dcp_t *c2);
 
-  pauli_t* dcp_image_x(dcp_t *dcp, size_t i);
+  pauli_t* dcp_image_x(dcp_t *dcp, uint32_t i);
   // 2. converts a diagonal clifford to a stabiliser state (operator state duality)
   stabiliser_state_t* dcp_to_stabiliser_state(dcp_t* dcp);
 
@@ -252,12 +196,12 @@ extern "C" {
   int ft_iteration_combination_incf(int k, int *sizes, int n, int *first_balls,
                                     int *last_balls, int *current_combination);
 
-  void init_dcp_to_size(dcp_t* tableau, size_t n);
+  void init_dcp_to_size(dcp_t* tableau, uint32_t n);
 
   int dcp_fault_bad_p_css(dcp_t *error, comb_css_magic_state_t* state, pauli_t* p, int count);
 
   uint32_t mzd_data(mzd_t* mzd);
-  void  permute_qubits(pauli_z_coset_t* coset,int n, size_t* c);
+  void  permute_qubits(pauli_z_coset_t* coset,int n, uint32_t* c);
   void set_to_pauli(pauli_t* a, pauli_t* b);
   void init_pauli_to_size(pauli_t* a, int size);
   void set_dcp_to_transvection(dcp_t* dcp, pauli_t* z_pauli);
