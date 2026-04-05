@@ -7,49 +7,66 @@ extern "C" {
 #include <time.h> 
 #include "comb.h"
 
-  comb_code_t comb_verify_css_magic_state(int n, int *sizes, int k,
-                                          uint32_t *bad_fault_array,
-                                          comb_css_magic_state_t* state,
-                                          uint32_t output_error_count, comb_dcp_t* output_errors,
-                                          uint32_t x_measurement_count, comb_pauli_x_t* x_measurement_paulis,
-                                          uint32_t z_measurement_count, comb_pauli_z_t* z_measurement_paulis){
-    printf("hello from verify css magic state \n");
+  comb_code_t comb_verify_css_magic_state( uint32_t n_all, // number of qubits in code + all ancillas
+                                           uint32_t n, // number of qubits in code
+                                           uint32_t n_x, // number of independent x stabiliser generators in code
+                                           uint32_t n_z, // number of independent z stabiliser generators in code
+                                           uint32_t k, // number of logical qubits in code. equivalently, number of logical dcp operators that stabilise the code
+                                           comb_pauli_x_t* x_stabilisers, // n-x of these
+                                           comb_permutation_t* x_permutation, //permutation that puts x_stabilisers in rref form
+                                           comb_bit_array_t x_lookup_table, // x lookup table. of size 2^(n-n_x)
+                                           comb_pauli_z_t* z_stabilisers,
+                                           comb_permutation_t* z_permutation, // permutation that puts z_stabilisers in rref form
+                                           comb_bit_array_t z_lookup_table,
+                                           comb_dcp_t* dcp_stabilisers, // k of these
+
+                                           int fault_location_count, // number of fault locations
+                                           int *fault_location_partitions, // at least fault_location_count of these. number of faults at each location
+                                           int s, // number of faults to which circuit should be resilient to
+                                           uint32_t *bad_fault_array, // where to store indices of bad_faults
+                                           uint32_t output_error_count, // number of output errors that result from propagating all the faults. should be at least sum(fault_location_partitions)
+                                           comb_dcp_t* output_errors, // at least output_error_count of these
+                                           uint32_t x_measurement_count, // number of x measurement paulis
+                                           comb_pauli_x_t* x_measurement_paulis, // postselections made in x basis. at least x_measurement_count of these
+                                           uint32_t z_measurement_count, // number of z measurement paulis
+                                           comb_pauli_z_t* z_measurement_paulis){
+    lwlog_info("start timing \n");
     // Start timing
     int fault_counter=0;
     struct timespec start, finish;
     clock_gettime( CLOCK_MONOTONIC, &start );
-    printf("convert output errors to dcp \n");
-    // Convert the output errors to dcp.
+
+    lwlog_info("convert %d output errors to dcp",output_error_count);
     dcp_t* dcp_output_errors = malloc(output_error_count * sizeof(dcp_t));
     for(int i = 0 ; i < output_error_count ; i++){
       convert_dcp(&(dcp_output_errors[i]),&(output_errors[i])); // TODO write convert_dcp
     }
-    dcp_t* logical_stabilisers = malloc(state->k * sizeof(dcp_t));
+    lwlog_info("convert %d logical stabilisers to dcp", k);
+    dcp_t* logical_stabilisers = malloc(k * sizeof(dcp_t));
     for(int i = 0 ; i < state->k ; i++){
       convert_dcp(&(logical_stabilisers[i]),&(state->dcp_stabilisers[i]));
     }
 
-    printf("check that the number of faults is not too large \n");
+    lwlog_info("check that the number of faults is not too large \n");
     // Check that the number of faults is not too large
     uint32_t fault_count = 0;
     for(int i = 0;i<n; i++){
       fault_count+=sizes[i];
     }
     if (n > MAX_SIZE_COUNT) {
-      printf("problem too large: %i > %i\n", n, MAX_SIZE_COUNT);
+      lwlog_info("problem too large: %i > %i\n", n, MAX_SIZE_COUNT);
       return PROBLEM_TOO_LARGE;
     }
 
-
-
     // Allocate space for multiplying dcp errors together in the iteration
-    int qubit_count = (output_error_count>0)?output_errors[0].pauli_x_part.pauli_length:0;
+    int qubit_count = n_all;
     dcp_t current_dcp_output_combination;
     dcp_t temp;
     dcp_t error_with_stabilisers;
     init_dcp_to_size(&temp,qubit_count);
     init_dcp_to_size(&current_dcp_output_combination,qubit_count);
     init_dcp_to_size(&error_with_stabilisers,qubit_count);
+
     // Construct the sequence of measurements that postselect and canonicalise all dcp errors
     int measurement_sequence_count = 0;
     pauli_t* measurement_sequence = malloc(measurement_sequence_count*sizeof(pauli_t));
@@ -79,7 +96,7 @@ extern "C" {
     }
     // do the iteration
     unsigned long long c = 0;
-    if(fault_count) // only do if there is at least one fault
+    if(output_error_count) // only do if there is at least one fault
     do {
       if(fault_counter%10000 == 0)printf("checking fault number %d\n",fault_counter++);
       // Multiply DCP errors together. TODO verify that order is correct

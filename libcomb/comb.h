@@ -6,95 +6,17 @@ extern "C" {
 
 // need fixed width integers
 #include "comb_external.h"
-
-
-
-#define MAX_SIZE_COUNT 1024
-
-  // External interface
-
-  typedef struct {
-    uint32_t pauli_length; // number of qubits in the pauli
-    // convention is: bits 0 - n-1 z parts
-    comb_bit_array_t data; // bit array. must have enough space to store pauli_length bits
-  } comb_pauli_z_t;
-
-  typedef struct {
-    uint32_t pauli_length; // number of qubits in the pauli
-    // convention is: bits 0 - n-1 x parts
-    comb_bit_array_t data; // bit array. must have enough space to store pauli_length bits
-  } comb_pauli_x_t;
-
-  typedef struct {
-    uint32_t pauli_length; // number of qubits in the pauli
-    // convention is: bits 0 - n-1 z parts, n - 2n-1 x parts, 2n is the `phase'` bit, 2n+1 sign bit
-    comb_bit_array_t x_data; // bit array. must have enough space to store pauli_length bits
-    comb_bit_array_t z_data; // bit array. must have enough space to store pauli_length bits
-    char sign_bit; // the sign and phase bits of the pauli... potentially unused?
-  } comb_pauli_t;
-
-  typedef struct {
-    uint32_t term_count;
-    comb_pauli_z_t* terms;
-    int32_t* coefficients;
-  } comb_pauli_z_sum_t; // A sum of Z paulis.
-
-  typedef struct {
-    comb_pauli_z_sum_t exponent_sum;
-    comb_pauli_x_t pauli_x_part;
-  } comb_dcp_t; // A DCP operator (represented as an exponential of a Pauli sum)
-
-  typedef struct {
-    uint32_t n;
-    uint32_t* indices;
-  } comb_permutation_t;
-  // If you want, you can supply a function to be called on each pauli after canonicalisation
-
-  typedef int (*comb_ft_iteration_xz_evaluator)(comb_pauli_t* output_error_combination);
-  typedef int (*comb_ft_iteration_x_evaluator)(comb_pauli_x_t* output_error_combination_x);
-  typedef int (*comb_ft_iteration_z_evaluator)(comb_pauli_z_t* output_error_combination_z);
-
-  // Specifies magic states of CSS codes prepared by the CNOT + T gate set.
-  // It includes lookup tables to check the weight of operators
-  typedef struct {
-    uint32_t n; // number of qubits
-    uint32_t n_x; // number of independent x stabiliser generators
-    uint32_t n_z; // number of independent z stabiliser generators
-    uint32_t k; // number of dcp stabilisers
-    comb_pauli_x_t* x_stabilisers; // n-x of these. they are also in rref; after a permutation, they are in the appropriate diagonal form in the final n-x entries
-    uint32_t* x_permutation; // permutation to apply to qubits to get into canonical form needed for x weight lookup
-    comb_bit_array_t x_lookup_table; // z weight lookup table. of size 2^(n - n_x)
-    comb_pauli_z_t* z_stabilisers; // n-z of these. they are also in rref; after a permutation, they are in the appropriate diagonal form in the final n-z entries
-    uint32_t* z_permutation;  // permutation to apply to qubits to get into canonical form needed for z weight lookup
-    comb_bit_array_t z_lookup_table; // z weight lookup table. of size 2^(n - n_z)
-    comb_dcp_t* dcp_stabilisers; // k of these
-    comb_ft_iteration_x_evaluator x_evaluator; // optional. if not NULL, it is called instead of dealing with lookup tables.
-    comb_ft_iteration_z_evaluator z_evaluator; // optional. if not NULL, it is called instead of dealing with lookup tables.
-  } comb_css_magic_state_t;
-
-  // for pauli eigenstates of css codes. Assumed to be of X type
-  typedef struct {
-    uint32_t n; // number of qubits in the code
-    uint32_t n_x; // number of x stabilisers in the code
-    comb_pauli_x_t* stabilisers; // n_x of these, in rref
-    comb_bit_array_t weight_lookup_table; // of size 2^(n-n_x)
-  } comb_css_pauli_eigenstate_t; // one half of a css code (assumed to be x)
-
-  typedef struct {
-    uint32_t n; // number of qubits in the code
-    comb_pauli_t* stabilisers; // n of these, in a rref canonical form
-    comb_bit_array_t weight_lookup_table;
-    comb_ft_iteration_xz_evaluator xz_evaluator;
-  } comb_pauli_eigenstate_t; // a general stabiliser code.
+#include <m4ri/m4ri.h>
 
   // Functions
 
   // idea. do rref in c? maybe a todo later. people should do it themselves...
   // it goes against the philosophy of the library
+  // also cant be done as it precludes reuse of lookup tables
 
-  // Internal definitions - not necessary to expose these in CFFI
+  // These are all internal definitions
 
-  // use m4rie for matrix multiplication
+  // use m4ri for matrix multiplication
   // no need to implement addition / multiplication etc.
   typedef struct { // A Clifford tableau following Dehaene and Demoor.
     mzd_t* c_bar; // 2n + 1 square matrix
@@ -207,6 +129,12 @@ extern "C" {
   void set_dcp_to_transvection(dcp_t* dcp, pauli_t* z_pauli);
   void convert_pauli(pauli_t* temp_pauli,comb_pauli_z_t* pauli);
   void print_magic_state(comb_css_magic_state_t* state);
+  // conversion
+  void convert_dcp(dcp_t* dcp, comb_dcp_t* value);
+  void convert_pauli_x(pauli_t* pauli, comb_pauli_x_t* value);
+  void convert_pauli_z(pauli_t* pauli, comb_pauli_z_t* value);
+  void convert_permutation(mzp_t* permutation, comb_permutation_t* permutation);
+
 #ifdef __cplusplus
 }
 #endif

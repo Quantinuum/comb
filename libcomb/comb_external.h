@@ -1,7 +1,6 @@
 // External interface
 #include <stdint.h>
 #include <stdlib.h>
-#include <m4ri/m4ri.h>
 // Error codes
 
 typedef enum {ALL_FAULTS_GOOD = 0,
@@ -36,7 +35,7 @@ typedef struct { // m x n matrix
 } comb_matrix_t;
 
 typedef struct {
-  comb_matrix_t M;
+  comb_matrix_t F;
   comb_vector_t h_x;
   comb_vector_t h_z;
 } comb_dcp_t;
@@ -49,23 +48,23 @@ typedef struct {
 typedef comb_vector_t comb_pauli_x_t;
 typedef comb_vector_t comb_pauli_z_t;
 
-comb_bit_array_t alloc_bit_array(int n);
-comb_vector_t *alloc_vector(int n);
-comb_matrix_t *alloc_matrix(int m, int n);
-comb_dcp_t *alloc_dcp(int n);
-comb_permutation_t *alloc_permutation(int n);
+comb_bit_array_t comb_alloc_bit_array(int n);
+comb_vector_t *comb_alloc_vector(int n);
+comb_matrix_t *comb_alloc_matrix(int m, int n);
+comb_dcp_t *comb_alloc_dcp(int n);
+comb_permutation_t *comb_alloc_permutation(int n);
 
-void set_vector_aref(comb_vector_t* vector, int i, int value);
-void set_matrix_aref(comb_matrix_t* matrix, int i, int j, int value);
+void comb_set_vector_aref(comb_vector_t* vector, int i, int value);
+void comb_set_matrix_aref(comb_matrix_t* matrix, int i, int j, int value);
 
-int vector_aref(comb_vector_t* vector, int i);
-int matrix_aref(comb_matrix_t* matrix, int i, int j);
+int comb_vector_aref(comb_vector_t* vector, int i);
+int comb_matrix_aref(comb_matrix_t* matrix, int i, int j);
 
-void free_bit_array(comb_bit_array_t pointer);
-void free_vector(comb_vector_t* pointer);
-void free_matrix(comb_matrix_t* pointer);
-void free_dcp(comb_dcp_t* pointer);
-void free_permutation(comb_permutation_t pointer);
+void comb_free_bit_array(comb_bit_array_t pointer);
+void comb_free_vector(comb_vector_t* pointer);
+void comb_free_matrix(comb_matrix_t* pointer);
+void comb_free_dcp(comb_dcp_t* pointer);
+void comb_free_permutation(comb_permutation_t pointer);
 
 comb_code_t comb_verify_css_magic_state( // describing the magic state
                                            uint32_t n_all, // number of qubits in code + all ancillas
@@ -81,10 +80,11 @@ comb_code_t comb_verify_css_magic_state( // describing the magic state
                                            comb_bit_array_t z_lookup_table,
                                            comb_dcp_t* dcp_stabilisers, // k of these
 
+                                           // other parameters to the problem
                                            int fault_location_count, // number of fault locations
                                            int *fault_location_partitions, // at least fault_location_count of these. number of faults at each location
                                            int s, // number of faults to which circuit should be resilient to
-                                           uint32_t *bad_fault_array, // where to store indices of bad_faults
+                                           uint32_t *bad_fault_array, // where to store indices of bad faults. must have enough space for s elements.
                                            uint32_t output_error_count, // number of output errors that result from propagating all the faults. should be at least sum(fault_location_partitions)
                                            comb_dcp_t* output_errors, // at least output_error_count of these
                                            uint32_t x_measurement_count, // number of x measurement paulis
