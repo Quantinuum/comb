@@ -78,12 +78,12 @@ extern "C" {
     }
     printf("x lookup table: ");
     for(int i = 0; i < (1 << (n-n_x)); i++){
-      printf("%d",TestBit(x_lookup_table,i));
+      printf("%d",TestBit(x_lookup_table,i)?1:0);
         }
     printf("\n");
     printf("z lookup table: ");
     for(int i = 0; i < (1 << (n-n_z)); i++){
-      printf("%d",TestBit(z_lookup_table,i));
+      printf("%d",TestBit(z_lookup_table,i)?1:0);
     }
     printf("\n");
     convert_permutation(x_permutation,_x_permutation);
@@ -96,7 +96,7 @@ extern "C" {
   double seconds = (finish.tv_sec - start.tv_sec) + 1.0e-9 * (finish.tv_nsec - start.tv_nsec);
   printf("Took %f seconds.\n", seconds);
   // TODO free everything
-
+  for(int i = 0; i < s; i++)bad_fault_array[i]=i+42;
   return ALL_FAULTS_GOOD;
   }
 
@@ -106,6 +106,13 @@ extern "C" {
     dcp->F=mzd_init(n,n);
     dcp->h_x=mzd_init(n,1);
     dcp->h_z=mzd_init(n,1);
+    for(int i = 0; i < n; i++){
+      mzd_write_bit(dcp->h_x,i,0,TestBit(value->h_x,i)?1:0);
+      mzd_write_bit(dcp->h_z,i,0,TestBit(value->h_z,i)?1:0);
+      for(int j = 0; j < n; j++){
+        mzd_write_bit(dcp->F,i,j,TestBit(value->F,(i*n) + j)?1:0);
+      }
+    }
   }
   void convert_pauli_x(pauli_t* pauli, comb_pauli_x_t* value)
   {
@@ -161,8 +168,13 @@ extern "C" {
     }
     free(pointer);
   }
+  void comb_cfree_vector(int count, comb_vector_t* pointer){
+    for(int i = 0; i < count; i++){
+      comb_free_bit_array(pointer[i].data);
+    }
+    free(pointer);
+  }
   comb_vector_t *comb_calloc_vector(int count, int n){
-    lwlog_debug("in comb_calloc_vector %d, %d",count,n);
     comb_vector_t* pointer = (comb_vector_t*)malloc(count * sizeof(comb_vector_t));
     for(int i =0; i < count; i++){
       pointer[i].n=n;
@@ -178,6 +190,35 @@ extern "C" {
     for(int i = 0; i < n; i++)pointer->indices[i]=i;
     return pointer;
   }
+  void comb_free_permutation(comb_permutation_t* pointer){
+    free(pointer->indices);
+    free(pointer);
+  }
+  void comb_set_cvector_aref(comb_vector_t* vector, int n, int i, int value){
+    if(value)SetBit(vector[n].data,i);
+    else ClearBit(vector[n].data,i);
+  }
+  void comb_set_cdcp_F_aref(comb_dcp_t* dcp, int n, int i, int j, int value){
+    if(value)SetBit(dcp[n].F.data,(i*dcp[n].F.n) + j);
+    else ClearBit(dcp[n].F.data,(i*dcp[n].F.n) + j);
+  }
+  void comb_set_cdcp_h_x_aref(comb_dcp_t* dcp, int n, int i, int value){
+    if(value)SetBit(dcp[n].h_x.data,i);
+    else ClearBit(dcp[n].h_x.data,i);
+  }
+  void comb_set_cdcp_h_z_aref(comb_dcp_t* dcp, int n, int i, int value){
+    if(value)SetBit(dcp[n].h_z.data,i);
+    else ClearBit(dcp[n].h_z.data,i);
+  }
+
+  void comb_set_permutation_aref(comb_permutation_t* permutation, int i, int value){
+    permutation->indices[i]=value;
+  }
+  void comb_set_bit_array_aref(comb_bit_array_t array, int i, int value){
+    if(value)SetBit(array,i);
+    else ClearBit(array,i);
+  }
+
 #ifdef __cplusplus
 }
 #endif

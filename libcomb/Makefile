@@ -14,3 +14,4 @@ libcomb.so: $(obj_files)
 clean:
 	rm -f demo
 	rm -f *.o
+	rm -f *.so

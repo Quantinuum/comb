@@ -29,8 +29,8 @@ typedef struct { // n x 1 vector
 } comb_vector_t;
 
 typedef struct { // m x n matrix
-  uint32_t m;
-  uint32_t n;
+  uint32_t m; // number of rows
+  uint32_t n; // number of columns
   comb_bit_array_t data;
 } comb_matrix_t;
 
@@ -50,21 +50,21 @@ typedef comb_vector_t comb_pauli_z_t;
 
 comb_bit_array_t comb_alloc_bit_array(int n);
 comb_vector_t *comb_calloc_vector(int count, int n);
-comb_matrix_t *comb_alloc_matrix(int m, int n);
 comb_dcp_t *comb_calloc_dcp(int count, int n);
 comb_permutation_t *comb_alloc_permutation(int n);
 
-void comb_set_vector_aref(comb_vector_t* vector, int i, int value);
-void comb_set_matrix_aref(comb_matrix_t* matrix, int i, int j, int value);
+void comb_set_cvector_aref(comb_vector_t* vector, int n, int i, int value);
+void comb_set_cdcp_F_aref(comb_dcp_t* dcp, int n, int i, int j, int value);
+void comb_set_cdcp_h_x_aref(comb_dcp_t* dcp, int n, int i, int value);
+void comb_set_cdcp_h_z_aref(comb_dcp_t* dcp, int n, int i, int value);
+void comb_set_permutation_aref(comb_permutation_t* permutation, int i, int value);
+void comb_set_bit_array_aref(comb_bit_array_t array, int i, int value);
 
-int comb_vector_aref(comb_vector_t* vector, int i);
-int comb_matrix_aref(comb_matrix_t* matrix, int i, int j);
 
 void comb_free_bit_array(comb_bit_array_t pointer);
 void comb_cfree_vector(int count, comb_vector_t* pointer);
-void comb_free_matrix(comb_matrix_t* pointer);
 void comb_cfree_dcp(int count, comb_dcp_t* pointer);
-void comb_free_permutation(comb_permutation_t pointer);
+void comb_free_permutation(comb_permutation_t* pointer);
 
 comb_code_t comb_verify_css_magic_state( // describing the magic state
                                            uint32_t n_all, // number of qubits in code + all ancillas
