@@ -78,6 +78,7 @@ extern "C" {
     return p_z_parts;
 }
   stabiliser_state_t* dcp_to_stabiliser_state(dcp_t* dcp){
+    lwlog_debug("in dcp_to_stabiliser_state");
     int n = DCP_N(dcp);
     stabiliser_state_t* state = (stabiliser_state_t*)malloc(sizeof(stabiliser_state_t));
     state->n=n;
@@ -85,6 +86,7 @@ extern "C" {
     for(int i = 0 ; i < n; i++){
       state->generators[i]=dcp_image_x(dcp,i);
     }
+    lwlog_debug("returning from dcp_to_stabiliser_state");
     return state;
   }
 
@@ -101,17 +103,20 @@ extern "C" {
 
 
   pauli_z_coset_t *diagonal_clifford_to_coset(stabiliser_state_t *state){ // WARNING: dcp will be destroyed after this!
+    print_stabiliser_state(state,1);
     // Gaussian elimination on the Z parts is simply Gaussian elimination on F.
     int n = state->n;
     pauli_t** old_stabilisers= state->generators;
     mzp_t* p = mzp_init(n);
-    mzp_t* q = mzp_init(n); mzd_t* z_parts = mzd_init(n,n);
+    mzp_t* q = mzp_init(n);
+    mzd_t* z_parts = mzd_init(n,n);
     for(int i = 0; i< n; i++){
       for(int j = 0; j < n; j++){
         mzd_write_bit(z_parts,i,j,mzd_read_bit(old_stabilisers[i]->data,j,0));
       }
     }
     int r = mzd_pluq(z_parts,p,q,0);
+    lwlog_debug("PLUQ done");
     mzd_t* u  = mzd_init(n,n);
     mzd_t* l  = mzd_init(n,n);
 
@@ -178,7 +183,7 @@ extern "C" {
 
     pauli_z_coset_t* coset = init_pauli_z_coset(n,r);
 
-    for(int i = 0; i < n; i++){
+    for(int i = 0; i < r; i++){
       new_stabilisers[i]=init_pauli(n);
       for(int j = 0; j < n; j++){
         mzd_write_bit(new_stabilisers[i]->data,j,0,mzd_read_bit(rref,i,j));

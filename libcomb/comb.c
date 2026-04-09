@@ -24,11 +24,13 @@ extern "C" {
         count++;
       }
     }
+    lwlog_debug("in mzd_data, returning %d",elt);
     return elt;
   }
 
 
   void  permute_qubits(pauli_z_coset_t* coset,int n, uint32_t* c){
+    lwlog_debug("in permute qubits");
     mzp_t* perm = mzp_init(2*n+1);
     for(int i =0; i < n; i++)
       perm->values[i]=c[i]; // only need to permute zs
@@ -38,6 +40,9 @@ extern "C" {
   }
 
   void set_to_pauli(pauli_t* a, pauli_t* b){
+    lwlog_debug("in set_to_pauli");
+    print_pauli(a,1);
+    print_pauli(b,1);
     a->sign_bit=b->sign_bit;
     mzd_copy(a->data,b->data);
   }
@@ -47,6 +52,8 @@ extern "C" {
   }
 
   int dcp_fault_bad_p_css(dcp_t *error, pauli_t* p, int count, int n, uint32_t* z_permutation, comb_bit_array_t z_lookup_table){
+    lwlog_debug("in dcp_fault_bad_p_css:");
+    print_dcp(error,1);
     // First, check the X part of the error, as this is easier to deal with.
     // Does it anticommute with any Z basis postselections? If so, the error is always detected, so the entire error is good
     // Is it low weight? If so, it is good, but we must check the rest of the error. If it is not low weight, then the whole error is bad
@@ -56,27 +63,46 @@ extern "C" {
     // Do all postselections and canonicalisations by measuring all the Paulis on the state.
     // If the state ever vanishes, the error is good, so return.
     for(int i =0 ; i< count; i++){
+      lwlog_debug("postselecting %d",i);
       if(postselect_on_measuring_plus_one(state,&(p[i])))return 0; // vanishes so return good
     }
     // State now postselected and canonicalised. Expand the resulting state as a coset
+    lwlog_debug("before diagonal clifford to coset");
     pauli_z_coset_t *coset = diagonal_clifford_to_coset(state);
+    lwlog_debug("after diagonal clifford to coset");
+    print_pauli_z_coset(coset,1);
     // Apply the qubit permutation:
     permute_qubits(coset,n,z_permutation);
 
+    lwlog_debug("qubits permuted");
     pauli_t current_element;
     pauli_t temp;
+    init_pauli_to_size(&current_element,PAULI_N(coset->factor));
     set_to_pauli(&current_element,coset->factor);
     init_pauli_to_size(&temp,PAULI_N(coset->factor));
+    lwlog_debug("n is %d",PAULI_N(coset->factor));
     // Iterate over every element in the coset using a gray code
     for(int i = 0 ; i < (1 << coset->k); i++){
+      lwlog_debug("iterating %d in gray code",i);
       // If any term is bad, the error is bad, otherwise it is good.
-      pauli_mul(&temp,&current_element,coset->set_generators[gray_bit_to_switch(i)]);
+      print_pauli(&current_element,1);
       if(!TestBit(z_lookup_table,mzd_data(temp.data))) {
-        // it's bad so return, otherwise check the other ones
+        //it's bad so return, otherwise check the other ones
+        lwlog_debug("returning 1");
         return 1;
+       }
+    
+
+      if((i+1)!=(1<<coset->k)){
+        pauli_mul(&temp,&current_element,coset->set_generators[gray_bit_to_switch(i)]);
+        set_to_pauli(&current_element,&temp);
       }
-      current_element=temp;
     }
+    lwlog_debug("finished loop");
+    return 0;
+    mzd_free(temp.data);
+    mzd_free(current_element.data);
+    lwlog_debug("freed data");
   // all elements in the coset were good so return
     return 0;
   }
@@ -218,12 +244,12 @@ extern "C" {
     // do the iteration
     unsigned long long c = 0;
     do {
-      if(fault_counter%10000 == 0)lwlog_debug("checking fault number %d\n",fault_counter++);
+      lwlog_debug("checking fault number %d\n",fault_counter++);
       // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(&current_dcp_output_combination,&(output_errors[current_combination[0]]));
       for(int i = 1 ; i < k ; i++){
         dcp_mul(&temp,&current_dcp_output_combination,&(output_errors[current_combination[i]]));
-        current_dcp_output_combination=temp;
+        set_dcp_to(&current_dcp_output_combination,&temp);
       }
       // output errors multiplied. now, multiply by all combinations of logical operators and test them:
       // TODO they all commute (i think) so a gray code should be fine here really
@@ -250,6 +276,7 @@ extern "C" {
         //error_with_stabilisers=0; //error_with_stabilisers is now bad after the destructive operation
       }
       if (!good_combination_found) {
+        lwlog_debug("no good combination was found: fault combination was bad");
         // need to return a fault
         for (int i = 0; i < k; i++) {
           bad_fault_array[i] = current_combination[i];
@@ -262,7 +289,7 @@ extern "C" {
       }
 
     c++;
-  } while (ft_iteration_combination_incf(k, fault_location_partitions, n, first_balls, last_balls,
+  } while (ft_iteration_combination_incf(k, fault_location_partitions, fault_location_count, first_balls, last_balls,
                                          current_combination));
   lwlog_info("%llu faults processed.\n", c);
   // Stop timing
