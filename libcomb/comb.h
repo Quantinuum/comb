@@ -9,6 +9,7 @@ extern "C" {
 #include <m4ri/m4ri.h>
 #include "lwlog.h"
 
+#define MAX_SIZE_COUNT 1024
   // Functions
 
   // idea. do rref in c? maybe a todo later. people should do it themselves...

@@ -1,8 +1,8 @@
-// External interface
+// External interface to Comb. This alone should be exposed to other languages
 #include <stdint.h>
 #include <stdlib.h>
-// Error codes
 
+// Error codes
 typedef enum {ALL_FAULTS_GOOD = 0,
               BAD_FAULT_FOUND = 1,
               INVALID_INPUT = 2,
@@ -10,18 +10,13 @@ typedef enum {ALL_FAULTS_GOOD = 0,
               INTERNAL_ERROR = 4,
               OTHER_ERROR = 5} comb_code_t;
 
+// A bit vector is an array of words
+typedef uint64_t comb_bit_word_t;
+typedef comb_bit_word_t* comb_bit_array_t;
+
 #define SetBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] |= (1U << ((k) % sizeof(comb_bit_word_t))))
 #define ClearBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] &= ~(1U << ((k) % sizeof(comb_bit_word_t))))
 #define TestBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] & (1U << ((k) % sizeof(comb_bit_word_t))))
-// A bit vector is an array of words
-
-typedef uint64_t comb_bit_word_t;
-typedef comb_bit_word_t* comb_bit_array_t; // maybe not needed?
-#define MAX_SIZE_COUNT 1024
-//#define MAX_BIT_VECTOR_LENGTH 64
-//#define MAX_BIT_VECTOR_WORD_LENGTH (MAX_BIT_VECTOR_LENGTH / sizeof(comb_bit_word_t))
-//#define MAX_BIT_MATRIX_LENGTH (MAX_BIT_VECTOR_LENGTH * MAX_BIT_VECTOR_LENGTH )
-//#define MAX_BIT_MATRIX_WORD_LENGTH (MAX_BIT_VECTOR_LENGTH / sizeof(comb_bit_word_t))
 
 typedef struct { // n x 1 vector
   uint32_t n;
@@ -45,14 +40,16 @@ typedef struct {
   uint32_t* indices;
 } comb_permutation_t;
 
-typedef comb_vector_t comb_pauli_x_t;
+typedef comb_vector_t comb_pauli_x_t; // Paulis of X or Z type are vectors
 typedef comb_vector_t comb_pauli_z_t;
 
+// Allocate bit arrays, arrays of vectors, dcps and permutations
 comb_bit_array_t comb_alloc_bit_array(int n);
 comb_vector_t *comb_calloc_vector(int count, int n);
 comb_dcp_t *comb_calloc_dcp(int count, int n);
 comb_permutation_t *comb_alloc_permutation(int n);
 
+// Convenience methods for manipulating arrays of dcps, vectors and bit arrays
 void comb_set_cvector_aref(comb_vector_t* vector, int n, int i, int value);
 void comb_set_cdcp_F_aref(comb_dcp_t* dcp, int n, int i, int j, int value);
 void comb_set_cdcp_h_x_aref(comb_dcp_t* dcp, int n, int i, int value);
@@ -60,13 +57,13 @@ void comb_set_cdcp_h_z_aref(comb_dcp_t* dcp, int n, int i, int value);
 void comb_set_permutation_aref(comb_permutation_t* permutation, int i, int value);
 void comb_set_bit_array_aref(comb_bit_array_t array, int i, int value);
 
-
+// Freeing data structures after they are no longer needed
 void comb_free_bit_array(comb_bit_array_t pointer);
 void comb_cfree_vector(int count, comb_vector_t* pointer);
 void comb_cfree_dcp(int count, comb_dcp_t* pointer);
 void comb_free_permutation(comb_permutation_t* pointer);
 
-comb_code_t comb_verify_css_magic_state( // describing the magic state
+comb_code_t comb_verify_css_magic_state( // 1. Describing the magic state
                                            uint32_t n_all, // number of qubits in code + all ancillas
                                            uint32_t n, // number of qubits in code
                                            uint32_t n_x, // number of independent x stabiliser generators in code
@@ -79,8 +76,7 @@ comb_code_t comb_verify_css_magic_state( // describing the magic state
                                            comb_permutation_t* z_permutation, // permutation that puts z_stabilisers in rref form
                                            comb_bit_array_t z_lookup_table,
                                            comb_dcp_t* dcp_stabilisers, // k of these
-
-                                           // other parameters to the problem
+                                           // 2. Other parameters
                                            uint32_t fault_location_count, // number of fault locations
                                            uint32_t *fault_location_partitions, // at least fault_location_count of these. number of faults at each location
                                            uint32_t s, // number of faults to which circuit should be resilient to

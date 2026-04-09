@@ -107,10 +107,10 @@ extern "C" {
     dcp->h_x=mzd_init(n,1);
     dcp->h_z=mzd_init(n,1);
     for(int i = 0; i < n; i++){
-      mzd_write_bit(dcp->h_x,i,0,TestBit(value->h_x,i)?1:0);
-      mzd_write_bit(dcp->h_z,i,0,TestBit(value->h_z,i)?1:0);
+      mzd_write_bit(dcp->h_x,i,0,TestBit(value->h_x.data,i)?1:0);
+      mzd_write_bit(dcp->h_z,i,0,TestBit(value->h_z.data,i)?1:0);
       for(int j = 0; j < n; j++){
-        mzd_write_bit(dcp->F,i,j,TestBit(value->F,(i*n) + j)?1:0);
+        mzd_write_bit(dcp->F,i,j,TestBit(value->F.data,(i*n) + j)?1:0);
       }
     }
   }
@@ -142,7 +142,7 @@ extern "C" {
   void convert_permutation(mzp_t* permutation, comb_permutation_t* value){}
   comb_bit_array_t comb_alloc_bit_array(int n){
     //lwlog_debug("allocating bit array of size %d",n);
-    return (comb_bit_array_t)malloc((n/sizeof(comb_bit_word_t)) + 1);
+    return (comb_bit_array_t)malloc(n);
   }
   void comb_free_bit_array(comb_bit_array_t p){
     free(p);
