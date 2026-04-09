@@ -47,49 +47,53 @@ extern "C" {
     mzp_t* z_permutation = mzp_init(n);
 
     lwlog_info("converting objects");
-    printf("stabilisers: \n");
     for(int i = 0; i < n_x; i++){
-      //lwlog_debug("converting x stabiliser %d",i);
+      lwlog_debug("converting x stabiliser %d",i);
       convert_pauli_x(&(x_stabilisers[i]),&(_x_stabilisers[i]));
-      print_pauli(&(x_stabilisers[i]),1);
+      //print_pauli(&(x_stabilisers[i]),1);
     }
     for(int i = 0; i < n_z; i++){
+      lwlog_debug("converting z stabiliser %d",i);
       convert_pauli_z(&(z_stabilisers[i]),&(_z_stabilisers[i]));
-      print_pauli(&(z_stabilisers[i]),1);
+      //print_pauli(&(z_stabilisers[i]),1);
     }
     for(int i = 0; i < k; i++){
+      lwlog_debug("converting logical stabiliser %d",i);
       convert_dcp(&(dcp_stabilisers[i]),&(_dcp_stabilisers[i]));
-      printf("logical stabiliser %d: ",i);
-      print_dcp(&(dcp_stabilisers[i]),1);
+      //printf("logical stabiliser %d: ",i);
+      //print_dcp(&(dcp_stabilisers[i]),1);
     }
     for(int i = 0; i < output_error_count; i++){
+      lwlog_debug("converting output error %d",i);
       convert_dcp(&(output_errors[i]),&(_output_errors[i]));
-      printf("output error %d: ",i);
-      print_dcp(&(output_errors[i]),1);
+      //printf("output error %d: ",i);
+      //print_dcp(&(output_errors[i]),1);
     }
-    printf("measurements: \n");
     for(int i = 0; i < x_measurement_count; i++){
+      lwlog_debug("converting x measurement %d",i);
       convert_pauli_x(&(x_measurement_paulis[i]),&(_x_measurement_paulis[i]));
-      print_pauli(&(x_measurement_paulis[i]),1);
+      //print_pauli(&(x_measurement_paulis[i]),1);
     }
     for(int i = 0; i < z_measurement_count; i++){
+      lwlog_debug("converting z measurement %d",i);
       convert_pauli_z(&(z_measurement_paulis[i]),&(_z_measurement_paulis[i]));
-      print_pauli(&(z_measurement_paulis[i]),1);
+      //print_pauli(&(z_measurement_paulis[i]),1);
     }
-    printf("x lookup table: ");
+    lwlog_debug("x lookup table: ");
     for(int i = 0; i < (1 << (n-n_x)); i++){
-      printf("%d",TestBit(x_lookup_table,i)?1:0);
+      //lwlog_debug("%d",TestBit(x_lookup_table,i)?1:0);
         }
-    printf("\n");
-    printf("z lookup table: ");
+    lwlog_debug("z lookup table: ");
     for(int i = 0; i < (1 << (n-n_z)); i++){
-      printf("%d",TestBit(z_lookup_table,i)?1:0);
+      //lwlog_debug("%d",TestBit(z_lookup_table,i)?1:0);
     }
-    printf("\n");
     convert_permutation(x_permutation,_x_permutation);
     convert_permutation(z_permutation,_z_permutation);
-    mzp_print(x_permutation);
-    mzp_print(z_permutation);
+    //mzp_print(x_permutation);
+    //mzp_print(z_permutation);
+    for(int i = 0; i < fault_location_count ; i++){
+      //lwlog_debug("fault location partition %d: %d\n",i,fault_location_partitions[i]);
+    }
 
   // Stop timing
   clock_gettime( CLOCK_MONOTONIC, &finish );
@@ -139,7 +143,11 @@ extern "C" {
       }
     }
   }
-  void convert_permutation(mzp_t* permutation, comb_permutation_t* value){}
+  void convert_permutation(mzp_t* permutation, comb_permutation_t* value)
+  {
+    for(int i = 0; i < value->n; i++)
+    permutation->values[i]=value->indices[i];
+  }
   comb_bit_array_t comb_alloc_bit_array(int n){
     //lwlog_debug("allocating bit array of size %d",n);
     return (comb_bit_array_t)malloc(n);
