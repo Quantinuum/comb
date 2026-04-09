@@ -106,6 +106,54 @@ extern "C" {
     mzd_copy(a->h_z,b->h_z);
   }
 
+  comb_permutation_t *comb_alloc_permutation(int n){
+    comb_permutation_t* pointer = (comb_permutation_t*)malloc(sizeof(comb_permutation_t));
+    pointer->n=n;
+    pointer->indices=(uint32_t*)malloc(sizeof(uint32_t)*n);
+    for(int i = 0; i < n; i++)pointer->indices[i]=i;
+    return pointer;
+  }
+  void comb_free_permutation(comb_permutation_t* pointer){
+    free(pointer->indices);
+    free(pointer);
+  }
+
+  comb_dcp_t *comb_calloc_dcp(int count, int n){
+    comb_dcp_t* pointer = malloc(count * sizeof(comb_dcp_t));
+    for(int i =0; i <count; i++){
+      pointer[i].F.m=n;
+      pointer[i].F.n=n;
+      pointer[i].F.data=comb_alloc_bit_array(n*n);
+      pointer[i].h_x.n=n;
+      pointer[i].h_x.data=comb_alloc_bit_array(n);
+      pointer[i].h_z.n=n;
+      pointer[i].h_z.data=comb_alloc_bit_array(n);
+    }
+    return pointer;
+  }
+  void comb_cfree_dcp(int count, comb_dcp_t* pointer){
+    for(int i =0; i < count; i++){
+      comb_free_bit_array(pointer[i].F.data);
+      comb_free_bit_array(pointer[i].h_x.data);
+      comb_free_bit_array(pointer[i].h_z.data);
+    }
+    free(pointer);
+  }
+  void comb_cfree_vector(int count, comb_vector_t* pointer){
+    for(int i = 0; i < count; i++){
+      comb_free_bit_array(pointer[i].data);
+    }
+    free(pointer);
+  }
+  comb_vector_t *comb_calloc_vector(int count, int n){
+    comb_vector_t* pointer = (comb_vector_t*)malloc(count * sizeof(comb_vector_t));
+    for(int i =0; i < count; i++){
+      pointer[i].n=n;
+      pointer[i].data=comb_alloc_bit_array(n);
+    }
+    return pointer;
+  }
+
 #ifdef __cplusplus
 }
 #endif
