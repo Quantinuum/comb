@@ -101,7 +101,6 @@ extern "C" {
     return p;
   }
 
-
   pauli_z_coset_t *diagonal_clifford_to_coset(stabiliser_state_t *state){ // WARNING: dcp will be destroyed after this!
     print_stabiliser_state(state,1);
     // Gaussian elimination on the Z parts is simply Gaussian elimination on F.
@@ -212,6 +211,9 @@ extern "C" {
   int postselect_on_measuring_plus_one(stabiliser_state_t* state, pauli_t* p){
     // warning: destructive
        // assume that p is of x type.
+    lwlog_debug("measuring:");
+    print_pauli(p,1);
+    fflush(stdout);
     int n = state->n;
     pauli_t** old_stabilisers=state->generators;
     // case 1: p is in the stabiliser group. in this case, measuring is always +1 (in which case no effect) or -1 in which case always detected, and we return non-zero.
@@ -228,7 +230,7 @@ extern "C" {
     }
     if(anticommutes_with_some_pauli_p){
       // case 3
-      printf("case 3\n");
+      //printf("case 3\n");
       pauli_t* anticommuter = old_stabilisers[anti_commuting_index];
       pauli_t** new_stabilisers=malloc(n*sizeof(pauli_t*));
       for(int i =0 ; i< n; i++){
@@ -242,11 +244,11 @@ extern "C" {
           else new_stabilisers[i]=pauli_mul(0,old_stabilisers[i],anticommuter);
         }
       }
-      printf("new stabilisers:\n");
-      for(int i =0;i<n;i++){
-        printf("%d: ",i);
-        print_pauli(new_stabilisers[i],1);
-      }
+      //  printf("new stabilisers:\n");
+      //for(int i =0;i<n;i++){
+      //  printf("%d: ",i);
+      // print_pauli(new_stabilisers[i],1);
+      // }
       // set the old stabilisers equal to the new stabilisers.
       state->generators=new_stabilisers;
       //for(int i = 0; i< n; i++)free_pauli(old_stabilisers[i]);
@@ -259,13 +261,13 @@ extern "C" {
       // can try from the x patterns of the images of the x_i?
       // won't generalise to multiple postselections...
       pauli_t* r = p;
-      printf("case 1\n");
+      //printf("case 1\n");
       for(int i = 0 ; i < n; i ++){
         if(mzd_read_bit(p->data,i+n,0))
           r = pauli_mul(0,r,old_stabilisers[i]);
       }
-      printf("result:\n");
-      print_pauli(r,1);
+      //printf("result:\n");
+      //print_pauli(r,1);
       if(r->sign_bit){
         return 1; // -I so always detected; state vanishes
       }
