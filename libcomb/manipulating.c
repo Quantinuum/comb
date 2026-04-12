@@ -74,7 +74,7 @@ extern "C" {
     mzd_write_bit(p_z_parts->data,2*n,0,mzd_read_bit(dcp->F,i,i));
     for(int j = 0;j<n;j++)mzd_write_bit(p_z_parts->data,j,0,mzd_read_bit(dcp->F,i,j));
 
-    p_z_parts->sign_bit=mzd_read_bit(dcp->h_x,i,0);
+    p_z_parts->sign_bit=mzd_read_bit(dcp->h_z,i,0); //? think it works
     return p_z_parts;
 }
   stabiliser_state_t* dcp_to_stabiliser_state(dcp_t* dcp){

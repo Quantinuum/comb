@@ -95,7 +95,7 @@ extern "C" {
   }
 
   int dcp_fault_bad_p_css(dcp_t *error, pauli_t* p, int count, int n, mzd_t* z_permutation, comb_bit_array_t z_lookup_table, mzd_t* x_permutation, comb_bit_array_t x_lookup_table,pauli_t* x_stabilisers, uint32_t n_x, uint32_t* rref_x, uint32_t z_measurement_count, pauli_t* z_measurement_paulis, int n_all){
-    lwlog_debug("in dcp_fault_bad_p_css:");
+    lwlog_debug("Testing %s",print_dcp(error,0));
     //print_dcp(error,1);
     // TODO First, check the X part of the error, as this is easier to deal with.
     // Does it anticommute with any Z basis postselections? If so, the error is always detected, so the entire error is good
@@ -117,10 +117,14 @@ extern "C" {
     }
     lwlog_debug("x_part pauli %s after canonicalisation",print_pauli(x_part,1));
     // set higher qubits equal to 0
-
+    for(int i = n; i < n_all; i++){
+      mzd_write_bit(x_part->data,i+n_all,0,0);
+    }
+    lwlog_debug("x_part pauli %s after zeroing",print_pauli(x_part,0));
     // now permute it
+    mzd_t* old_pauli = x_part->data;
     permute_x_pauli(x_part,n_all,x_permutation);
-    lwlog_debug("x_part pauli %s after permutation",print_pauli(x_part,1));
+    lwlog_debug("x_part pauli %s after zeroing and permutation",print_pauli(x_part,0));
     // Is it low weight? If so, it is good, but we must check the rest of the error. If it is not low weight, then the whole error is bad
     if(!TestBit(x_lookup_table,mzd_x_data(x_part->data)))return 1;
     // Now we do the more expensive Z check.
@@ -129,20 +133,19 @@ extern "C" {
     // Do all postselections and canonicalisations by measuring all the Paulis on the state.
     // If the state ever vanishes, the error is good, so return.
     for(int i =0 ; i< count; i++){
-      lwlog_debug("postselecting measurement %d: %s",i,print_pauli(&(p[i]),0));
+      lwlog_debug("Postselecting measurement %d: %s",i,print_pauli(&(p[i]),0));
       if(postselect_on_measuring_plus_one(state,&(p[i]))){
-        lwlog_debug("postselecting measurement %d vanished, so return good",i);
+        lwlog_debug("Postselecting measurement %d vanished, returning 0",i);
       return 0; // vanishes so return good
       }
-      lwlog_debug("finished postselecting %d",i);
+      lwlog_debug("Finished postselecting %d",i);
     }
     // State now postselected and canonicalised. Expand the resulting state as a coset
-    lwlog_debug("before diagonal clifford to coset");
     pauli_z_coset_t *coset = diagonal_clifford_to_coset(state);
-    lwlog_debug("after diagonal clifford to coset %s",print_pauli_z_coset(coset,0));
+    lwlog_debug("Diagonal clifford to coset %s",print_pauli_z_coset(coset,0));
     // Apply the qubit permutation:
     permute_qubits(coset,n,z_permutation);
-    lwlog_debug("permuted coset: %s",print_pauli_z_coset(coset,0));
+    lwlog_debug("Permuted coset: %s",print_pauli_z_coset(coset,0));
     pauli_t current_element;
     pauli_t temp;
     init_pauli_to_size(&current_element,PAULI_N(coset->factor));
@@ -150,28 +153,28 @@ extern "C" {
     init_pauli_to_size(&temp,PAULI_N(coset->factor));
     lwlog_debug("n is %d",PAULI_N(coset->factor));
     // Iterate over every element in the coset using a gray code
-    printf("+++\n");
     for(int i = 0 ; i < (1 << coset->k); i++){
-      lwlog_debug("iterating %d in gray code",i);
+      lwlog_debug("iterating %d: %s in gray code",i,print_pauli(&current_element,0));
       // If any term is bad, the error is bad, otherwise it is good.
-      print_pauli(&current_element,1);
       if(!TestBit(z_lookup_table,mzd_data(current_element.data))) {
         //it's bad so return, otherwise check the other ones
-        lwlog_debug("returning 1");
+        lwlog_debug("%s is bad, returning 1",print_pauli(&current_element,0));
         return 1;
        }
-      printf("+++\n");
+      else{
+        lwlog_debug("%s was good",print_pauli(&current_element,0));
+      }
 
       if((i+1)!=(1<<coset->k)){
         pauli_mul(&temp,&current_element,coset->set_generators[gray_bit_to_switch(i)]);
         set_to_pauli(&current_element,&temp);
       }
     }
-    lwlog_debug("finished loop");
-    return 0;
+    lwlog_debug("Finished gray code loop, returning 0");
     mzd_free(temp.data);
     mzd_free(current_element.data);
     lwlog_debug("freed data");
+    return 0;
   // all elements in the coset were good so return
     return 0;
   }
@@ -262,7 +265,7 @@ extern "C" {
     for(int i = 0; i < k; i++){
       lwlog_debug("converting logical stabiliser %d",i);
       convert_dcp(&(dcp_stabilisers[i]),&(_dcp_stabilisers[i]));
-      //printf("logical stabiliser %d: ",i);
+      lwlog_debug("logical stabiliser %d: %s",i,print_dcp(&(dcp_stabilisers[i]),0));
       //print_dcp(&(dcp_stabilisers[i]),1);
     }
     lwlog_debug("converting %d output errors",output_error_count);
