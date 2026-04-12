@@ -70,10 +70,10 @@ extern "C" {
   // ? what to put here. they are structs so not that much point?
   void set_dcp_to(dcp_t *a, dcp_t* b); // assigns b to a: a = b.
   // Printing
-  void print_dcp(dcp_t *dcp, char print_newline_p);
-  void print_pauli(pauli_t *pauli, char print_newline_p);
-  void print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
-  void print_stabiliser_state(stabiliser_state_t *coset, char print_newline_p);
+  char* print_dcp(dcp_t *dcp, char print_newline_p);
+  char* print_pauli(pauli_t *pauli, char print_newline_p);
+  char* print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
+  char* print_stabiliser_state(stabiliser_state_t *coset, char print_newline_p);
   // more convenient creation
   pauli_t *pauli_x(uint32_t i, uint32_t n);
   pauli_t *pauli_z(uint32_t i, uint32_t n);

@@ -94,19 +94,20 @@ extern "C" {
     p->data=mzd_init((n_all*2) + 1,1);
   }
 
-  int dcp_fault_bad_p_css(dcp_t *error, pauli_t* p, int count, int n, mzd_t* z_permutation, comb_bit_array_t z_lookup_table, mzd_t* x_permutation, comb_bit_array_t x_lookup_table,pauli_t* x_stabilisers, uint32_t n_x, uint32_t* rref_x, uint32_t z_measurement_count, pauli_t* z_measurement_paulis){
+  int dcp_fault_bad_p_css(dcp_t *error, pauli_t* p, int count, int n, mzd_t* z_permutation, comb_bit_array_t z_lookup_table, mzd_t* x_permutation, comb_bit_array_t x_lookup_table,pauli_t* x_stabilisers, uint32_t n_x, uint32_t* rref_x, uint32_t z_measurement_count, pauli_t* z_measurement_paulis, int n_all){
     lwlog_debug("in dcp_fault_bad_p_css:");
     //print_dcp(error,1);
     // TODO First, check the X part of the error, as this is easier to deal with.
     // Does it anticommute with any Z basis postselections? If so, the error is always detected, so the entire error is good
-    pauli_t* x_part = init_pauli(n);//mzd_init(1+(2*n),1);
-    for(int i = 0; i < n; i++){
-      mzd_write_bit(x_part->data,i+n,0,mzd_read_bit(error->h_z,i,0));
+    pauli_t* x_part = init_pauli(n_all);//mzd_init(1+(2*n),1);
+    for(int i = 0; i < n_all; i++){
+      mzd_write_bit(x_part->data,i+n_all,0,mzd_read_bit(error->h_z,i,0));
     }
+    lwlog_debug("x_part pauli %s before measurement",print_pauli(x_part,1));
     for(int j = 0; j < z_measurement_count; j++){
       if(!pauli_commute_p(&(z_measurement_paulis[j]),x_part))return 0; // detected
     }
-    pauli_t* x_temp = init_pauli(n);//mzd_init(1+(2*n),1);
+    pauli_t* x_temp = init_pauli(n_all);//mzd_init(1+(2*n),1);
       // now put in canonical form
     for(int i = 0; i < n_x; i++){
       if(mzd_read_bit(x_part->data,n+rref_x[i],0)){
@@ -114,8 +115,12 @@ extern "C" {
         set_to_pauli(x_part,x_temp);
       }
     }
+    lwlog_debug("x_part pauli %s after canonicalisation",print_pauli(x_part,1));
+    // set higher qubits equal to 0
+
     // now permute it
-    permute_x_pauli(x_part,n,x_permutation);
+    permute_x_pauli(x_part,n_all,x_permutation);
+    lwlog_debug("x_part pauli %s after permutation",print_pauli(x_part,1));
     // Is it low weight? If so, it is good, but we must check the rest of the error. If it is not low weight, then the whole error is bad
     if(!TestBit(x_lookup_table,mzd_x_data(x_part->data)))return 1;
     // Now we do the more expensive Z check.
@@ -124,9 +129,9 @@ extern "C" {
     // Do all postselections and canonicalisations by measuring all the Paulis on the state.
     // If the state ever vanishes, the error is good, so return.
     for(int i =0 ; i< count; i++){
-      lwlog_debug("postselecting %d",i);
+      lwlog_debug("postselecting measurement %d: %s",i,print_pauli(&(p[i]),0));
       if(postselect_on_measuring_plus_one(state,&(p[i]))){
-        lwlog_debug("postselecting %d vanished, so return good",i);
+        lwlog_debug("postselecting measurement %d vanished, so return good",i);
       return 0; // vanishes so return good
       }
       lwlog_debug("finished postselecting %d",i);
@@ -134,14 +139,10 @@ extern "C" {
     // State now postselected and canonicalised. Expand the resulting state as a coset
     lwlog_debug("before diagonal clifford to coset");
     pauli_z_coset_t *coset = diagonal_clifford_to_coset(state);
-    lwlog_debug("after diagonal clifford to coset");
-    print_pauli_z_coset(coset,1);
+    lwlog_debug("after diagonal clifford to coset %s",print_pauli_z_coset(coset,0));
     // Apply the qubit permutation:
     permute_qubits(coset,n,z_permutation);
-    print_pauli_z_coset(coset,1);
-    printf("---\n");
-
-    lwlog_debug("qubits permuted");
+    lwlog_debug("permuted coset: %s",print_pauli_z_coset(coset,0));
     pauli_t current_element;
     pauli_t temp;
     init_pauli_to_size(&current_element,PAULI_N(coset->factor));
@@ -392,7 +393,7 @@ extern "C" {
           // (dcp_t *error, pauli_t* p, int cozunt, int n, uint32_t* z_permutation, comb_bit_array_t z_lookup_table)
         }
         // now check to see if it is good or not.
-        if(!dcp_fault_bad_p_css(&error_with_stabilisers,measurement_sequence,measurement_sequence_count,n,z_permutation,z_lookup_table,x_permutation,x_lookup_table,x_stabilisers,n_x,rref_x,z_measurement_count,z_measurement_paulis)){
+        if(!dcp_fault_bad_p_css(&error_with_stabilisers,measurement_sequence,measurement_sequence_count,n,z_permutation,z_lookup_table,x_permutation,x_lookup_table,x_stabilisers,n_x,rref_x,z_measurement_count,z_measurement_paulis,n_all)){
           // a good one was found after multiplying by a choice of logicals, set the flag
           good_combination_found=1;
           //break outer;
