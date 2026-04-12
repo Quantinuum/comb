@@ -31,7 +31,7 @@ extern "C" {
 
   void add_and(mzd_t* result, mzd_t* F1,mzd_t* F2){
     for(int i = 0; i < F1->nrows; i++){
-      mzd_write_bit(result,i,i,mzd_read_bit(result,i,i) ^ (mzd_read_bit(F1,i,i) & mzd_read_bit(F2,i,i)));
+      mzd_write_bit(result,i,0,mzd_read_bit(result,i,0) ^ (mzd_read_bit(F1,i,i) & mzd_read_bit(F2,i,i)));
     }
   }
 
@@ -211,7 +211,7 @@ extern "C" {
   int postselect_on_measuring_plus_one(stabiliser_state_t* state, pauli_t* p){
     // warning: destructive
        // assume that p is of x type.
-    lwlog_debug("measuring:");
+    lwlog_debug("measuring state %s ",print_stabiliser_state(state,0));
     //print_pauli(p,1);
     fflush(stdout);
     int n = state->n;
@@ -230,7 +230,7 @@ extern "C" {
     }
     if(anticommutes_with_some_pauli_p){
       // case 3
-      //printf("case 3\n");
+      lwlog_debug("stabiliser %s anticommutes",print_pauli(old_stabilisers[anti_commuting_index],0));
       pauli_t* anticommuter = old_stabilisers[anti_commuting_index];
       pauli_t** new_stabilisers=malloc(n*sizeof(pauli_t*));
       for(int i =0 ; i< n; i++){
@@ -256,10 +256,11 @@ extern "C" {
       return 0;
     }
     else{
+      lwlog_debug("every stabiliser commutes, trying to form the identity");
       //case 1
       // try to figure out if you can create -1 from it.
       // can try from the x patterns of the images of the x_i?
-      // won't generalise to multiple postselections...
+      // won't generalise to multiple postselections... TODO this is broken so fix it
       pauli_t* r = p;
       //printf("case 1\n");
       for(int i = 0 ; i < n; i ++){
@@ -267,11 +268,14 @@ extern "C" {
           r = pauli_mul(0,r,old_stabilisers[i]);
       }
       //printf("result:\n");
+      lwlog_debug("pauli %s formed",print_pauli(r,0));
       //print_pauli(r,1);
       if(r->sign_bit){
+        lwlog_debug("-I so always detected; state vanishes");
         return 1; // -I so always detected; state vanishes
       }
       else{ // state is unchanged
+        lwlog_debug("I so state unchanged");
         return 0;
       }
     }

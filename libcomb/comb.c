@@ -154,7 +154,6 @@ extern "C" {
     init_pauli_to_size(&current_element,PAULI_N(coset->factor));
     set_to_pauli(&current_element,coset->factor);
     init_pauli_to_size(&temp,PAULI_N(coset->factor));
-    lwlog_debug("n is %d",PAULI_N(coset->factor));
     // Iterate over every element in the coset using a gray code
     for(int i = 0 ; i < (1 << coset->k); i++){
       lwlog_debug("iterating %d: %s in gray code",i,print_pauli(&current_element,0));
