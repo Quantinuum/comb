@@ -8,10 +8,27 @@ extern "C" {
 
 
 
-  void convert_permutation(mzp_t* permutation, comb_permutation_t* value)
+  void convert_permutation(mzd_t* permutation, uint32_t n_z, uint32_t n, uint32_t *rrefs)
   {
-    for(int i = 0; i < value->n; i++)
-      permutation->values[i]=value->indices[i];
+    for(int j=0, i = (n - n_z); i < n; i ++,j++){
+      int stabiliser_index = j;
+      int column_to_eliminate = rrefs[j];
+      //mzd_write_bit(permutation,column_to_eliminate,i,1);
+      mzd_write_bit(permutation,i,column_to_eliminate,1);
+    }
+    // now do the other columns
+    int current_index=0;
+    for(int i = 0; i < n; i++){
+      int rref_p = 0;
+      for(int j = 0; j < n_z; j++){
+        if(rrefs[j]==i)rref_p=1;
+      }
+      if(!rref_p){ // wasnt an rref; need to add to permutation
+        //mzd_write_bit(permutation,i,current_index,1);
+        mzd_write_bit(permutation,current_index,i,1);
+        current_index++;
+      }
+    }
   }
 
 

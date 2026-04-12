@@ -70,10 +70,10 @@ comb_code_t comb_verify_css_magic_state( // 1. Describing the magic state
                                            uint32_t n_z, // number of independent z stabiliser generators in code
                                            uint32_t k, // number of logical qubits in code. equivalently, number of logical dcp operators that stabilise the code
                                            comb_pauli_x_t* x_stabilisers, // n-x of these
-                                           comb_permutation_t* x_permutation, //permutation that puts x_stabilisers in rref form
+                       
                                            comb_bit_array_t x_lookup_table, // x lookup table. of size 2^(n-n_x)
                                            comb_pauli_z_t* z_stabilisers,
-                                           comb_permutation_t* z_permutation, // qubit permutation that puts z_stabilisers in rref form
+                       
                                            comb_bit_array_t z_lookup_table,
                                            comb_dcp_t* dcp_stabilisers, // k of these
                                            // 2. Other parameters

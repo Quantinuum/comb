@@ -8,7 +8,6 @@ extern "C" {
 #include "comb_external.h"
 #include <m4ri/m4ri.h>
 #include "lwlog.h"
-
 #define MAX_SIZE_COUNT 1024
   // Functions
 
@@ -124,7 +123,7 @@ extern "C" {
 
 
   uint32_t mzd_data(mzd_t* mzd);
-  void  permute_qubits(pauli_z_coset_t* coset,int n, uint32_t* c);
+  void  permute_qubits(pauli_z_coset_t* coset,int n, mzd_t* c);
   void set_to_pauli(pauli_t* a, pauli_t* b);
   void init_pauli_to_size(pauli_t* a, int size);
   void set_dcp_to_transvection(dcp_t* dcp, pauli_t* z_pauli);
@@ -133,7 +132,7 @@ extern "C" {
   void convert_dcp(dcp_t* dcp, comb_dcp_t* value);
   void convert_pauli_x(pauli_t* pauli, comb_pauli_x_t* value);
   void convert_pauli_z(pauli_t* pauli, comb_pauli_z_t* value);
-  void convert_permutation(mzp_t* permutation, comb_permutation_t* value);
+  void convert_permutation(mzd_t* permutation, uint32_t n, uint32_t n_z, uint32_t *rrefs);
 
 #ifdef __cplusplus
 }

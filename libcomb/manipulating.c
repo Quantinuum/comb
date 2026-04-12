@@ -102,7 +102,7 @@ extern "C" {
   }
 
   pauli_z_coset_t *diagonal_clifford_to_coset(stabiliser_state_t *state){ // WARNING: dcp will be destroyed after this!
-    print_stabiliser_state(state,1);
+    //print_stabiliser_state(state,1);
     // Gaussian elimination on the Z parts is simply Gaussian elimination on F.
     int n = state->n;
     pauli_t** old_stabilisers= state->generators;
@@ -212,7 +212,7 @@ extern "C" {
     // warning: destructive
        // assume that p is of x type.
     lwlog_debug("measuring:");
-    print_pauli(p,1);
+    //print_pauli(p,1);
     fflush(stdout);
     int n = state->n;
     pauli_t** old_stabilisers=state->generators;
