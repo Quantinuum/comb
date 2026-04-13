@@ -233,7 +233,7 @@ extern "C" {
     int fault_counter=0;
     struct timespec start, finish;
     clock_gettime( CLOCK_MONOTONIC, &start );
-    lwlog_debug("n_all=%d, n=%d, n_x = %d, n_z = %d, k = %d,fault_location_count = %d, s = %d, output_error_count = %d, x_measurement_count = %d, z_measurement_count = %d",n_all,n,n_x,n_z,k,fault_location_count,s,output_error_count,x_measurement_count,z_measurement_count);
+    lwlog_info("n_all=%d, n=%d, n_x = %d, n_z = %d, k = %d,fault_location_count = %d, s = %d, output_error_count = %d, x_measurement_count = %d, z_measurement_count = %d",n_all,n,n_x,n_z,k,fault_location_count,s,output_error_count,x_measurement_count,z_measurement_count);
     lwlog_info("allocating and converting objects");
     uint32_t rref_x[1024];
     uint32_t rref_z[1024];
@@ -421,7 +421,7 @@ extern "C" {
       }
 
     c++;
-  } while (ft_iteration_combination_incf(k, fault_location_partitions, fault_location_count, first_balls, last_balls,
+  } while (ft_iteration_combination_incf(s, fault_location_partitions, fault_location_count, first_balls, last_balls,
                                          current_combination));
   lwlog_info("%llu faults processed.\n", c);
   // Stop timing
