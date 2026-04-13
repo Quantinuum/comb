@@ -116,7 +116,7 @@ extern "C" {
 
   // iteration
 
-  int ft_iteration_combination_incf(int k, int *sizes, int n, int *first_balls,
+  int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_balls,
                                     int *last_balls, int *current_combination);
 
   void init_dcp_to_size(dcp_t* tableau, uint32_t n);

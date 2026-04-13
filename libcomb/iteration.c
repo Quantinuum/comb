@@ -36,7 +36,7 @@ void print_bit_vector(int *v, int n) {
 
 // Increments the fault combination n_0, ... , n_(k-1) and returns 0. if not
 // possible it returns 1.
-int ft_iteration_combination_incf(int k, int *sizes, int n, int *first_balls,
+int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_balls,
                                   int *last_balls, int *current_combination) {
   // k number of balls to take - size of current_combination
   // n number of sizes/baskets

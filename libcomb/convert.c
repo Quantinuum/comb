@@ -11,7 +11,6 @@ extern "C" {
   void convert_permutation(mzd_t* permutation, uint32_t n_z, uint32_t n, uint32_t *rrefs)
   {
     for(int j=0, i = (n - n_z); i < n; i ++,j++){
-      int stabiliser_index = j;
       int column_to_eliminate = rrefs[j];
       //mzd_write_bit(permutation,column_to_eliminate,i,1);
       mzd_write_bit(permutation,i,column_to_eliminate,1);

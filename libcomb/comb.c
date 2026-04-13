@@ -86,11 +86,11 @@ extern "C" {
     a->data=mzd_init(1+(2*n),1);
   }
 
-  void* init_to_pauli_x (pauli_t* p, int i, int n_all){
+  void init_to_pauli_x (pauli_t* p, int i, int n_all){
     p->data=mzd_init((n_all*2) + 1,1);
     mzd_write_bit(p->data,i+ n_all,0,1);
   }
-  void* init_to_pauli (pauli_t* p, int n_all){
+  void init_to_pauli (pauli_t* p, int n_all){
     p->data=mzd_init((n_all*2) + 1,1);
   }
 
@@ -146,6 +146,10 @@ extern "C" {
     lwlog_debug("state after postselecting is %s",print_stabiliser_state(state,0));
     // State now postselected and canonicalised. Expand the resulting state as a coset
     pauli_z_coset_t *coset = diagonal_clifford_to_coset(state);
+    if(coset == 0){
+      lwlog_debug("Coset was 0, so must have -I, so state was detected, so returning good");
+      return 0;
+    }
     lwlog_debug("Diagonal clifford to coset %s",print_pauli_z_coset(coset,0));
     // Apply the qubit permutation:
     permute_qubits(coset,n,z_permutation);
@@ -230,7 +234,7 @@ extern "C" {
                                            comb_pauli_z_t* _z_measurement_paulis){
     lwlog_info("start timing \n");
     // Start timing
-    int fault_counter=0;
+    unsigned long long fault_counter=0;
     struct timespec start, finish;
     clock_gettime( CLOCK_MONOTONIC, &start );
     lwlog_info("n_all=%d, n=%d, n_x = %d, n_z = %d, k = %d,fault_location_count = %d, s = %d, output_error_count = %d, x_measurement_count = %d, z_measurement_count = %d",n_all,n,n_x,n_z,k,fault_location_count,s,output_error_count,x_measurement_count,z_measurement_count);
@@ -373,7 +377,6 @@ extern "C" {
       last_balls[i]--;
     }
     // do the iteration
-    unsigned long long c = 0;
     do {
       lwlog_debug("checking fault number %d\n",fault_counter++);
       // Multiply DCP errors together. TODO verify that order is correct
@@ -416,14 +419,14 @@ extern "C" {
         fflush(stdout);
         clock_gettime( CLOCK_MONOTONIC, &finish );
         double seconds = (finish.tv_sec - start.tv_sec) + 1.0e-9 * (finish.tv_nsec - start.tv_nsec);
-        printf("Took %f seconds.\n", seconds);
+        printf("Checked %lld faults in  %f seconds.\n", fault_counter, seconds);
         return BAD_FAULT_FOUND;
       }
 
-    c++;
+    fault_counter++;
   } while (ft_iteration_combination_incf(s, fault_location_partitions, fault_location_count, first_balls, last_balls,
                                          current_combination));
-  lwlog_info("%llu faults processed.\n", c);
+  lwlog_info("%llu faults processed.\n", fault_counter);
   // Stop timing
   clock_gettime( CLOCK_MONOTONIC, &finish );
   double seconds = (finish.tv_sec - start.tv_sec) + 1.0e-9 * (finish.tv_nsec - start.tv_nsec);

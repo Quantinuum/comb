@@ -47,7 +47,7 @@ extern "C" {
     return result;
   }
 
-  void* set_to_lows(mzd_t* matrix){ // erases the upper triangular part of matrix
+  void set_to_lows(mzd_t* matrix){ // erases the upper triangular part of matrix
     for(int i = 0; i< matrix->nrows; i++){
       for(int j = i; j < matrix->ncols; j++){
         mzd_write_bit(matrix,i,j,0);
@@ -180,7 +180,7 @@ extern "C" {
       }
     }
     if(-1==mzd_solve_left(coefficient_matrix,coefficient_vector,0,1)){
-      printf("solution not found! \n");
+      lwlog_debug("solution not found -  \n");
       return 0;
     }
 
@@ -274,8 +274,6 @@ extern "C" {
       lwlog_debug("every stabiliser commutes, trying to form the identity");
       //case 1
       // try to figure out if you can create -1 from it.
-      // can try from the x patterns of the images of the x_i?
-      // won't generalise to multiple postselections... TODO this is broken so fix it
       mzd_t* A = mzd_init(2*n,n);
       mzd_t* B = mzd_init(2*n,1);
       for(int i = 0; i < (2*n); i++){
@@ -285,7 +283,7 @@ extern "C" {
         mzd_write_bit(B,i,0,mzd_read_bit(p->data,i,0));
       }
       int solution = mzd_solve_left(A,B,0,0);
-      if(solution==-1)lwlog_debug("warning: solution was -1! no solution found");
+      if(solution==-1)lwlog_err("warning: solution was -1! no solution found");
       pauli_t* r = p;
       //printf("case 1\n");
       for(int i = 0 ; i < n; i ++){
