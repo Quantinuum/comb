@@ -378,7 +378,7 @@ extern "C" {
       lwlog_debug("checking fault number %d\n",fault_counter++);
       // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(&current_dcp_output_combination,&(output_errors[current_combination[0]]));
-      for(int i = 1 ; i < k ; i++){
+      for(int i = 1 ; i < s ; i++){
         dcp_mul(&temp,&current_dcp_output_combination,&(output_errors[current_combination[i]]));
         set_dcp_to(&current_dcp_output_combination,&temp);
       }
