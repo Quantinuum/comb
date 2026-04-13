@@ -3,11 +3,11 @@ extern "C" {
 #endif
 #include "comb.h"
   mzd_t* clifford_u_matrix(int n){
-    mzd_t* matrix = mzd_init(1+(2*n),1+(2*n));
+    mzd_t* matrix = mzd_init((2*n),(2*n));
     for(int i = 0 ; i < n ; i++){
       mzd_write_bit(matrix,i,i+n,1);
     }
-    mzd_write_bit(matrix,2*n,2*n,1);
+    // mzd_write_bit(matrix,2*n,2*n,1);
     return matrix;
   }
 
@@ -31,7 +31,7 @@ extern "C" {
 
   void add_and(mzd_t* result, mzd_t* F1,mzd_t* F2){
     for(int i = 0; i < F1->nrows; i++){
-      mzd_write_bit(result,i,0,mzd_read_bit(result,i,0) ^ (mzd_read_bit(F1,i,i) & mzd_read_bit(F2,i,i)));
+      mzd_write_bit(result,i,0,mzd_read_bit(result,i,0) ^ ((mzd_read_bit(F1,i,i) & mzd_read_bit(F2,i,i))));
     }
   }
 
@@ -85,6 +85,7 @@ extern "C" {
     state->generators=(pauli_t**)malloc(n*sizeof(pauli_t*));
     for(int i = 0 ; i < n; i++){
       state->generators[i]=dcp_image_x(dcp,i);
+      lwlog_debug("generator %d is %s",i,print_pauli(state->generators[i],0));
     }
     lwlog_debug("returning from dcp_to_stabiliser_state");
     return state;
@@ -168,13 +169,17 @@ extern "C" {
     // set up system solving
     mzd_t* coefficient_matrix = mzd_init(n,n);
     mzd_t* coefficient_vector = mzd_init(n,1);
+    for(int i = 0; i < r; i++){
+      lwlog_debug("new_stabilisers[%d]=%s",i,print_pauli(new_stabilisers[i],0));
+    }
     for(int i = r; i< n; i++){
+      lwlog_debug("new_stabilisers[%d]=%s,sign bit=%d",i,print_pauli(new_stabilisers[i],0),new_stabilisers[i]->sign_bit);
       mzd_write_bit(coefficient_vector,i-r,0,new_stabilisers[i]->sign_bit);
       for(int j = 0; j< n; j++){
         mzd_write_bit(coefficient_matrix,i-r,j,mzd_read_bit(new_stabilisers[i]->data,j+n,0));
       }
     }
-    if(mzd_solve_left(coefficient_matrix,coefficient_vector,0,1)){
+    if(-1==mzd_solve_left(coefficient_matrix,coefficient_vector,0,1)){
       printf("solution not found! \n");
       return 0;
     }
@@ -212,6 +217,8 @@ extern "C" {
     // warning: destructive
        // assume that p is of x type.
     lwlog_debug("measuring state %s ",print_stabiliser_state(state,0));
+    lwlog_debug("measurement operator is %s ",print_pauli(p,0));
+    lwlog_debug("coset is %s ",print_pauli_z_coset(diagonal_clifford_to_coset(state),0));
     //print_pauli(p,1);
     fflush(stdout);
     int n = state->n;
@@ -221,7 +228,7 @@ extern "C" {
     // case 3: p not in the normaliser. in this case, we take one elt S' which does not commute with P, add P as a stabiliser, and for all S not equal to S', we add S if it commutes with P and PS'S otherwise.
     // seeing as how for us diagonal cliffords enter into the picture solely through the images of the x_i bases might not be an issue. probably want a stabiliser state after all though
     int anticommutes_with_some_pauli_p=0;
-    int anti_commuting_index=0;
+    int anti_commuting_index=-1;
     for(int i = 0; i < n; i++){
       if(!pauli_commute_p(p,old_stabilisers[i])){
         anti_commuting_index=i;
@@ -234,14 +241,22 @@ extern "C" {
       pauli_t* anticommuter = old_stabilisers[anti_commuting_index];
       pauli_t** new_stabilisers=malloc(n*sizeof(pauli_t*));
       for(int i =0 ; i< n; i++){
+        lwlog_debug("processing stabiliser generator %s",print_pauli(old_stabilisers[i],0));
         if(i== anti_commuting_index){
-          new_stabilisers[i]=p;
+          lwlog_debug("it is the anticommuting operator, so replacing with measurement operator %s",print_pauli(p,0));
+          new_stabilisers[i]=init_pauli(n);
+          set_to_pauli(new_stabilisers[i],p);
         }
         else{
           if(pauli_commute_p(p,old_stabilisers[i])){
-            new_stabilisers[i]=old_stabilisers[i];
+            new_stabilisers[i]=init_pauli(n);
+            set_to_pauli(new_stabilisers[i],old_stabilisers[i]);
+            lwlog_debug("it commutes, so keeping %s",print_pauli(new_stabilisers[i],0));
           }
-          else new_stabilisers[i]=pauli_mul(0,old_stabilisers[i],anticommuter);
+          else {
+          new_stabilisers[i]=pauli_mul(0,old_stabilisers[i],anticommuter);
+          lwlog_debug("it anticommutes, so multiplying it by the anticommuter: %s",print_pauli(new_stabilisers[i],0));
+          }
         }
       }
       //  printf("new stabilisers:\n");
@@ -261,10 +276,20 @@ extern "C" {
       // try to figure out if you can create -1 from it.
       // can try from the x patterns of the images of the x_i?
       // won't generalise to multiple postselections... TODO this is broken so fix it
+      mzd_t* A = mzd_init(2*n,n);
+      mzd_t* B = mzd_init(2*n,1);
+      for(int i = 0; i < (2*n); i++){
+        for(int j = 0; j < n; j++){
+          mzd_write_bit(A,i,j,mzd_read_bit(old_stabilisers[j]->data,i,0));
+        }
+        mzd_write_bit(B,i,0,mzd_read_bit(p->data,i,0));
+      }
+      int solution = mzd_solve_left(A,B,0,0);
+      if(solution==-1)lwlog_debug("warning: solution was -1! no solution found");
       pauli_t* r = p;
       //printf("case 1\n");
       for(int i = 0 ; i < n; i ++){
-        if(mzd_read_bit(p->data,i+n,0))
+        if(mzd_read_bit(B,i,0))
           r = pauli_mul(0,r,old_stabilisers[i]);
       }
       //printf("result:\n");

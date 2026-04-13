@@ -75,7 +75,7 @@ extern "C" {
     mzd_free(big_c);
   }
   void set_to_pauli(pauli_t* a, pauli_t* b){
-    lwlog_debug("in set_to_pauli");
+    //lwlog_debug("in set_to_pauli");
     //print_pauli(a,1);
     //print_pauli(b,1);
     a->sign_bit=b->sign_bit;
@@ -143,6 +143,7 @@ extern "C" {
       }
       lwlog_debug("Finished postselecting %d",i);
     }
+    lwlog_debug("state after postselecting is %s",print_stabiliser_state(state,0));
     // State now postselected and canonicalised. Expand the resulting state as a coset
     pauli_z_coset_t *coset = diagonal_clifford_to_coset(state);
     lwlog_debug("Diagonal clifford to coset %s",print_pauli_z_coset(coset,0));
@@ -392,6 +393,7 @@ extern "C" {
         for(int i = 0 ; i < k && !good_combination_found; i++){
           if(dcp_index & (1 << i)){
             // multiply the output error by dcp stabilisers
+            lwlog_info("multiplying error by logical stabiliser");
             dcp_mul(&temp,&error_with_stabilisers,&(dcp_stabilisers[i]));
             set_dcp_to(&error_with_stabilisers,&temp);
           }
