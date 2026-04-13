@@ -60,9 +60,6 @@ extern "C" {
     else ClearBit(dcp[n].h_z.data,i);
   }
 
-  void comb_set_permutation_aref(comb_permutation_t* permutation, int i, int value){
-    permutation->indices[i]=value;
-  }
   void comb_set_bit_array_aref(comb_bit_array_t array, int i, int value){
     if(value)SetBit(array,i);
     else ClearBit(array,i);

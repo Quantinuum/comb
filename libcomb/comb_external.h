@@ -35,10 +35,6 @@ typedef struct {
   comb_vector_t h_z;
 } comb_dcp_t;
 
-typedef struct {
-  uint32_t n;
-  uint32_t* indices;
-} comb_permutation_t;
 
 typedef comb_vector_t comb_pauli_x_t; // Paulis of X or Z type are vectors
 typedef comb_vector_t comb_pauli_z_t;
@@ -47,21 +43,18 @@ typedef comb_vector_t comb_pauli_z_t;
 comb_bit_array_t comb_alloc_bit_array(int n);
 comb_vector_t *comb_calloc_vector(int count, int n);
 comb_dcp_t *comb_calloc_dcp(int count, int n);
-comb_permutation_t *comb_alloc_permutation(int n);
 
 // Convenience methods for manipulating arrays of dcps, vectors and bit arrays
 void comb_set_cvector_aref(comb_vector_t* vector, int n, int i, int value);
 void comb_set_cdcp_F_aref(comb_dcp_t* dcp, int n, int i, int j, int value);
 void comb_set_cdcp_h_x_aref(comb_dcp_t* dcp, int n, int i, int value);
 void comb_set_cdcp_h_z_aref(comb_dcp_t* dcp, int n, int i, int value);
-void comb_set_permutation_aref(comb_permutation_t* permutation, int i, int value);
 void comb_set_bit_array_aref(comb_bit_array_t array, int i, int value);
 
 // Freeing data structures after they are no longer needed
 void comb_free_bit_array(comb_bit_array_t pointer);
 void comb_cfree_vector(int count, comb_vector_t* pointer);
 void comb_cfree_dcp(int count, comb_dcp_t* pointer);
-void comb_free_permutation(comb_permutation_t* pointer);
 
 comb_code_t comb_verify_css_magic_state( // 1. Describing the magic state
                                            uint32_t n_all, // number of qubits in code + all ancillas
@@ -70,10 +63,8 @@ comb_code_t comb_verify_css_magic_state( // 1. Describing the magic state
                                            uint32_t n_z, // number of independent z stabiliser generators in code
                                            uint32_t k, // number of logical qubits in code. equivalently, number of logical dcp operators that stabilise the code
                                            comb_pauli_x_t* x_stabilisers, // n-x of these
-                       
                                            comb_bit_array_t x_lookup_table, // x lookup table. of size 2^(n-n_x)
                                            comb_pauli_z_t* z_stabilisers,
-                       
                                            comb_bit_array_t z_lookup_table,
                                            comb_dcp_t* dcp_stabilisers, // k of these
                                            // 2. Other parameters
