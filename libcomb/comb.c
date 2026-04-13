@@ -410,7 +410,7 @@ extern "C" {
       if (!good_combination_found) {
         lwlog_debug("no good combination was found: fault combination was bad");
         // need to return a fault
-        for (int i = 0; i < k; i++) {
+        for (int i = 0; i < s; i++) {
           bad_fault_array[i] = current_combination[i];
         }
         fflush(stdout);
