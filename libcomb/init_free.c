@@ -35,7 +35,19 @@ extern "C" {
     }
     return coset;
   }
-
+  void free_dcp_array(uint32_t count, dcp_t* array){
+    for(int i = 0; i < count; i++){
+      mzd_free(array[i].F);
+      mzd_free(array[i].h_x);
+      mzd_free(array[i].h_z);
+    }
+    free(array);
+  }
+  void free_pauli_array(uint32_t count, pauli_t* array){
+    for(int i = 0; i < count; i++)
+      mzd_free(array[i].data);
+    free(array);
+  }
   void free_dcp(dcp_t* dcp){
     mzd_free(dcp->F);
     mzd_free(dcp->h_x);

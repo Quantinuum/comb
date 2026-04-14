@@ -22,10 +22,10 @@ extern "C" {
     mzd_t* au = mzd_mul_naive(0,p2t,u);
     mzd_t* aua = mzd_mul_naive(0,au,p1->data);
     result->sign_bit = (p1->sign_bit) ^ (p2->sign_bit) ^ (d1 & d2) ^ mzd_read_bit(aua,0,0);
-    mzd_free(u);
     mzd_free(p2t);
     mzd_free(au);
     mzd_free(aua);
+    mzd_free(u);
     return result;
   }
 

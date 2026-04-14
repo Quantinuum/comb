@@ -15,3 +15,7 @@ clean:
 	rm -f demo
 	rm -f *.o
 	rm -f *.so
+	rm -rf docs
+
+docs: comb_external.h
+	doxygen Doxyfile

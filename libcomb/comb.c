@@ -4,7 +4,7 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <time.h> 
+#include <time.h>
 #include "comb.h"
   uint32_t gray_bit_to_switch(uint32_t n)
   {
@@ -75,9 +75,6 @@ extern "C" {
     mzd_free(big_c);
   }
   void set_to_pauli(pauli_t* a, pauli_t* b){
-    //lwlog_debug("in set_to_pauli");
-    //print_pauli(a,1);
-    //print_pauli(b,1);
     a->sign_bit=b->sign_bit;
     mzd_copy(a->data,b->data);
   }
@@ -209,19 +206,16 @@ extern "C" {
   return 1;
 }
 
-  comb_code_t comb_verify_css_magic_state( uint32_t n_all, // number of qubits in code + all ancillas
+  comb_code_t comb_verify_css_magic_state( uint32_t n_all, ///< number of qubits in code + all ancillas
                                            uint32_t n, // number of qubits in code
                                            uint32_t n_x, // number of independent x stabiliser generators in code
                                            uint32_t n_z, // number of independent z stabiliser generators in code
                                            uint32_t k, // number of logical qubits in code. equivalently, number of logical dcp operators that stabilise the code
                                            comb_pauli_x_t* _x_stabilisers, // n-x of these
-                                        
                                            comb_bit_array_t x_lookup_table, // x lookup table. of size 2^(n-n_x)
                                            comb_pauli_z_t* _z_stabilisers,
-                  
                                            comb_bit_array_t z_lookup_table,
                                            comb_dcp_t* _dcp_stabilisers, // k of these
-
                                            uint32_t fault_location_count, // number of fault locations
                                            uint32_t *fault_location_partitions, // at least fault_location_count of these. number of faults at each location
                                            uint32_t s, // number of faults to which circuit should be resilient to
@@ -378,7 +372,7 @@ extern "C" {
     }
     // do the iteration
     do {
-      lwlog_debug("checking fault number %d\n",fault_counter++);
+      lwlog_debug("checking fault number %d\n",fault_counter);
       // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(&current_dcp_output_combination,&(output_errors[current_combination[0]]));
       for(int i = 1 ; i < s ; i++){
@@ -419,7 +413,15 @@ extern "C" {
         fflush(stdout);
         clock_gettime( CLOCK_MONOTONIC, &finish );
         double seconds = (finish.tv_sec - start.tv_sec) + 1.0e-9 * (finish.tv_nsec - start.tv_nsec);
-        printf("Checked %lld faults in  %f seconds.\n", fault_counter, seconds);
+        printf("Checked %lld faults in  %f seconds before finding a bad one.\n", fault_counter+1, seconds);
+        free_dcp_array(k,dcp_stabilisers);
+        free_dcp_array(output_error_count,output_errors);
+        free_pauli_array(x_measurement_count,x_measurement_paulis);
+        free_pauli_array(z_measurement_count,z_measurement_paulis);
+        free_pauli_array(n_x,x_stabilisers);
+        free_pauli_array(n_z,z_stabilisers);
+        mzd_free(x_permutation);
+        mzd_free(z_permutation);
         return BAD_FAULT_FOUND;
       }
 
@@ -431,9 +433,15 @@ extern "C" {
   clock_gettime( CLOCK_MONOTONIC, &finish );
   double seconds = (finish.tv_sec - start.tv_sec) + 1.0e-9 * (finish.tv_nsec - start.tv_nsec);
   printf("Took %f seconds.\n", seconds);
-  //lwlog_debug("TODO freeing everything");
-
-
+  lwlog_debug("freeing memory");
+  free_dcp_array(k,dcp_stabilisers);
+  free_dcp_array(output_error_count,output_errors);
+  free_pauli_array(x_measurement_count,x_measurement_paulis);
+  free_pauli_array(z_measurement_count,z_measurement_paulis);
+  free_pauli_array(n_x,x_stabilisers);
+  free_pauli_array(n_z,z_stabilisers);
+  mzd_free(x_permutation);
+  mzd_free(z_permutation);
   return ALL_FAULTS_GOOD;
   }
 

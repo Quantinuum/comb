@@ -134,6 +134,9 @@ extern "C" {
   void convert_pauli_z(pauli_t* pauli, comb_pauli_z_t* value);
   void convert_permutation(mzd_t* permutation, uint32_t n, uint32_t n_z, uint32_t *rrefs);
 
+  void free_pauli_array(uint32_t count, pauli_t* array);
+
+  void free_dcp_array(uint32_t count, dcp_t* array);
 #ifdef __cplusplus
 }
 #endif

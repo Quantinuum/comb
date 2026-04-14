@@ -1,8 +1,20 @@
-// External interface to Comb. This alone should be exposed to other languages
+/**
+ * \file comb_external.h
+ *
+ * \brief External interface to Comb.
+ *
+ * It is intended that exposing this interface will be sufficient for invoking Comb from another language via FFI.
+ *
+ * \author Selwyn Simsek
+ *
+ */
+
 #include <stdint.h>
 #include <stdlib.h>
 
-// Error codes
+/**
+ * The possible outcomes from checking a circuit for fault tolerance.
+ */
 typedef enum {ALL_FAULTS_GOOD = 0,
               BAD_FAULT_FOUND = 1,
               INVALID_INPUT = 2,
@@ -10,34 +22,68 @@ typedef enum {ALL_FAULTS_GOOD = 0,
               INTERNAL_ERROR = 4,
               OTHER_ERROR = 5} comb_code_t;
 
-// A bit vector is an array of words
+/// 64-bit wide word
 typedef uint64_t comb_bit_word_t;
+/// A bit array is represented by an array of words.
 typedef comb_bit_word_t* comb_bit_array_t;
 
+/// Sets the k-th bit of a bit array A to 1.
 #define SetBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] |= (1U << ((k) % sizeof(comb_bit_word_t))))
+/// Clears the k-th bit of a bit array A (sets it to 0).
 #define ClearBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] &= ~(1U << ((k) % sizeof(comb_bit_word_t))))
+/// Evaluates to 0 if the k-th bit of the bit array A is 0, and non-zero otherwise.
 #define TestBit(A, k) (A[(k) / sizeof(comb_bit_word_t)] & (1U << ((k) % sizeof(comb_bit_word_t))))
 
-typedef struct { // n x 1 vector
-  uint32_t n;
+/**
+ * A bit vector.
+ */
+typedef struct {
+  uint32_t n; /// The length of the vector
+  /**
+   * Bit array that stores the entries of the vector.
+   * Must have enough space for n bits.
+   */
   comb_bit_array_t data;
 } comb_vector_t;
 
-typedef struct { // m x n matrix
-  uint32_t m; // number of rows
-  uint32_t n; // number of columns
+/**
+ * A bit matrix of fixed size.
+ */
+typedef struct {
+  uint32_t m; ///< The number of rows of the matrix.
+  uint32_t n; ///< The number of columns of the matrix.
+  /**
+   * A bit array that stores the entries of the array in row-major order.
+   * Must have enough room to store \f$ mn \f$ bits.
+   */
   comb_bit_array_t data;
 } comb_matrix_t;
 
+/**
+ * The product of a diagonal Clifford and a Pauli (DCP).
+ */
 typedef struct {
+  /**
+   * Stores the Z parts of the images of the \f$X_i\f$.
+   * Must be a \f$ n \times n\f$ dimensional symmetric matrix.
+   */
   comb_matrix_t F;
+  /**
+   * Stores the signs of the images of the Paulis \f$Z_i\f$ by conjugation.
+   * i.e. the i-th bit is set to 1 if the Pauli \f$Z_i\f$ changes sign and 0 otherwise.
+   * Must be a \f$ n \f$-dimensional vector
+   */
   comb_vector_t h_x;
+  /**
+   * Stores the sign bits of the images of the Paulis \f$X_i\f$ by conjugation.
+   * Must be a \f$ n \f$-dimensional vector
+   */
   comb_vector_t h_z;
 } comb_dcp_t;
 
 
-typedef comb_vector_t comb_pauli_x_t; // Paulis of X or Z type are vectors
-typedef comb_vector_t comb_pauli_z_t;
+typedef comb_vector_t comb_pauli_x_t; ///< A Pauli of X type
+typedef comb_vector_t comb_pauli_z_t; ///< A Pauli of Z type
 
 // Allocate bit arrays, arrays of vectors, dcps and permutations
 comb_bit_array_t comb_alloc_bit_array(int n);
@@ -56,25 +102,30 @@ void comb_free_bit_array(comb_bit_array_t pointer);
 void comb_cfree_vector(int count, comb_vector_t* pointer);
 void comb_cfree_dcp(int count, comb_dcp_t* pointer);
 
+/**
+ * Determines whether a circuit that prepares the magic state of a CSS code is fault tolerant or not.
+ * @return A code indicating the result of the verification. If BAD_FAULT_FOUND, then bad_fault_array is set to the indices of the bad faults in output_error_array.
+ */
 comb_code_t comb_verify_css_magic_state( // 1. Describing the magic state
-                                           uint32_t n_all, // number of qubits in code + all ancillas
-                                           uint32_t n, // number of qubits in code
-                                           uint32_t n_x, // number of independent x stabiliser generators in code
-                                           uint32_t n_z, // number of independent z stabiliser generators in code
-                                           uint32_t k, // number of logical qubits in code. equivalently, number of logical dcp operators that stabilise the code
-                                           comb_pauli_x_t* x_stabilisers, // n-x of these
-                                           comb_bit_array_t x_lookup_table, // x lookup table. of size 2^(n-n_x)
-                                           comb_pauli_z_t* z_stabilisers,
-                                           comb_bit_array_t z_lookup_table,
-                                           comb_dcp_t* dcp_stabilisers, // k of these
+                                           uint32_t n_all, ///< The number of qubits that comprise the code and all the ancillas.
+                                           uint32_t n, ///< The number of qubits in the code.
+                                           uint32_t n_x, ///< The number of independent stabiliser generators of X type in the code.
+                                           uint32_t n_z, ///< The number of independent stabiliser generators of Z type in the code.
+                                           uint32_t k, ///< The number of logical qubits in the code
+                                           comb_pauli_x_t* x_stabilisers, ///< An pointer to the stabiliser generators of X type. They must be in reduced row echelon form. There must be n_x stabiliser generators.
+                                           comb_bit_array_t x_lookup_table, ///< A bit array that is the lookup table to determine the X weights of the operators. The lookup table must be of size 2^(n-n_x).
+                                           comb_pauli_z_t* z_stabilisers, ///< A pointer to the stabiliser generators of Z type. They must be in reduced row echelon form. There must be n_z stabiliser generators.
+                                           comb_bit_array_t z_lookup_table,///< A bit array that contains the lookup table to determine the X weights of the operators. The lookup table must be of size 2^(n-n_z).
+                                           comb_dcp_t* dcp_stabilisers, ///< A pointer to the logical DCP operators that stabilise the magic state and thus characterise it uniquely. There must be k such operators.
                                            // 2. Other parameters
-                                           uint32_t fault_location_count, // number of fault locations
-                                           uint32_t *fault_location_partitions, // at least fault_location_count of these. number of faults at each location
-                                           uint32_t s, // number of faults to which circuit should be resilient to
-                                           uint32_t *bad_fault_array, // where to store indices of bad faults. must have enough space for s elements.
-                                           uint32_t output_error_count, // number of output errors that result from propagating all the faults. should be at least sum(fault_location_partitions)
-                                           comb_dcp_t* output_errors, // at least output_error_count of these
-                                           uint32_t x_measurement_count, // number of x measurement paulis
-                                           comb_pauli_x_t* x_measurement_paulis, // postselections made in x basis. at least x_measurement_count of these
-                                           uint32_t z_measurement_count, // number of z measurement paulis
-                                           comb_pauli_z_t* z_measurement_paulis); // postselections made in z basis
+                                           uint32_t fault_location_count, ///< The number of fault locations in the circuit.
+                                           uint32_t *fault_location_partitions, ///< A pointer to the numbers of faults at each fault location. There must be at least fault_location_count of them.
+                                           uint32_t s, ///< The number of faults that make up each fault combination. Typically one will invoke this function for all \f$1 \leq s \leq \frac{d}{2}\f$
+                                           uint32_t *bad_fault_array, ///< A pointer to where indices of bad faults can be stored. It must have enough space for s elements.
+                                           uint32_t output_error_count, ///< The number of output errors that result from propagating all the faults. This number should be at least the sum of all the fault_location_partitions.
+                                           comb_dcp_t* output_errors, ///< A pointer to the DCP output errors that result from propagating each fault to the end of the circuit. There must be at least output_error_count errors.
+                                           uint32_t x_measurement_count, ///< The number of ancilla measurements made in the X basis.
+                                           comb_pauli_x_t* x_measurement_paulis, ///< A pointer to the measurement operators corresponding to postselected measurements made in the X basis. There must be at least x_measurement_count of these
+                                           uint32_t z_measurement_count, ///< The number of ancilla measurements made in the Z basis.
+                                           comb_pauli_z_t* z_measurement_paulis ///< A pointer to the measurement operators corresponding to postselected measurements made in the Z basis. There must be at least z_measurement_count of these
+                                         );
