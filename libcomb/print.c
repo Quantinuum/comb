@@ -4,75 +4,68 @@ extern "C" {
 #include "comb.h"
 
   #define PRINT_SIZE 4096
+  #define PRINT_DEBUG_INFORMATION
   char print_buffer[PRINT_SIZE];
 
-  int do_print_pauli(pauli_t* p, char print_newline_p, int counter){
+  int do_print_pauli(mzd_t* x_parts, mzd_t* z_parts, mzd_t* delta_vector, mzd_t* epsilon_vector,
+                     int row_number, char print_newline_p, int counter){
     int phase=0;
-    int n = PAULI_N(p);
-    for(int i= 0;i<n;i++){
-      if(mzd_read_bit(p->data,i,0) && mzd_read_bit(p->data,i+n,0))phase++;
+    int n = state->ncols;
+    for(int i = 0 ; i < n; i++){
+      if(mzd_read_bit(x_parts,row_number,i) && mzd_read_bit(z_parts,row_number,i))phase++;
     }
 
-    if(p->sign_bit)phase+=2;
-    if(mzd_read_bit(p->data,2*n,0))phase++;
-    phase &= 3;
-    switch(phase){
-    case 0: break;
-    case 1: counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"i"); break;
-    case 2: counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"-"); break;
+    if(mzd_read_bit(epsilon_vector,row_number,0))phase+=2;
+    if(mzd_read_bit(delta_vector,row_number,0))phase++;
+    switch(phase & 3){
+    case 0: counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"  ");break;
+    case 1: counter += snprintf(print_buffer+counter, PRINT_SIZE-counter," i"); break;
+    case 2: counter += snprintf(print_buffer+counter, PRINT_SIZE-counter," -"); break;
     case 3: counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"-i"); break;
     default: counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"error in printing pauli");
     }
     for(int i = 0; i< n; i++){
-      char x_p = mzd_read_bit(p->data,i + n,0);
-      char z_p = mzd_read_bit(p->data,i ,0);
+      char x_p = mzd_read_bit(x_parts, row_number, i);
+      char z_p = mzd_read_bit(z_parts, row_number, i);
       counter+=snprintf(print_buffer+counter, PRINT_SIZE-counter,z_p?(x_p?"Y":"Z"):(x_p?"X":"I"));
     }
     if(print_newline_p)counter+=snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
     return counter;
   }
+
   char* print_dcp(dcp_t* dcp, char print_newline_p){ // print_newline_p ignored actually
     int n = DCP_N(dcp);
     int counter = 0;
-    for(int i = 0 ;i<n; i++){
-      pauli_t* p_x = pauli_x(i,n);
-      pauli_t* p_z = pauli_z(i,n);
+    mzd_t* zero = mzd_init(n,n);
+    mzd_t* identity = mzd_init(n,n);
+    mzd_t* zero_vector = mzd_init(n,1);
+    mzd_set_ui(zero,0);
+    mzd_set_ui(zero_vector,0);
+    mzd_set_ui(identity,1);
 
-      counter=do_print_pauli(p_x,0,counter);
+    for(int i = 0 ; i < n ; i++){
+      // print pauli x_i
+      counter = do_print_pauli(identity,zero,zero_vector,zero_vector,i,0,counter);
       counter += snprintf(print_buffer+counter, PRINT_SIZE-counter," -> ");
-      pauli_t* p_z_parts=dcp_image_x(dcp,i);
-      counter= do_print_pauli(p_z_parts,1,counter);
-
-      counter= do_print_pauli(p_z,0,counter);
+      counter = do_print_pauli(identity,dcp->F,dcp->F-diagonal,dcp->h_z,1,counter); // check these are the right way around
+      // print pauli z_i
+      counter = do_print_pauli(zero,identity,zero_vector,zero_vector,i,0,counter);
       counter += snprintf(print_buffer+counter, PRINT_SIZE-counter," -> ");
-      if(mzd_read_bit(dcp->h_x,i,0))counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"-");
-      counter= do_print_pauli(p_z,1,counter);
-
-      free_pauli(p_z_parts);
-      free_pauli(p_x);
-      free_pauli(p_z);
+      counter = do_print_pauli(zero,identity,zero_vector,dcp->h_x,1,counter);
     }
-    
+    mzd_free(zero);
+    mzd_free(zero_vector);
+    mzd_free(identity);
     if(print_newline_p)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
-    counter+=snprintf(print_buffer+counter,PRINT_SIZE-counter,"h-x: ");
-    for(int i = 0; i < n; i++){
-
-      counter+=snprintf(print_buffer+counter,PRINT_SIZE-counter,"%d",mzd_read_bit(dcp->h_x,i,0));
-    }
-    counter+=snprintf(print_buffer+counter,PRINT_SIZE-counter,"\nh-z: ");
-    for(int i = 0; i < n; i++){
-
-      counter+=snprintf(print_buffer+counter,PRINT_SIZE-counter,"%d",mzd_read_bit(dcp->h_z,i,0));
-    }
     return print_buffer;
   }
 
-  char* print_stabiliser_state(stabiliser_state_t *coset, char print_newline_p){
+  char* print_stabiliser_state(stabiliser_state_t *state, char print_newline_p){
     int counter = 0;
     counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"{");
-    for(int i = 0 ; i< coset->n; i++){
-      counter=do_print_pauli(coset->generators[i],0,counter);
-        if(i +1 != coset->n)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,", ");
+    for(int i = 0 ; i< STATE_N(state); i++){
+      counter=do_print_pauli(state->x_parts,state->z_parts,state->delta_vector,state->epsilon_vector,i,0,counter);
+        if(i +1 != coset->n)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
     }
       counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,print_newline_p?"}\n":"}");
       return print_buffer;
@@ -80,19 +73,19 @@ extern "C" {
 
   char* print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p){
     int counter = 0;
-    counter = do_print_pauli(coset->factor,0,counter);
-    counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"<");
-    for(int i= 0;i<coset->k;i++){
-      counter = do_print_pauli(coset->set_generators[i],0,counter);
-      counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,i+1==coset->k?"":", ");
+    int n = COSET_N(coset);
+    int k = COSET_K(coset);
+    for(int i = 0; i < n; i++){
+      counter+=snprintf(print_buffer+counter,PRINT_SIZE-counter,mzd_read_bit(coset->factor_transpose,0,i)?"Z":"I");
     }
-    counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,">");
+    counter += snprintf(print_buffer+counter,PRINT_SIZE-counter,"<");
+    for(int i = 0; i < k; i++){
+      for(int j = 0; j < n; j++){
+        counter+=snprintf(print_buffer+counter,PRINT_SIZE-counter,mzd_read_bit(coset->set_generators,i,j)?"Z":"I");
+      }
+      if(i!=(k-1))counter+=snprintf(print_buffer+counter,PRINT_SIZE-counter,", ");
+    }
     if(print_newline_p)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
-    return print_buffer;
-  }
-
-  char* print_pauli(pauli_t *p, char print_newline_p){
-    do_print_pauli(p,print_newline_p,0);
     return print_buffer;
   }
 

@@ -2,57 +2,22 @@
 extern "C" {
 #endif
 #include "comb.h"
-  mzd_t* clifford_u_matrix(int n){
-    mzd_t* matrix = mzd_init((2*n),(2*n));
-    for(int i = 0 ; i < n ; i++){
-      mzd_write_bit(matrix,i,i+n,1);
-    }
-    // mzd_write_bit(matrix,2*n,2*n,1);
-    return matrix;
-  }
 
-  pauli_t *pauli_mul(pauli_t *result, pauli_t *p1, pauli_t *p2){ // lots of allocation... try to avoid this
-    int n = PAULI_N(p1);
-    if(!result)result = init_pauli(n);
-    mzd_add(result->data, p1->data, p2->data);
-    int d1 = mzd_read_bit(p1->data,2*n,0);
-    int d2 = mzd_read_bit(p2->data,2*n,0);
-    mzd_t* u = clifford_u_matrix(n);
-    mzd_t* p2t = mzd_transpose(0,p2->data);
-    mzd_t* au = mzd_mul_naive(0,p2t,u);
-    mzd_t* aua = mzd_mul_naive(0,au,p1->data);
-    result->sign_bit = (p1->sign_bit) ^ (p2->sign_bit) ^ (d1 & d2) ^ mzd_read_bit(aua,0,0);
-    mzd_free(p2t);
-    mzd_free(au);
-    mzd_free(aua);
-    mzd_free(u);
-    return result;
-  }
-
-  inline void add_and(mzd_t* result, mzd_t* F1,mzd_t* F2){
+  void add_and_row_vector(mzd_t* result, mzd_t* F1,mzd_t* F2){
     // Adds F1 & F2 to result. Assumes only one row. must be initialised to right shape
     for(int i = 0; i < result->width; i++){
       result->data[0]^=(F1->data[0] & F2->data[0]);
     }
     result->data[result->width - 1] &= result->high_bitmask; // on the safe side
   }
-
+  void add_and_column_vector(mzd_t* result, mzd_t* F1, mzd_t* F2){
+    // TODO
+  }
 
   void *incf_coset(pauli_z_coset_t *coset, int index){
     // Iterates over the coset by adding one of the generators, chosen by a gray code, to factor.
     // !!! won't work with less than 64 bits (reasonable assumption if we're using lookup tables)
     coset->factor->data[0]^=mzd_row(coset->set_generators,gray_bit_to_switch(index))[0];
-  }
-
-
-  int pauli_commute_p(pauli_t *p1, pauli_t *p2){ // slow but probably eventually shouldn't need this
-    int commute_p=1;
-    int n = PAULI_N(p1);
-    for(int i =0 ; i < n; i++){
-      if(mzd_read_bit(p1->data,i,0) && mzd_read_bit(p2->data,i+n,0))commute_p=1-commute_p;
-      if(mzd_read_bit(p1->data,i+n,0) && mzd_read_bit(p2->data,i,0))commute_p=1-commute_p;
-    }
-    return commute_p;
   }
 
   int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, mzd_t* x_measurement_matrix /* n_x x n*/
