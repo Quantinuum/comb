@@ -37,92 +37,14 @@ extern "C" {
     result->data[result->width - 1] &= result->high_bitmask; // on the safe side
   }
 
-  dcp_t *dcp_mul(dcp_t *result, dcp_t *c2, dcp_t *c1){ // allocation free. does not check sizes
-    if(!result)result = init_dcp(DCP_N(c1));
-    mzd_add(result->F_diagonal,c2->F_diagonal,c1->F_diagonal); // F parts add
-    mzd_add(result->F,c2->F,c1->F); // F parts add
-    mzd_add(result->h_x,c2->h_x,c1->h_x); // h_x
-    mzd_add(result->h_z,c2->h_z,c1->h_z); // h_z
-    mzd_addmul_naive(result->h_z,c1->F,c2->h_x);
-    add_and(result->h_z,c1->F_diagonal,c2->F_diagonal);
-    return result;
-  }
 
- void set_stabiliser_state_to_dcp(stabiliser_state_t* state, dcp_t* dcp){
-    lwlog_debug("setting stabiliser state to dcp");
-    int n = DCP_N(dcp);
-    mzd_copy(state->sign_bits,dcp->h_z);
-    mzd_set_ui(state->tableau,0);
-    mzd_copy(state->tableau,dcp->F);
-    for(int i = 0; i < n; i++ ){
-      mzd_write_bit(state->tableau,i,i+n,1);
-      mzd_write_bit(state->tableau,i,2*n,mzd_read_bit(state->F_diagonal,i,0));
-    }
-  }
-  void apply_row_ops_to_stabiliser_state(mzd_t* transposed_row_ops /*a n x n matrix*/,stabiliser_state_t *state /* n qubit state*/){
-  }
   void *incf_coset(pauli_z_coset_t *coset, int index){
     // Iterates over the coset by adding one of the generators, chosen by a gray code, to factor.
     // !!! won't work with less than 64 bits (reasonable assumption if we're using lookup tables)
     coset->factor->data[0]^=mzd_row(coset->set_generators,gray_bit_to_switch(index))[0];
   }
 
-  void *set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state,
-                                      mzd_t* temp /* n x n */, mzd_t* temp_transpose /* n x n */, mzp_t* p/* n */, mzp_t *q /* n  */, mzd_t* augmented_matrix /*n x (n+1)*/, mzd_t* augmented_transpose /* n+1 x n */){
-    int n = STABILISER_N(state);
-    //mzp_t* p = mzp_init(n);
-    //mzp_t* q = mzp_init(n);
-    //mzd_t* z_parts = mzd_init(n,n);
-    for(int i = 0; i< n; i++){
-      for(int j = 0; j < n; j++){
-        mzd_write_bit(temp,i,j,mzd_read_bit(state->tableau,i,j,0));
-      }
-    }
-    int r = mzd_pluq(temp,p,q,0);
-    lwlog_debug("PLUQ done"); // L is n x r, U is r x n.
-    // The rref = U Q forms the coset part. copy it over
-    coset->set_generators.nrows=n;
-    mzd_set_ui(coset->set_generators,0);
-    mzd_copy(coset->set_generators,temp);
-    // only want the upper diagonal part in order to get U.
-    for(int i = 0; i < r; i++){
-      mzd_write_bit(coset->set_generators,i,i,1);
-      for(int j = 0; j < i ; j++){
-        mzd_write_bit(coset->set_generators,i,j,0); // TODO use clear bits on row to speed it up?
-      }
-    }
-    mzd_apply_p_right(coset->set_generators,q);
-    coset->set_generators.nrows=r; // careful: lower rows may be garbage.
 
-    // Now need to calculate L^-1 P^T - the row ops.
-
-    mzd_transpose(temp_transpose,temp); // TODO can you do transpose in place? unsure if worth it
-    for(int i = 0; i < r; i++){
-      mzd_write_bit(temp_transpose,i,i,1);
-      for(int j = 0; j < i ; j++){
-        mzd_write_bit(temp_transpose,i,j,0); // TODO use clear bits on row to speed it up?
-      }
-    } temp_transpose->nrows=r; // temp_transpose now contains L^T - a r x n upper triangular matrix.
-    mzd_trtri_upper(temp_transpose); //temp_transpose now contains (L^T)^-1.
-    // apply P on the left
-    mzd_apply_p_left(temp_transpose,p);
-    // Now temp_transpose contains P (L^T)^-1 = ( L^-1 P^T )^T. So the transpose of what we wanted.
-    // Apply the row_ops to get the new stabilisers
-
-    apply_row_ops_to_stabiliser_state(temp_transpose,state);
-
-    // Need to find a Pauli which commutes or anticommutes with the X parts of the stabilisers as appropriate.
-    // Use gaussian elimination on an augmented matrix to do this.
-    // TODO set up augmented matrix here. copy in sign bits as appropriate
-
-    mzd_echelonize_naive(augmented_matrix,1);
-    // Final column of augmented matrix now contains a solution. transpose it and get it into factor
-    mzd_transpose(augmented_transpose,augmented_matrix); // augmented transpose is n+1 x n. final row is factor
-    mzd_copy_row(coset->factor,0,augmented_transpose,n); // or are the remaining columns a basis for the null space? well, we got them from the gaussian elimination anyway
-    temp->nrows=n; // set nrows back to n. temp is now the coefficient matrix - n x n bits.
-    return coset;
-
-  }
   int pauli_commute_p(pauli_t *p1, pauli_t *p2){ // slow but probably eventually shouldn't need this
     int commute_p=1;
     int n = PAULI_N(p1);
@@ -133,7 +55,19 @@ extern "C" {
     return commute_p;
   }
 
-  int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, pauli_t* p){
+  int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, mzd_t* x_measurement_matrix /* n_x x n*/
+                                         ){
+    int n = STABILISER_N(state);
+    int n_x = x_measurement_matrix->nrows;
+
+    mzd* temp = mzd_init(1,n);
+    // z parts submatrix:
+    mzd_t* z_parts = mzd_init(n,n);
+    mzd_submatrix(z_parts,state->tableau,0,0,n,n);
+    mzd_t* temp_commutations=mzd_init(n_x,n);
+  }
+
+  int postselect_on_measuring_plus_one(stabiliser_state_t* state, pauli_t* p){
     // warning: destructive
     int n = STABILISER_N(state);
     pauli_t** old_stabilisers=state->generators;

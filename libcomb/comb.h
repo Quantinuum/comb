@@ -22,23 +22,27 @@ extern "C" {
 
   typedef struct { // Stores a DCP operator as a tableau.
     mzd_t* F; // the upper right block element of c (not c-bar). n x n matrix
-    mzd_t* h_x; // signs of images of z_i. 1  x n matrix
-    mzd_t* h_z; // 1 x n matrix
-    mzd_t* F_diagonal; // diagonal part of F. 1 x n matrix.
+    mzd_t* h_x; // n x 1 matrix
+    mzd_t* h_x_transpose; // 1 x n matrix
+    mzd_t* h_z; // n x 1 matrix
+    mzd_t* F_diagonal; // diagonal part of F. n x 1 matrix.
   } dcp_t;
 
   typedef struct {
     char sign_bit; // sign bit
-    mzd_t* data; // 1 x 2n + 1 row vector
+    mzd_t* data; // 2n + 1 x 1 matrix (column vector)
   } pauli_t; // A Pauli following Dehaene and Demoor.
 
   typedef struct {
-    mzd_t* tableau; // n x 2n+1 matrix (rows are paulis)
-    mzd_t* sign_vector; // 1 x n vector (sign bits of the paulis)
+    mzd_t* x_parts; // n x n - rows are the x parts of paulis
+    mzd_t* z_parts; // n x n - rows are the z parts of paulis
+    mzd_t* delta_vector; // n x 1 - entries are the imaginary bits of the vectors
+    // idea: delta_vector is determined by x_parts and z_parts as it must always be hermitian...
+    mzd_t* epsilon_vector; // n x 1 - entries are the sign bits of the vectors.
   } stabiliser_state_t; // A stabiliser state
 
   typedef struct {
-    mzd_t* factor; // factor: 1 x n matrix
+    mzd_t* factor_transpose; // factor: 1 x n matrix (called transpose to make clear its a row vector)
     mzd_t* set_generators; // k x n matrix (each row a generator)
   } pauli_z_coset_t;
   // Useful macros
