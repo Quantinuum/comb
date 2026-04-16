@@ -6,47 +6,19 @@ extern "C" {
 #include <math.h>
 #include <time.h>
 #include "comb.h"
-  uint32_t gray_bit_to_switch(uint32_t n)
+  uint32_t gray_bit_to_switch(uint32_t n) // allocation free
   {
     uint32_t n_add_one = n + 1;
     uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
     return n ? 31 - __builtin_clz(diff) : 0;
   }
 
-  uint32_t mzd_data(mzd_t* mzd){
-    int n = mzd->nrows;
-    int m = mzd->ncols;
-    uint32_t elt=0;
-    int count = 0;
-    for(int i = 0; i < n; i++){
-      for(int j = 0; j < m; j++){
-        if(mzd_read_bit(mzd,i,j))elt|=(1<< count);
-        count++;
-      }
-    }
-    lwlog_debug("in mzd_data, returning %d",elt);
-    return elt;
+  uint32_t mzd_data(mzd_t* mzd){ // allocation free
+    return (uint32_t)mzd->data[0];
   }
 
-  uint32_t mzd_x_data(mzd_t* mzd){
-    int n = mzd->nrows;
-    int m = mzd->ncols;
-    uint32_t elt=0;
-    int count = 0;
-    for(int i = ((n-1)/2); i < n; i++){
-      for(int j = 0; j < m; j++){
-        if(mzd_read_bit(mzd,i,j))elt|=(1<< count);
-        count++;
-      }
-    }
-    lwlog_debug("in mzd_x_data, returning %d",elt);
-    return elt;
-  }
-
-  void  permute_qubits(pauli_z_coset_t* coset,int n, mzd_t* c){
+  void  permute_qubits(pauli_z_coset_t* coset,int n, mzd_t* c, mzd_t* temp /*mzd_init(2*n+1,1)*/, mzd_t* big_c /*mzd_init((2*n)+1,(2*n)+1)*/){ // allocation free
     lwlog_debug("in permute qubits");
-    mzd_t* temp = mzd_init(2*n+1,1);
-    mzd_t* big_c = mzd_init((2*n)+1,(2*n)+1);
     mzd_set_ui(big_c,1);
     mzd_copy(big_c,c);
     mzd_mul_naive(temp,big_c,coset->factor->data);
@@ -55,14 +27,10 @@ extern "C" {
       mzd_mul_naive(temp,big_c,coset->set_generators[i]->data);
       mzd_copy(coset->set_generators[i]->data,temp);
     }
-    mzd_free(temp);
-    mzd_free(big_c);
   }
 
-  void  permute_x_pauli(pauli_t* pauli, int n, int n_all, mzd_t* permutation){
+  void  permute_x_pauli(pauli_t* pauli, int n, int n_all, mzd_t* permutation, mzd_t* temp /* mzd_init(2*n_all+1,1)*/, mzd_t* big_c /*mzd_init((2*n_all)+1,(2*n_all)+1)*/){ // allocation free
     lwlog_debug("in permute qubits");
-    mzd_t* temp = mzd_init(2*n_all+1,1);
-    mzd_t* big_c = mzd_init((2*n_all)+1,(2*n_all)+1);
     mzd_set_ui(big_c,1);
     for(int i = 0; i < n; i ++){
       for(int j = 0; j < n; j++){
@@ -71,32 +39,34 @@ extern "C" {
     }
     mzd_mul_naive(temp,big_c,pauli->data);
     mzd_copy(pauli->data,temp);
-    mzd_free(temp);
-    mzd_free(big_c);
   }
   void set_to_pauli(pauli_t* a, pauli_t* b){
     a->sign_bit=b->sign_bit;
     mzd_copy(a->data,b->data);
   }
-  void init_pauli_to_size(pauli_t* a, int n){
+  void init_pauli_to_size(pauli_t* a, int n){ // allocates
     a->sign_bit=0;
     a->data=mzd_init(1+(2*n),1);
   }
 
-  void init_to_pauli_x (pauli_t* p, int i, int n_all){
+  void init_to_pauli_x (pauli_t* p, int i, int n_all){ // allocates
     p->data=mzd_init((n_all*2) + 1,1);
     mzd_write_bit(p->data,i+ n_all,0,1);
   }
-  void init_to_pauli (pauli_t* p, int n_all){
+  void init_to_pauli (pauli_t* p, int n_all){ // allocates
     p->data=mzd_init((n_all*2) + 1,1);
   }
 
   int dcp_fault_bad_p_css(dcp_t *error, pauli_t* p, int count, int n, mzd_t* z_permutation, comb_bit_array_t z_lookup_table, mzd_t* x_permutation, comb_bit_array_t x_lookup_table,pauli_t* x_stabilisers, uint32_t n_x, uint32_t* rref_x, uint32_t z_measurement_count, pauli_t* z_measurement_paulis, int n_all){
     lwlog_debug("Testing %s",print_dcp(error,0));
+    mzd_t* temp_x_permute = mzd_init(2*n + 1, 1);
+    mzd_t* big_c_permute = mzd_init(2*n + 1, 2*n + 1);
+    pauli_t* x_part = init_pauli(n_all);//mzd_init(1+(2*n),1);
+    pauli_t* x_part_residual = init_pauli(n);//mzd_init(1+(2*n),1);
+    pauli_t* x_temp = init_pauli(n);//mzd_init(1+(2*n),1);
     //print_dcp(error,1);
     // TODO First, check the X part of the error, as this is easier to deal with.
     // Does it anticommute with any Z basis postselections? If so, the error is always detected, so the entire error is good
-    pauli_t* x_part = init_pauli(n_all);//mzd_init(1+(2*n),1);
     for(int i = 0; i < n_all; i++){
       mzd_write_bit(x_part->data,i+n_all,0,mzd_read_bit(error->h_x,i,0));
     }
@@ -104,11 +74,9 @@ extern "C" {
     for(int j = 0; j < z_measurement_count; j++){
       if(!pauli_commute_p(&(z_measurement_paulis[j]),x_part))return 0; // detected
     }
-    pauli_t* x_part_residual = init_pauli(n);//mzd_init(1+(2*n),1);
     for(int i = 0; i < n; i++){
       mzd_write_bit(x_part_residual->data,i+n,0,mzd_read_bit(x_part->data,i+n_all,0));
     }
-    pauli_t* x_temp = init_pauli(n);//mzd_init(1+(2*n),1);
       // now put in canonical form
     for(int i = 0; i < n_x; i++){
       if(mzd_read_bit(x_part_residual->data,n+rref_x[i],0)){
@@ -118,7 +86,7 @@ extern "C" {
     }
     lwlog_debug("x_part pauli %s after canonicalisation",print_pauli(x_part_residual,0));
     // now permute it
-    permute_x_pauli(x_part_residual,n,n,x_permutation);
+    permute_x_pauli(x_part_residual,n,n,x_permutation,temp_x_permute,big_c_permute);
     lwlog_debug("x_part pauli %s after zeroing and permutation",print_pauli(x_part_residual,0));
     // Is it low weight? If so, it is good, but we must check the rest of the error. If it is not low weight, then the whole error is bad
     if(!TestBit(x_lookup_table,mzd_x_data(x_part_residual->data)))
@@ -149,7 +117,7 @@ extern "C" {
     }
     lwlog_debug("Diagonal clifford to coset %s",print_pauli_z_coset(coset,0));
     // Apply the qubit permutation:
-    permute_qubits(coset,n,z_permutation);
+    permute_qubits(coset,n,z_permutation,temp_x_permute,big_c_permute);
     lwlog_debug("Permuted coset: %s",print_pauli_z_coset(coset,0));
     pauli_t current_element;
     pauli_t temp;

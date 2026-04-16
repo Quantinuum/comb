@@ -19,50 +19,42 @@ extern "C" {
 
   // use m4ri for matrix multiplication
   // no need to implement addition / multiplication etc.
-  typedef struct { // A Clifford tableau following Dehaene and Demoor.
-    mzd_t* c_bar; // 2n + 1 square matrix
-    mzd_t* h_bar; // 2n + 1 column vector
-  } clifford_t;
 
   typedef struct { // Stores a DCP operator as a tableau.
     mzd_t* F; // the upper right block element of c (not c-bar). n x n matrix
-    mzd_t* h_x; // signs of images of z_i
-    mzd_t* h_z;
+    mzd_t* h_x; // signs of images of z_i. 1  x n matrix
+    mzd_t* h_z; // 1 x n matrix
+    mzd_t* F_diagonal; // diagonal part of F. 1 x n matrix.
   } dcp_t;
 
   typedef struct {
     char sign_bit; // sign bit
-    mzd_t* data; // 2n + 1 column vector
+    mzd_t* data; // 1 x 2n + 1 row vector
   } pauli_t; // A Pauli following Dehaene and Demoor.
 
   typedef struct {
-    int n;
-    pauli_t** generators;
+    mzd_t* tableau; // n x 2n+1 matrix (rows are paulis)
+    mzd_t* sign_vector; // 1 x n vector (sign bits of the paulis)
   } stabiliser_state_t; // A stabiliser state
 
   typedef struct {
-    pauli_t* factor; // factor
-    uint32_t k;
-    pauli_t** set_generators; // array of k generators
+    mzd_t* factor; // factor: 1 x n matrix
+    mzd_t* set_generators; // k x n matrix (each row a generator)
   } pauli_z_coset_t;
   // Useful macros
 
-  uint32_t gray_bit_to_switch(uint32_t n);
+uint32_t gray_bit_to_switch(uint32_t n);
+
 #define DCP_N(t) ((t)->F->nrows)
 #define PAULI_N(t) ((((t)->data->nrows)-1)/2)
 #define STABILISER_N(t) ((((t)->data->nrows)-1)/2)
+#define STABILISER_K(t) ((((t)->data->ncols)))
 
   // Creation
-  clifford_t* init_clifford(uint32_t n);
   dcp_t* init_dcp(uint32_t n);
   pauli_t* init_pauli(uint32_t n);
   pauli_z_coset_t* init_pauli_z_coset(uint32_t n, uint32_t k);
-  dcp_t* dcp_pauli_x(uint32_t i, uint32_t n);
-  dcp_t* dcp_pauli_z(uint32_t i, uint32_t n);
-  dcp_t* dcp_cz(uint32_t i, uint32_t j,uint32_t n);
-  dcp_t* dcp_s(uint32_t i, uint32_t n);
   // Freeing
-  void free_clifford(clifford_t* clifford);
   void free_pauli(pauli_t* pauli);
   void free_dcp(dcp_t* dcp);
   void free_pauli_z_coset(pauli_z_coset_t* coset);
@@ -75,9 +67,6 @@ extern "C" {
   char* print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
   char* print_stabiliser_state(stabiliser_state_t *coset, char print_newline_p);
   // more convenient creation
-  pauli_t *pauli_x(uint32_t i, uint32_t n);
-  pauli_t *pauli_z(uint32_t i, uint32_t n);
-
   mzd_t* diag(mzd_t* matrix);
   void add_and(mzd_t* result, mzd_t* F1,mzd_t* F2);
 
@@ -123,7 +112,7 @@ extern "C" {
 
 
   uint32_t mzd_data(mzd_t* mzd);
-  void  permute_qubits(pauli_z_coset_t* coset,int n, mzd_t* c);
+  void  permute_qubits(pauli_z_coset_t* coset,int n, mzd_t* c, mzd_t* temp, mzd_t* big_c);
   void set_to_pauli(pauli_t* a, pauli_t* b);
   void init_pauli_to_size(pauli_t* a, int size);
   void set_dcp_to_transvection(dcp_t* dcp, pauli_t* z_pauli);
@@ -137,6 +126,7 @@ extern "C" {
   void free_pauli_array(uint32_t count, pauli_t* array);
 
   void free_dcp_array(uint32_t count, dcp_t* array);
+  void *incf_coset(pauli_z_coset_t *coset, int index);
 #ifdef __cplusplus
 }
 #endif

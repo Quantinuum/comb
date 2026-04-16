@@ -11,6 +11,9 @@ obj_files := $(c_files:.c=.o)
 libcomb.so: $(obj_files)
 	gcc -shared -o libcomb.so $(CFLAGS) -rdynamic $(obj_files) $(M4RI)
 
+demo: $(c_files) comb.h lwlog.h
+		$(CC) $(c_files) -o demo $(M4RI) $(CFLAGS)
+
 clean:
 	rm -f demo
 	rm -f *.o
