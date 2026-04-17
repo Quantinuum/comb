@@ -10,7 +10,7 @@ extern "C" {
   int do_print_pauli(mzd_t* x_parts, mzd_t* z_parts, mzd_t* delta_vector, mzd_t* epsilon_vector,
                      int row_number, char print_newline_p, int counter){
     int phase=0;
-    int n = state->ncols;
+    int n = x_parts->ncols;
     for(int i = 0 ; i < n; i++){
       if(mzd_read_bit(x_parts,row_number,i) && mzd_read_bit(z_parts,row_number,i))phase++;
     }
@@ -24,7 +24,7 @@ extern "C" {
     case 3: counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"-i"); break;
     default: counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"error in printing pauli");
     }
-    for(int i = 0; i< n; i++){
+    for(int i = 0; i < n; i++){
       char x_p = mzd_read_bit(x_parts, row_number, i);
       char z_p = mzd_read_bit(z_parts, row_number, i);
       counter+=snprintf(print_buffer+counter, PRINT_SIZE-counter,z_p?(x_p?"Y":"Z"):(x_p?"X":"I"));
@@ -42,16 +42,16 @@ extern "C" {
     mzd_set_ui(zero,0);
     mzd_set_ui(zero_vector,0);
     mzd_set_ui(identity,1);
-
     for(int i = 0 ; i < n ; i++){
       // print pauli x_i
       counter = do_print_pauli(identity,zero,zero_vector,zero_vector,i,0,counter);
-      counter += snprintf(print_buffer+counter, PRINT_SIZE-counter," -> ");
-      counter = do_print_pauli(identity,dcp->F,dcp->F-diagonal,dcp->h_z,1,counter); // check these are the right way around
+      counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"  ->");
+      counter = do_print_pauli(identity,dcp->F,dcp->F_diagonal,dcp->h_z,i,1,counter);
+      // check h_z is the right way around
       // print pauli z_i
       counter = do_print_pauli(zero,identity,zero_vector,zero_vector,i,0,counter);
-      counter += snprintf(print_buffer+counter, PRINT_SIZE-counter," -> ");
-      counter = do_print_pauli(zero,identity,zero_vector,dcp->h_x,1,counter);
+      counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"  ->");
+      counter = do_print_pauli(zero,identity,zero_vector,dcp->h_x,i,1,counter);
     }
     mzd_free(zero);
     mzd_free(zero_vector);
@@ -62,10 +62,11 @@ extern "C" {
 
   char* print_stabiliser_state(stabiliser_state_t *state, char print_newline_p){
     int counter = 0;
+    int n = STATE_N(state);
     counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"{");
-    for(int i = 0 ; i< STATE_N(state); i++){
-      counter=do_print_pauli(state->x_parts,state->z_parts,state->delta_vector,state->epsilon_vector,i,0,counter);
-        if(i +1 != coset->n)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
+    for(int i = 0 ; i< n; i++){
+      counter=do_print_pauli(state->x_parts,state->z_parts,state->delta_vector,state->epsilon_vector,i,1,counter);
+        if(i +1 != n)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
     }
       counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,print_newline_p?"}\n":"}");
       return print_buffer;

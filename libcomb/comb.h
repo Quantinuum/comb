@@ -51,8 +51,8 @@ uint32_t gray_bit_to_switch(uint32_t n);
 
 #define DCP_N(t) ((t)->F->nrows)
 #define STATE_N(t) ((((t)->x_parts->nrows)))
-#define COSET_N(t) ((((t)->set_generators->nrows)))
-#define COSET_K(t) ((((t)->set_generators->ncols)))
+#define COSET_K(t) ((((t)->set_generators->nrows)))
+#define COSET_N(t) ((((t)->set_generators->ncols)))
 
   // Creation
   dcp_t* init_dcp(uint32_t n);
@@ -87,8 +87,8 @@ uint32_t gray_bit_to_switch(uint32_t n);
   int postselect_on_measuring_plus_one_z(stabiliser_state_t* state, mzd_t* z_measurement_matrix);
 
   // 4. Applies the diagonal clifford structure theorem to express a clifford as a linear combination of a set of paulis.
-  void *set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state);
-
+  void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state,
+                                     mzd_t* temp /* n x n */, mzd_t* temp_transpose /* n x n */, mzp_t* p/* n */, mzp_t *q /* n  */, mzd_t* augmented_matrix /*n x (n+1)*/, mzd_t* augmented_transpose /* n+1 x n */, stabiliser_state_t *new_state);
   // iteration
 
   int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_balls,
@@ -98,20 +98,23 @@ uint32_t gray_bit_to_switch(uint32_t n);
 
   uint32_t mzd_data(mzd_t* mzd);
   void  permute_qubits(pauli_z_coset_t* coset,int n, mzd_t* c, mzd_t* temp, mzd_t* big_c);
-  void convert_pauli(pauli_t* temp_pauli,comb_pauli_z_t* pauli);
   // conversion
   void convert_dcp(dcp_t* dcp, comb_dcp_t* value);
-  void convert_pauli_x(pauli_t* pauli, comb_pauli_x_t* value);
-  void convert_pauli_z(pauli_t* pauli, comb_pauli_z_t* value);
   void convert_permutation(mzd_t* permutation, uint32_t n, uint32_t n_z, uint32_t *rrefs);
 
-  void free_pauli_array(uint32_t count, pauli_t* array);
-
   void free_dcp_array(uint32_t count, dcp_t* array);
-  void *incf_coset(pauli_z_coset_t *coset, int index);
+  void incf_coset(pauli_z_coset_t *coset, int index);
 
   // temporary variables (won't be thread safe.. probably replace later)
-  extern mzd_t* temp_n_n_1,temp_n_n_2,temp_n_plus_one_n,temp_n_n_plus_one,;
+  extern mzd_t *temp_n_n_1,*temp_n_n_2,*temp_n_plus_one_n,*temp_n_n_plus_one;
+  void init_temps();
+  // utils
+
+  void make_upper_diagonal(int r, mzd_t* M);
+  void fill_rows_with_identity(mzd_t* temp_transpose, int r, int n);
+  BIT row_product(mzd_t* x, int i, mzd_t* z, int j);
+
+  void fix_dcp(dcp_t* dcp);
 #ifdef __cplusplus
 }
 #endif

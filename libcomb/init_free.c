@@ -7,61 +7,45 @@ extern "C" {
   dcp_t* init_dcp(uint32_t n){
     dcp_t* tableau = (dcp_t*)malloc(sizeof(dcp_t));
     // follows demoor and dehaene
-    tableau->F=mzd_init(n,n);
-    tableau->h_x=mzd_init(1,n);
-    tableau->h_z=mzd_init(1,n);
-    tableau->F_diagonal=mzd_init(1,n);
+    init_dcp_to_size(tableau,n);
     return tableau;
   }
 
   void init_dcp_to_size(dcp_t* tableau, uint32_t n){
     tableau->F=mzd_init(n,n);
-    tableau->h_x=mzd_init(1,n);
-    tableau->h_z=mzd_init(1,n);
-    tableau->F_diagonal=mzd_init(1,n);
+    tableau->h_x=mzd_init(n,1);
+    tableau->h_x_transpose=mzd_init(1,n);
+    tableau->h_z=mzd_init(n,1);
+    tableau->F_diagonal=mzd_init(n,1);
   }
 
-  pauli_t* init_pauli(uint32_t n){
-    pauli_t* pauli = (pauli_t*)malloc(sizeof(pauli_t));
-    pauli->sign_bit=0;
-    pauli->data=mzd_init(1,1+(2*n));
-    return pauli;
-  }
   pauli_z_coset_t* init_pauli_z_coset(uint32_t n, uint32_t k){
     pauli_z_coset_t* coset = (pauli_z_coset_t*)malloc(sizeof(pauli_z_coset_t));
-    coset->factor=mzd_init(1,n);
+    coset->factor_transpose=mzd_init(1,n);
     coset->set_generators=mzd_init(n,n);
-    coset->n_cols=k; // hope this is fine?
     return coset;
   }
   void free_dcp_array(uint32_t count, dcp_t* array){
     for(int i = 0; i < count; i++){
       mzd_free(array[i].F);
       mzd_free(array[i].h_x);
+      mzd_free(array[i].h_x_transpose);
       mzd_free(array[i].h_z);
       mzd_free(array[i].F_diagonal);
     }
     free(array);
   }
-  void free_pauli_array(uint32_t count, pauli_t* array){
-    for(int i = 0; i < count; i++)
-      mzd_free(array[i].data);
-    free(array);
-  }
   void free_dcp(dcp_t* dcp){
     mzd_free(dcp->F);
     mzd_free(dcp->h_x);
+    mzd_free(dcp->h_x_transpose);
     mzd_free(dcp->h_z);
     mzd_free(dcp->F_diagonal);
     free(dcp);
   }
-  void free_pauli(pauli_t* pauli){
-    mzd_free(pauli->data);
-    free(pauli);
-  }
   void free_pauli_z_coset(pauli_z_coset_t* coset){
-    mzd_free(coset->factor);
-    coset->set_generators->ncols=coset->set_generators->nrows; // bring back up to size before freeing
+    mzd_free(coset->factor_transpose);
+    coset->set_generators->nrows=coset->set_generators->ncols; // bring back up to size before freeing
     mzd_free(coset->set_generators);
     free(coset);
   }
@@ -71,6 +55,7 @@ extern "C" {
     mzd_copy(a->F,b->F);
     mzd_copy(a->F_diagonal,b->F_diagonal);
     mzd_copy(a->h_x,b->h_x);
+    mzd_copy(a->h_x_transpose,b->h_x_transpose);
     mzd_copy(a->h_z,b->h_z);
   }
 

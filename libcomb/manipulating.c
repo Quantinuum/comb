@@ -14,109 +14,12 @@ extern "C" {
     // TODO
   }
 
-  void *incf_coset(pauli_z_coset_t *coset, int index){
+  void incf_coset(pauli_z_coset_t *coset, int index){
     // Iterates over the coset by adding one of the generators, chosen by a gray code, to factor.
     // !!! won't work with less than 64 bits (reasonable assumption if we're using lookup tables)
-    coset->factor->data[0]^=mzd_row(coset->set_generators,gray_bit_to_switch(index))[0];
+    coset->factor_transpose->data[0]^=mzd_row(coset->set_generators,gray_bit_to_switch(index))[0];
   }
 
-  int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, mzd_t* x_measurement_matrix /* n_x x n*/
-                                         ){
-    int n = STABILISER_N(state);
-    int n_x = x_measurement_matrix->nrows;
-
-    mzd* temp = mzd_init(1,n);
-    // z parts submatrix:
-    mzd_t* z_parts = mzd_init(n,n);
-    mzd_submatrix(z_parts,state->tableau,0,0,n,n);
-    mzd_t* temp_commutations=mzd_init(n_x,n);
-  }
-
-  int postselect_on_measuring_plus_one(stabiliser_state_t* state, pauli_t* p){
-    // warning: destructive
-    int n = STABILISER_N(state);
-    pauli_t** old_stabilisers=state->generators;
-    // case 1: p is in the stabiliser group. in this case, measuring is always +1 (in which case no effect) or -1 in which case always detected, and we return non-zero.
-    // case 2: p in the normaliser (commutes with all stabilisers) yet does not lie in the stabiliser group. in this case, p measures some of the data. this case is not possible for stabiliser states, as the normaliser equals the stabiliser group, so we neglect it.
-    // case 3: p not in the normaliser. in this case, we take one elt S' which does not commute with P, add P as a stabiliser, and for all S not equal to S', we add S if it commutes with P and PS'S otherwise.
-    // seeing as how for us diagonal cliffords enter into the picture solely through the images of the x_i bases might not be an issue. probably want a stabiliser state after all though
-    int anticommutes_with_some_pauli_p=0;
-    int anti_commuting_index=-1;
-    for(int i = 0; i < n; i++){
-      if(!pauli_commute_p(p,old_stabilisers[i])){
-        anti_commuting_index=i;
-        anticommutes_with_some_pauli_p=1;
-      }
-    }
-    if(anticommutes_with_some_pauli_p){
-      // case 3
-      lwlog_debug("stabiliser %s anticommutes",print_pauli(old_stabilisers[anti_commuting_index],0));
-      pauli_t* anticommuter = old_stabilisers[anti_commuting_index];
-      pauli_t** new_stabilisers=malloc(n*sizeof(pauli_t*));
-      for(int i =0 ; i< n; i++){
-        lwlog_debug("processing stabiliser generator %s",print_pauli(old_stabilisers[i],0));
-        if(i== anti_commuting_index){
-          lwlog_debug("it is the anticommuting operator, so replacing with measurement operator %s",print_pauli(p,0));
-          new_stabilisers[i]=init_pauli(n);
-          set_to_pauli(new_stabilisers[i],p);
-        }
-        else{
-          if(pauli_commute_p(p,old_stabilisers[i])){
-            new_stabilisers[i]=init_pauli(n);
-            set_to_pauli(new_stabilisers[i],old_stabilisers[i]);
-            lwlog_debug("it commutes, so keeping %s",print_pauli(new_stabilisers[i],0));
-          }
-          else {
-          new_stabilisers[i]=pauli_mul(0,old_stabilisers[i],anticommuter);
-          lwlog_debug("it anticommutes, so multiplying it by the anticommuter: %s",print_pauli(new_stabilisers[i],0));
-          }
-        }
-      }
-      //  printf("new stabilisers:\n");
-      //for(int i =0;i<n;i++){
-      //  printf("%d: ",i);
-      // print_pauli(new_stabilisers[i],1);
-      // }
-      // set the old stabilisers equal to the new stabilisers.
-      state->generators=new_stabilisers;
-      //for(int i = 0; i< n; i++)free_pauli(old_stabilisers[i]);
-      free(old_stabilisers);
-      return 0;
-    }
-    else{
-      lwlog_debug("every stabiliser commutes, trying to form the identity");
-      //case 1
-      // try to figure out if you can create -1 from it.
-      mzd_t* A = mzd_init(2*n,n);
-      mzd_t* B = mzd_init(2*n,1);
-      for(int i = 0; i < (2*n); i++){
-        for(int j = 0; j < n; j++){
-          mzd_write_bit(A,i,j,mzd_read_bit(old_stabilisers[j]->data,i,0));
-        }
-        mzd_write_bit(B,i,0,mzd_read_bit(p->data,i,0));
-      }
-      int solution = mzd_solve_left(A,B,0,0);
-      if(solution==-1)lwlog_err("warning: solution was -1! no solution found");
-      pauli_t* r = p;
-      //printf("case 1\n");
-      for(int i = 0 ; i < n; i ++){
-        if(mzd_read_bit(B,i,0))
-          r = pauli_mul(0,r,old_stabilisers[i]);
-      }
-      //printf("result:\n");
-      lwlog_debug("pauli %s formed",print_pauli(r,0));
-      //print_pauli(r,1);
-      if(r->sign_bit){
-        lwlog_debug("-I so always detected; state vanishes");
-        return 1; // -I so always detected; state vanishes
-      }
-      else{ // state is unchanged
-        lwlog_debug("I so state unchanged");
-        return 0;
-      }
-    }
-    return 0;
-  }
 
 #ifdef __cplusplus
 }
