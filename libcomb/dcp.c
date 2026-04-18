@@ -11,7 +11,7 @@ extern "C" {
     mzd_add(result->h_x,c2->h_x,c1->h_x); // h_x
     mzd_add(result->h_x_transpose,c2->h_x_transpose,c1->h_x_transpose); // h_x_transpose
     mzd_add(result->h_z,c2->h_z,c1->h_z); // h_z
-    mzd_addmul_naive(result->h_z,c1->F,c2->h_x); // TODO replace with transpose
+    _mzd_mul_naive(result->h_z,c1->F,c2->h_x_transpose,0);
     add_and_column_vector(result->h_z,c1->F_diagonal,c2->F_diagonal);
     return result;
   } // doesnt transpose. need add_and to work on column matrices though. keep track of h_x and h_x transpose? should be able to avoid all transposing when multiplying dcp operators.
@@ -81,7 +81,7 @@ extern "C" {
           expand_state(state); // ensure state has enough room for n+1 stabiliser generators
           set_row(x_parts,z_parts,n,x_measurement_matrix,i, epsilon_bits, delta_bits); // copy measurement operator to last row
           // now do gaussian elimination to ensure that final row is either -I or I. if this is not possible signal an error
-          // actually need something better than this here. there's no row swapping
+          // something better than this needed? there's no row swapping
           clear_rows(state,x_parts,n);
           clear_rows(state,z_parts,n);
 
