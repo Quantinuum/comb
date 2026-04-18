@@ -18,26 +18,39 @@ extern "C" {
                           comb_bit_array_t z_lookup_table,
                           mzd_t* x_stabilisers,
                           uint32_t* rref_x,
-                          int n_all,
+                          int n_all, int n, int n_x,
                           stabiliser_state_t* state,
                           pauli_z_coset_t* coset){
     lwlog_debug("Testing %s",print_dcp(error,0));
     mzd_t* x_error = error->h_x_transpose; // dont need to transpose to get x error
+    lwlog_debug("X error is %s",print_row_vector_as_pauli(x_error,0,"X"));
     for(int i = 0; i < z_measurements_for_x->nrows; i++){
       if(row_product(x_error,0,z_measurements_for_x,i)){
-        // detected by a z measurement; so fault is good
+        lwlog_debug("X error anticommutes with Z measurement %d %s, so whole error is good",i,
+                    print_row_vector_as_pauli(z_measurements_for_x,i,"Z"));
         return 0;
+      }
+      else{
+        lwlog_debug("X error commutes with Z measurement %d %s, continuing...",i,
+                    print_row_vector_as_pauli(z_measurements_for_x,i,"Z"));
       }
     }
     // need to canonicalise the x error.
     for(int i = 0; i < x_stabilisers->nrows; i++){
       if(mzd_read_bit(x_error,0,rref_x[i])){ // eliminate by multiplying by a stabiliser
+        lwlog_debug("Multiplying by %s to canonicalise...",print_row_vector_as_pauli(x_stabilisers,i,"X"));
         mzd_combine(x_error,0,0,x_error,0,0,x_stabilisers,i,0);
+        lwlog_debug("New X error is %s",print_row_vector_as_pauli(x_error,0,"X"));
       }
     }
     // apply the permutation to x.
+    lwlog_debug("Error before permutation and eliminating ancillas is %s (mask %x)",print_row_vector_as_pauli(x_error,0,"X"),x_permutation);
+    x_error->data[0]&=((1<<(n)) - 1);
+    lwlog_debug("Error after eliminating ancilla terms is %s",print_row_vector_as_pauli(x_error,0,"X"));
     permute_columns(x_error,x_permutation);
+    lwlog_debug("Error after permutation is %s",print_row_vector_as_pauli(x_error,0,"X"));
     int reduced_x_error = mzd_data(x_error);
+    lwlog_debug("Reduced x error is %x",reduced_x_error);
     if(!TestBit(x_lookup_table,reduced_x_error)){
       lwlog_debug("x error undetected and high weight, so whole error is bad");
       return 1;
@@ -201,7 +214,7 @@ extern "C" {
           }
         }
         // now check to see if it is good or not.
-        if(!dcp_fault_bad_p_css(error_with_stabilisers, x_measurement_matrix, z_measurement_matrix, z_measurements_for_x, x_permutation, z_permutation, x_lookup_table, z_lookup_table, x_stabilisers, rref_x, n_all, state, coset)){
+        if(!dcp_fault_bad_p_css(error_with_stabilisers, x_measurement_matrix, z_measurement_matrix, z_measurements_for_x, x_permutation, z_permutation, x_lookup_table, z_lookup_table, x_stabilisers, rref_x, n_all, n,  n_x, state, coset)){
           // a good one was found after multiplying by a choice of logicals, set the flag
           good_combination_found=1;
           //break outer;
@@ -262,8 +275,8 @@ extern "C" {
     }
     dcp_t* dcp_stabilisers = malloc(k * sizeof(dcp_t));
     dcp_t* output_errors = malloc(output_error_count * sizeof(dcp_t));
-    mzd_t* x_measurement_paulis = mzd_init(x_measurement_count,n);
-    mzd_t* z_measurement_paulis = mzd_init(z_measurement_count,n);
+    mzd_t* x_measurement_paulis = mzd_init(x_measurement_count,n_all);
+    mzd_t* z_measurement_paulis = mzd_init(z_measurement_count,n_all);
     mzd_t* x_stabilisers = mzd_init(n_x,n);
     mzd_t* z_stabilisers = mzd_init(n_z,n);
     unsigned long long fault_counter=0;
@@ -271,10 +284,12 @@ extern "C" {
     for(int i = 0; i < n_x; i++){
       lwlog_debug("converting x stabiliser %d",i);
       convert_row(x_stabilisers,i,&(_x_stabilisers[i]));
+      lwlog_debug("x_stabilisers[%d]=%s",i,print_row_vector_as_pauli(x_stabilisers,i,"X"));
     }
     for(int i = 0; i < n_z; i++){
       lwlog_debug("converting z stabiliser %d",i);
       convert_row(z_stabilisers,i,&(_z_stabilisers[i]));
+      lwlog_debug("z_stabilisers[%d]=%s",i,print_row_vector_as_pauli(z_stabilisers,i,"X"));
     }
     for(int i = 0; i < k; i++){
       lwlog_debug("converting logical stabiliser %d",i);
@@ -288,10 +303,12 @@ extern "C" {
     for(int i = 0; i < x_measurement_count; i++){
       lwlog_debug("converting x measurement %d",i);
       convert_row(x_measurement_paulis,i,&(_x_measurement_paulis[i]));
+      lwlog_debug("x_measurement_paulis[%d]=%s",i,print_row_vector_as_pauli(x_measurement_paulis,i,"X"));
     }
     for(int i = 0; i < z_measurement_count; i++){
       lwlog_debug("converting z measurement %d",i);
       convert_row(z_measurement_paulis,i,&(_z_measurement_paulis[i]));
+      lwlog_debug("z_measurement_paulis[%d]=%s",i,print_row_vector_as_pauli(z_measurement_paulis,i,"Z"));
     }
 
     for(int i = 0; i < fault_location_count ; i++){

@@ -27,17 +27,7 @@ extern "C" {
 
   // 3. Carry out measurements on a stabiliser state.
   // First, we'll need to be able to reorder the generators according to some specified row operations.
-  void left_multiply(stabiliser_state_t* state, mzd_t* M /*n x n*/, stabiliser_state_t* new_state){
-    // Performs elementary row operations on the stabiliser generators of a state by multiplying on the left by a matrix M and stores the results in a different state.
-    mzd_mul_naive(temp_n_n_1,state->delta_vector,mzd_transpose(0,state->delta_vector)); // delta delta^T
-    mzd_mul_naive(temp_n_n_2,state->x_parts,mzd_transpose(0,state->z_parts)); //SX S^Z^T
-    // do the multiplications
-    mzd_mul_naive(new_state->x_parts,M,state->x_parts);
-    mzd_mul_naive(new_state->z_parts,M,state->z_parts);
-    mzd_mul_naive(new_state->delta_vector,M,state->delta_vector);
-    mzd_mul_naive(new_state->epsilon_vector,M,state->epsilon_vector);
-    // TODO fix the epsilons using the delta and the a storage (important)
-  } // lots of transposing.
+
   void swap_rows(stabiliser_state_t* state, int i, int j){
     mzd_row_swap(state->x_parts,i,j);
     mzd_row_swap(state->z_parts,i,j);
@@ -63,13 +53,13 @@ extern "C" {
   }
 
 
-  int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, mzd_t* x_measurement_matrix, mzd_t* delta_bits, mzd_t* epsilon_bits){
+  int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, mzd_t* x_measurement_matrix, mzd_t* delta_bits, mzd_t* epsilon_bits,char* x_measurement_string){
     int n_x = x_measurement_matrix->nrows;
     int n = x_measurement_matrix->ncols;
     //mzd_t* m_i = mzd_init(1,n); // row vector
     //mzd_t* z_j = mzd_init(1,n); // current stabiliser: row vector
       for(int i = 0; i < n_x; i++){
-        lwlog_debug("measuring %d -th operator on state %s",i,print_stabiliser_state(state,1));
+        lwlog_debug("measuring operator %d: %s",i,print_row_vector_as_pauli(x_measurement_matrix,i,x_measurement_string));
         //mzd_copy_row(m_i,0,x_measurement_matrix,i); // get the measurement out
         int anticommuting_stabiliser_found = 0;
         for(int j = 0; j < n && !anticommuting_stabiliser_found; j++){
@@ -110,7 +100,7 @@ extern "C" {
   // Postselect a stabiliser state on a set of X measurements.
   int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, mzd_t* x_measurement_matrix /* n_x x n; rows are paulis*/
                                          ){
-    return _postselect_on_x(state, state->x_parts, state->z_parts, x_measurement_matrix, state->delta_vector, state->epsilon_vector);
+    return _postselect_on_x(state, state->x_parts, state->z_parts, x_measurement_matrix, state->delta_vector, state->epsilon_vector,"X");
   }
 
 
@@ -118,10 +108,9 @@ extern "C" {
   // Postselect a stabiliser state on a set of Z measurements.
   int postselect_on_measuring_plus_one_z(stabiliser_state_t* state, mzd_t* z_measurement_matrix /* n_z x n*/
                                          ){
-    return _postselect_on_x(state, state->z_parts, state->x_parts, z_measurement_matrix, state->delta_vector, state->epsilon_vector);
+    return _postselect_on_x(state, state->z_parts, state->x_parts, z_measurement_matrix, state->delta_vector, state->epsilon_vector,"Z");
   }
   // 4. Turn a stabiliser state into a coset. Idea: reduce size of stabiliser state by means of the permutation first? you know it will have zero support on ancilla qubits. what's the point in doing too much pluq. you can do it simply on the reduced data indices.
-#define VERIFY_COSET_RREF 1
   int row_empty_p(mzd_t* M, int row){
     for(int col = 0; col < M->ncols; col++)
       if(mzd_read_bit(M,row,col))return 0;
@@ -180,8 +169,8 @@ extern "C" {
       // column should only have one 1 now.
     }
     lwlog_debug("State after gaussian elimination on X parts:\n %s",print_stabiliser_state(state,1));
-    // optional: verify state is in rref
-    #if VERIFY_COSET_RREF
+    // optional: verify state is in rref if debug is on
+    #if DEBUG
     // verify that z parts, for all i greater than r, vanish
     for(int row = r; row < n; row++){
       for(int col = 0; col < n; col++){
@@ -222,6 +211,7 @@ extern "C" {
           }
         }
       }
+      lwlog_debug("state %s verified to be in appropriate form",print_stabiliser_state(state,1));
     #endif
     // Now read off results and store them in coset
     coset->set_generators->nrows=n; // bring back up to size

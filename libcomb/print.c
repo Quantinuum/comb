@@ -32,7 +32,14 @@ extern "C" {
     if(print_newline_p)counter+=snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
     return counter;
   }
-
+  char* print_row_vector_as_pauli(mzd_t* row_vector, int row, const char* character){
+    int counter =0;
+    const char* identity="I";
+    for(int i = 0; i < row_vector->ncols; i++){
+      counter+=snprintf(print_buffer+counter, PRINT_SIZE-counter,"%s",mzd_read_bit(row_vector,row,i)?character:identity);
+    }
+    return print_buffer;
+  }
   char* print_dcp(dcp_t* dcp, char print_newline_p){ // print_newline_p ignored actually
     int n = DCP_N(dcp);
     int counter = 0;

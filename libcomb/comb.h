@@ -72,6 +72,8 @@ uint32_t gray_bit_to_switch(uint32_t n);
   void add_and_column_vector(mzd_t* result, mzd_t* F1,mzd_t* F2);
   // Converting
   void convert_dcp(dcp_t* dcp, comb_dcp_t* comb);
+
+  char* print_row_vector_as_pauli(mzd_t* row_vector, int row, const char* character);
   // for algorithm:
   // 1. Multiplies DCP operators
   dcp_t *dcp_mul(dcp_t *result, dcp_t *c1, dcp_t *c2);
