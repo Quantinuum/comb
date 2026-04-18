@@ -19,7 +19,12 @@ extern "C" {
     result->data[result->width - 1] &= result->high_bitmask; // on the safe side
   }
   void add_and_column_vector(mzd_t* result, mzd_t* F1, mzd_t* F2){
-    // TODO
+    // assumes that f1, f2, and result are congruous column vectors
+    // necessarily linear time.
+    int n = result->nrows;
+    for(int i = 0; i < n; i++){
+      mzd_write_bit(result,i,0,(mzd_read_bit(result,i,0) ^ (mzd_read_bit(F1,i,0) & mzd_read_bit(F2,i,0))));
+    }
   }
 
   void incf_coset(pauli_z_coset_t *coset, int index){

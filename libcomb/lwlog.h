@@ -36,7 +36,7 @@ SOFTWARE.
 #include <string.h>
 
 #ifndef LOG_LEVEL
-#define LOG_LEVEL (8)
+#define LOG_LEVEL (4)
 #endif
 
 #ifndef LOG_COLOR

@@ -81,6 +81,7 @@ extern "C" {
           expand_state(state); // ensure state has enough room for n+1 stabiliser generators
           set_row(x_parts,z_parts,n,x_measurement_matrix,i, epsilon_bits, delta_bits); // copy measurement operator to last row
           // now do gaussian elimination to ensure that final row is either -I or I. if this is not possible signal an error
+          // actually need something better than this here. there's no row swapping
           clear_rows(state,x_parts,n);
           clear_rows(state,z_parts,n);
 
@@ -170,7 +171,7 @@ extern "C" {
     }
     lwlog_debug("State after gaussian elimination on X parts:\n %s",print_stabiliser_state(state,1));
     // optional: verify state is in rref if debug is on
-    #if DEBUG
+#if LOG_LEVEL >= DEBUG
     // verify that z parts, for all i greater than r, vanish
     for(int row = r; row < n; row++){
       for(int col = 0; col < n; col++){
@@ -204,7 +205,7 @@ extern "C" {
           for(int row2 = 0; row2 < n; row2++){
             if(row!=row2){
               if(mzd_read_bit(state->x_parts,row2,leading_column)){
-                lwlog_err( "state->x_parts[%d]{%d], state->x_parts[%d]{%d] not zero",row,leading_column,row2,leading_column);
+                lwlog_err( "state->x_parts[%d][%d], state->x_parts[%d]{%d] not zero",row,leading_column,row2,leading_column);
                 exit(1);
               }
             }
