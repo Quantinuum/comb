@@ -68,10 +68,13 @@ extern "C" {
     }
     // error is now canonicalised. turn it into a coset and apply the z permutation to it:
     set_coset_to_stabiliser_state(coset,state);
+    lwlog_debug("coset before permuting is %s",print_pauli_z_coset(coset,0));
     permute_columns(coset->factor_transpose, z_permutation);
     permute_columns(coset->set_generators, z_permutation);
+    lwlog_debug("coset after permuting is %s",print_pauli_z_coset(coset,0));
     // iterate over all elements in the coset and verify that each one is good. if not, return bad
     for(int i = 0; i < (1 << COSET_K(coset)); i++){
+      lwlog_debug("Testing Z error is %s",print_row_vector_as_pauli(coset->factor_transpose,0,"Z"));
       int reduced_z_error = mzd_data(coset->factor_transpose);
       if(!TestBit(z_lookup_table,reduced_z_error)){
         lwlog_debug("z error in coset is high weight, so error is bad");
