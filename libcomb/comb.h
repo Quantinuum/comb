@@ -79,7 +79,7 @@ uint32_t gray_bit_to_switch(uint32_t n);
   void set_stabiliser_state_to_dcp(stabiliser_state_t* state, dcp_t* dcp);
   // 3. Manipulate stabiliser states more easily
   void swap_rows(stabiliser_state_t* state, int i, int j);
-  void add_row(stabiliser_state_t* state, int i, int j);
+  void add_row(stabiliser_state_t* state, int sourcerow, int destrow);
   void left_multiply(stabiliser_state_t* state, mzd_t* M, stabiliser_state_t* new_state);
 
   // 3. Postselects on a stabiliser state (destructive). Can be used to canonicalise too...
@@ -87,8 +87,7 @@ uint32_t gray_bit_to_switch(uint32_t n);
   int postselect_on_measuring_plus_one_z(stabiliser_state_t* state, mzd_t* z_measurement_matrix);
 
   // 4. Applies the diagonal clifford structure theorem to express a clifford as a linear combination of a set of paulis.
-  void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state,
-                                     mzd_t* temp /* n x n */, mzd_t* temp_transpose /* n x n */, mzp_t* p/* n */, mzp_t *q /* n  */, mzd_t* augmented_matrix /*n x (n+1)*/, mzd_t* augmented_transpose /* n+1 x n */, stabiliser_state_t *new_state);
+  void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state);
   // iteration
 
   int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_balls,
@@ -117,6 +116,7 @@ uint32_t gray_bit_to_switch(uint32_t n);
 
   void fix_dcp(dcp_t* dcp);
 
+  void mask_row_vector(mzd_t* result, mzd_t* mask);
   stabiliser_state_t* init_state(int n);
 
   void expand_state(stabiliser_state_t* state);

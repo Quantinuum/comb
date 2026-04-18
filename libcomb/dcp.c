@@ -121,49 +121,83 @@ extern "C" {
     return _postselect_on_x(state, state->z_parts, state->x_parts, z_measurement_matrix, state->delta_vector, state->epsilon_vector);
   }
   // 4. Turn a stabiliser state into a coset. Idea: reduce size of stabiliser state by means of the permutation first? you know it will have zero support on ancilla qubits. what's the point in doing too much pluq. you can do it simply on the reduced data indices.
-
-    void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state,
-                                      mzd_t* temp /* n x n */, mzd_t* temp_transpose /* n x n */, mzp_t* p/* n */, mzp_t *q /* n  */, mzd_t* augmented_matrix /*n x (n+1)*/, mzd_t* augmented_transpose /* n+1 x n */, stabiliser_state_t *new_state){
+#define VERIFY_COSET_RREF 1
+  void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state){
     int n = STATE_N(state);
-    // 1. Do Gaussian elimination on the Z parts of the stabiliser generators.
-    mzd_copy(temp,state->z_parts); // copy over the Z parts
-    int r = mzd_pluq(temp,p,q,0);
-    lwlog_debug("PLUQ done"); // L is n x r, U is r x n.
-    // The rref = U Q is a basis for the vector space of the coset. Copy it over
-    coset->set_generators->nrows=n;
-    mzd_copy(coset->set_generators,temp);
-    // only want the upper diagonal part in order to get U.
-    make_upper_diagonal(r,coset->set_generators);
-    mzd_apply_p_right(coset->set_generators,q);
-    coset->set_generators->nrows=r;// Coset generators now equal to UQ^T. Careful: lower rows may be garbage.
-
-    // Now need to calculate L^-1 P^T - the row ops.
-    mzd_transpose(temp_transpose,temp); // TODO can you do transpose in place? unsure if worth it. update: looks like you can for small matrices at least
-    make_upper_diagonal(r,temp_transpose); // temp_transpose now contains L^T
-    fill_rows_with_identity(temp_transpose,r,n); // temp_transpose now contains L^T a unit n x n upper triangular matrix
-    mzd_trtri_upper(temp_transpose); // temp_transpose now contains (L^T)^-1.
-    // apply P on the left
-    mzd_apply_p_left(temp_transpose,p);
-    // Now temp_transpose contains P (L^T)^-1 = ( L^-1 P^T )^T. So the transpose of what we wanted.
-    // Apply the row_ops to get the new stabilisers
-    mzd_transpose(temp,temp_transpose);
-    left_multiply(state,temp,new_state);
-    state=new_state;
-    // Need to find a Pauli which commutes or anticommutes with the X parts of the stabilisers as appropriate.
-    // Use gaussian elimination on an augmented matrix to do this.
-    // TODO set up augmented matrix here. copy in sign bits as appropriate
-    mzd_set_ui(augmented_matrix,0);
-    // Figure out how to copy submatrices better
-    for(int i = r; i < n; i ++){
-      mzd_write_bit(augmented_matrix,i-r,n,mzd_read_bit(state->epsilon_vector,0,i));
-      for(int j = 0; j < n; j++){
-        mzd_write_bit(augmented_matrix,i-r,j,mzd_read_bit(state->x_parts,i,j));
+    int r = n;
+    mzd_t* row_mask = mzd_init(1,n);
+    lwlog_debug("State before gaussian elimination:\n %s",print_stabiliser_state(state,1));
+    // Gaussian elimination on Z parts - ensuring that last n-r stabilisers have no Z parts
+    for(int row = 0; row < n; row++){
+      // search for leading entry.
+      int leading_column=-1;
+      for(int col = 0; (leading_column==-1) && col < n; col++){
+        if(mzd_read_bit(state->z_parts,row,col)){
+          leading_column = col;
+        }
+      }
+      if(leading_column==-1){
+        // row was zero. swap it to the end and try again.
+        r--;
+        swap_rows(state,row,r);
+        row--; // have to now check the new row again, so decf row
+      }
+      else{
+        // do gaussian elimination on the column.
+        for(int row2 = 0; row2 < n; row2++){
+          if(row2!=row){
+            if(mzd_read_bit(state->z_parts,row2,leading_column)){
+              add_row(state,row,row2);
+            }
+          }
+        }
       }
     }
-    mzd_echelonize_naive(augmented_matrix,1);
-    // Final column of augmented matrix now contains a solution. transpose it and get it into factor
-    mzd_transpose(augmented_transpose,augmented_matrix); // augmented transpose is n+1 x n. final row is factor
-    mzd_copy_row(coset->factor_transpose,0,augmented_transpose,n); // or are the remaining columns a basis for the null space? well, we got them from the gaussian elimination anyway. but maybe not necessary to copy them over above then
+    lwlog_debug("State after gaussian elimination on Z parts: r = %d\n %s",r,print_stabiliser_state(state,1));
+    // Gaussian elimination on X parts of last n-r stabilisers
+    for(int col = 0; col < n; col++){
+      int row_to_add=-1;
+      for(int row = r; row < n; row++){
+        if(mzd_read_bit(state->x_parts,row,col)){
+          mzd_write_bit(row_mask,0,col,1);
+          if(row_to_add==-1){ // no row yet found with a 1 in this column; if there are any others, then add this one to them.
+            row_to_add=row;
+          }
+          else{
+            add_row(state,row,row_to_add);
+          }
+        }
+      }
+      // column should only have one 1 now.
+    }
+    lwlog_debug("State after gaussian elimination on X parts:\n %s",print_stabiliser_state(state,1));
+    // optional: verify state is in rref
+    #if VERIFY_COSET_RREF
+    // verify that z parts, for all i greater than r, vanish
+    for(int row = r; row < n; row++){
+      for(int col = 0; col < n; col++){
+        if(mzd_read_bit(state->z_parts,row,col)){
+          lwlog_err( "state->z_parts[%d]{%d] not zero",row,col);
+          exit(1);
+        }
+      }
+    }
+    // verify that x parts, for all greater than r, are in rref
+    // TODO
+    #endif
+    // Now read off results and store them in coset
+    coset->set_generators->nrows=n; // bring back up to size
+    mzd_copy(coset->set_generators,state->z_parts);
+    coset->set_generators->nrows=r; // only r of them are valid
+    mzd_set_ui(coset->factor_transpose,0);
+    for(int i = r; i < n; i++){
+      if(mzd_read_bit(state->epsilon_vector,i,0))
+        mzd_combine(coset->factor_transpose,0,0,
+                    coset->factor_transpose,0,0,
+                    state->x_parts,i,0); // if the sign bit is 1, add it to the coset element
+    }
+    mask_row_vector(coset->factor_transpose,row_mask);
+    mzd_free(row_mask);
   }
 
 #ifdef __cplusplus

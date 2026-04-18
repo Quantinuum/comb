@@ -22,7 +22,7 @@ int main(int argv, char** args){
   fprintf(stderr,"%s",print_stabiliser_state(state,1));
   fprintf(stderr,"postselection %d",postselect_on_measuring_plus_one_z(state,z_measurement_matrix));
   fprintf(stderr,"%s",print_stabiliser_state(state,1));
-  set_coset_to_stabiliser_state(coset,state,temp_n_n_1,temp_n_n_2,p,q,temp_n_n_plus_one,temp_n_plus_one_n,new_state);
+  set_coset_to_stabiliser_state(coset,state);
   for(int i = 0; i < 1 << COSET_K(coset); i++){
     fprintf(stderr,"%s",print_pauli_z_coset(coset,1));
     incf_coset(coset,i);

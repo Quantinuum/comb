@@ -53,12 +53,8 @@ extern "C" {
       lwlog_debug("error detected in x postselections, so error is good");
       return 0;
     }
-    stabiliser_state_t* new_state = init_state(n_all); // allocation.. need to fix this
-    // should probably rewrite set_coset_to_stabiliser_state to use own gaussian elimination
-    mzp_t *p = mzp_init(n_all);
-    mzp_t *q = mzp_init(n_all);
     // error is now canonicalised. turn it into a coset and apply the z permutation to it:
-    set_coset_to_stabiliser_state(coset,state,temp_n_n_1,temp_n_n_2,p,q,temp_n_n_plus_one,temp_n_plus_one_n,new_state);
+    set_coset_to_stabiliser_state(coset,state);
     permute_columns(coset->factor_transpose, z_permutation);
     permute_columns(coset->set_generators, z_permutation);
     // iterate over all elements in the coset and verify that each one is good. if not, return bad
