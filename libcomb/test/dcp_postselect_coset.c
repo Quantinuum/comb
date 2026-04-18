@@ -8,8 +8,8 @@ int main(int argv, char** args){
   dcp->h_x = mzd_from_str(3,1,args[2]);
   dcp->h_z = mzd_from_str(3,1,args[3]);
   fix_dcp(dcp);
-  dcp_t* x_measurement_matrix = mzd_from_str(2,3,args[4]);
-  dcp_t* z_measurement_matrix = mzd_from_str(2,3,args[5]);
+  mzd_t* x_measurement_matrix = mzd_from_str(2,3,args[4]);
+  mzd_t* z_measurement_matrix = mzd_from_str(2,3,args[5]);
 
   stabiliser_state_t* state = init_state(3);
   stabiliser_state_t* new_state = init_state(3);

@@ -70,7 +70,7 @@ void convert_permutation(mzd_t* permutation, uint32_t n_z, uint32_t n, uint32_t 
       mzd_write_bit(dcp->h_x_transpose,0,i,TestBit(value->h_x.data,i)?1:0);
       mzd_write_bit(dcp->h_x,i,0,TestBit(value->h_x.data,i)?1:0);
       mzd_write_bit(dcp->h_z,i,0,TestBit(value->h_z.data,i)?1:0);
-      mzd_write_bit(dcp->F_diagonal,i,i,TestBit(value->F.data,(i*n) + i)?1:0);
+      mzd_write_bit(dcp->F_diagonal,i,0,TestBit(value->F.data,(i*n) + i)?1:0);
       for(int j = 0; j < n; j++){
         mzd_write_bit(dcp->F,i,j,TestBit(value->F.data,(i*n) + j)?1:0);
       }
