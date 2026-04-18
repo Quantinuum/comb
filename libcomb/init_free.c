@@ -10,6 +10,19 @@ extern "C" {
     init_dcp_to_size(tableau,n);
     return tableau;
   }
+  stabiliser_state_t* init_state(int n){
+    stabiliser_state_t* state = (stabiliser_state_t*)malloc(sizeof(stabiliser_state_t));
+    state->x_parts=mzd_init(n+1,n); // one more row for gaussian elimination on measurement operator
+    state->z_parts=mzd_init(n+1,n);
+    state->delta_vector=mzd_init(n+1,1);
+    state->epsilon_vector=mzd_init(n+1,1);
+    state->x_parts->nrows=n;
+    state->z_parts->nrows=n;
+    state->delta_vector->nrows=n;
+    state->epsilon_vector->nrows=n;
+    return state;
+  }
+  
 
   void init_dcp_to_size(dcp_t* tableau, uint32_t n){
     tableau->F=mzd_init(n,n);

@@ -64,9 +64,9 @@ extern "C" {
     int counter = 0;
     int n = STATE_N(state);
     counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"{");
-    for(int i = 0 ; i< n; i++){
-      counter=do_print_pauli(state->x_parts,state->z_parts,state->delta_vector,state->epsilon_vector,i,1,counter);
-        if(i +1 != n)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
+    for(int i = 0 ; i< state->x_parts->nrows; i++){
+      counter=do_print_pauli(state->x_parts,state->z_parts,state->delta_vector,state->epsilon_vector,i,0,counter);
+        if(i +1 != n)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,", ");
     }
       counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,print_newline_p?"}\n":"}");
       return print_buffer;
@@ -86,6 +86,7 @@ extern "C" {
       }
       if(i!=(k-1))counter+=snprintf(print_buffer+counter,PRINT_SIZE-counter,", ");
     }
+    counter += snprintf(print_buffer+counter,PRINT_SIZE-counter,">");
     if(print_newline_p)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
     return print_buffer;
   }

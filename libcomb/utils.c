@@ -43,12 +43,44 @@ extern "C" {
     return acc;
   }
 
+  void expand_state(stabiliser_state_t* state){
+    state->x_parts->nrows++;
+    state->z_parts->nrows++;
+    state->delta_vector->nrows++;
+    state->epsilon_vector->nrows++;
+  }
 
-
-
+  void contract_state(stabiliser_state_t* state){
+    state->x_parts->nrows--;
+    state->z_parts->nrows--;
+    state->delta_vector->nrows--;
+    state->epsilon_vector->nrows--;
+  }
+  void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* m_i,mzd_t* epsilon_bits, mzd_t* delta_bits){ // moves m_i to row j of x_parts, and clears row j of z_parts
+    mzd_copy_row(x_parts,j,m_i,0);
+    mzd_row_clear_offset(z_parts,j,0);
+    mzd_write_bit(epsilon_bits,j,0,0);
+    mzd_write_bit(delta_bits,j,0,0); // we are done, so return
+  }
+  void clear_rows(stabiliser_state_t* state, mzd_t* parts, int n){ // cubic?
+    for(int col = 0; col < n; col++){
+      // go down the rows until you find one with a non zero entry.
+      int row_found_p = -1;
+      for(int row = 0; row < n && (row_found_p==-1); row++){
+        if(mzd_read_bit(parts,row,col))row_found_p=row;
+      }
+      if(row_found_p!=-1){
+        // if a row was found, eliminate all rows below it with elementary ops.
+        // otherwise, can carry on with the loop
+        for(int row_to_clear= row_found_p + 1; row_to_clear < n+1 ; row_to_clear++){
+          if(mzd_read_bit(parts,row_to_clear,col))add_row(state,row_found_p,row_to_clear);
+        }
+      }
+    }
+  }
 
   uint32_t gray_bit_to_switch(uint32_t n) // allocation free */
-     { 
+     {
        uint32_t n_add_one = n + 1; 
        uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
        return n ? 31 - __builtin_clz(diff) : 0;
@@ -58,9 +90,13 @@ extern "C" {
        return (uint32_t)mzd->data[0]; 
      } 
   mzd_t *temp_n_n_1,*temp_n_n_2,*temp_n_plus_one_n,*temp_n_n_plus_one;
-  void init_temps(){
-    
+  void init_temps(int n){
+    temp_n_n_1=mzd_init(n,n);
+    temp_n_n_2=mzd_init(n,n);
+    temp_n_n_plus_one=mzd_init(n,n+1);
+    temp_n_plus_one_n=mzd_init(n+1,n);
   }
+
 
 
 #ifdef __cplusplus

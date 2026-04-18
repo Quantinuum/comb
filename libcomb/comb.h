@@ -107,7 +107,7 @@ uint32_t gray_bit_to_switch(uint32_t n);
 
   // temporary variables (won't be thread safe.. probably replace later)
   extern mzd_t *temp_n_n_1,*temp_n_n_2,*temp_n_plus_one_n,*temp_n_n_plus_one;
-  void init_temps();
+  void init_temps(int n);
   // utils
 
   void make_upper_diagonal(int r, mzd_t* M);
@@ -115,6 +115,15 @@ uint32_t gray_bit_to_switch(uint32_t n);
   BIT row_product(mzd_t* x, int i, mzd_t* z, int j);
 
   void fix_dcp(dcp_t* dcp);
+
+  stabiliser_state_t* init_state(int n);
+
+  void expand_state(stabiliser_state_t* state);
+
+  void clear_rows(stabiliser_state_t* state, mzd_t* parts, int n);
+
+  void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* m_i,mzd_t* epsilon_bits, mzd_t* delta_bits);
+  void contract_state(stabiliser_state_t* state);
 #ifdef __cplusplus
 }
 #endif
