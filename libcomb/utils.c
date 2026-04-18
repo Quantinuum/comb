@@ -33,14 +33,15 @@ extern "C" {
 
   BIT row_product(mzd_t* x, int i, mzd_t* z, int j){
     // Forms the inner product of row i of x and row j of z (viewing both rows as vectors over F2).
-    // x and z are assumed to have the same number of columns.
-    // TODO this should admit a very fast implementation using mzd_combine.
-    int acc = 0;
-    int n = z->ncols;
-    for(int k = 0; k < n; k++){
-      if(mzd_read_bit(x,i,k) && mzd_read_bit(z,j,k))acc^=1;
+    word* row1 = mzd_row(x,i);
+    word* row2 = mzd_row(z,j);
+    wi_t const wide     = x->width;
+    word acc = 0;
+    for(int i = 0; i < wide; i++){
+      word part_of_product = row1[i] & row2[i];
+      acc+=__builtin_popcount(part_of_product);
     }
-    return acc;
+    return acc&1;
   }
 
   void expand_state(stabiliser_state_t* state){
