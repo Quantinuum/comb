@@ -101,6 +101,7 @@ uint32_t gray_bit_to_switch(uint32_t n);
   // conversion
   void convert_dcp(dcp_t* dcp, comb_dcp_t* value);
   void convert_permutation(mzd_t* permutation, uint32_t n, uint32_t n_z, uint32_t *rrefs);
+  void convert_row(mzd_t* M, int row, comb_vector_t* vector);
 
   void free_dcp_array(uint32_t count, dcp_t* array);
   void incf_coset(pauli_z_coset_t *coset, int index);
@@ -129,3 +130,4 @@ uint32_t gray_bit_to_switch(uint32_t n);
 #ifdef __cplusplus
 }
 #endif
+

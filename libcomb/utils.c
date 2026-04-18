@@ -139,6 +139,11 @@ extern "C" {
     }
     return x;
   }
+  void convert_row(mzd_t* M, int row, comb_vector_t* vector){
+    for(int i = 0; i < vector->n; i++){
+      mzd_write_bit(M,row,i,TestBit(vector->data,i)?1:0);
+    }
+  }
 #ifdef __cplusplus
 }
 #endif
