@@ -96,16 +96,49 @@ extern "C" {
     temp_n_n_plus_one=mzd_init(n,n+1);
     temp_n_plus_one_n=mzd_init(n+1,n);
   }
-  void permute_coset(pauli_z_coset_t* coset, mzd_t* permutation){
+  void permute_columns(mzd_t* data, unsigned mask){
+    for(int i = 0 ; i < data->nrows; i++){
+      word *b = mzd_row(data,i);
+      // assume small enough so that only have to do the first 64 bits
+      b[0]=compress4(b[0],mask);
+    }
     
   }
-  void permute_row_vector(mzd_t* row_vector, mzd_t* permutation){
-    
-  }
-  void permute_column_vector(mzd_t* row_vector, mzd_t* permutation){
-    
-  }
+  unsigned compress2(unsigned x, unsigned m) { // from hacker's delight
+    unsigned r, s, b;    // Result, shift, mask bit.
 
+    r = 0;
+    s = 0;
+    do {
+      b = m & 1;
+      r = r | ((x & b) << s);
+      s = s + b;
+      x = x >> 1;
+      m = m >> 1;
+    } while (m != 0);
+    return r;
+  }
+  unsigned compress4(unsigned x, unsigned m) { // from hacker's delight
+    unsigned mk, mp, mv, t;
+    int i;
+
+    x = x & m;           // Clear irrelevant bits.
+    mk = ~m << 1;        // We will count 0's to right.
+
+    for (i = 0; i < 5; i++) {
+      mp = mk ^ (mk << 1);              // Parallel suffix.
+      mp = mp ^ (mp << 2);
+      mp = mp ^ (mp << 4);
+      mp = mp ^ (mp << 8);
+      mp = mp ^ (mp << 16);
+      mv = mp & m;                      // Bits to move.
+      m = (m ^ mv) | (mv >> (1 << i));    // Compress m.
+      t = x & mv;
+      x = (x ^ t) | (t >> (1 << i));      // Compress x.
+      mk = mk & ~mp;
+    }
+    return x;
+  }
 #ifdef __cplusplus
 }
 #endif

@@ -27,10 +27,18 @@ int main(int argv, char** args){
     fprintf(stderr,"%s",print_pauli_z_coset(coset,1));
     incf_coset(coset,i);
   }
+  unsigned mask = 0b101;
+  permute_columns(coset->factor_transpose,mask);
+  permute_columns(coset->set_generators,mask);
+  for(int i = 0; i < 1 << COSET_K(coset); i++){
+    fprintf(stderr,"%s",print_pauli_z_coset(coset,1));
+    incf_coset(coset,i);
+  }
   mzd_print(coset->factor_transpose);
   printf("\n");
   mzd_print(coset->set_generators);
   printf("\n");
+  
 
   /* mzd_t *A = mzd_from_str(1,5,args[1]); */
   /* mzd_print(A); */

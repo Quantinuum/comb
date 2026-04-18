@@ -124,6 +124,8 @@ uint32_t gray_bit_to_switch(uint32_t n);
 
   void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* x_measurement_matrix, int i,mzd_t* epsilon_bits, mzd_t* delta_bits);
   void contract_state(stabiliser_state_t* state);
+  unsigned compress4(unsigned x, unsigned m);
+  void permute_columns(mzd_t* data, unsigned mask);
 #ifdef __cplusplus
 }
 #endif
