@@ -122,7 +122,7 @@ uint32_t gray_bit_to_switch(uint32_t n);
 
   void clear_rows(stabiliser_state_t* state, mzd_t* parts, int n);
 
-  void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* m_i,mzd_t* epsilon_bits, mzd_t* delta_bits);
+  void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* x_measurement_matrix, int i,mzd_t* epsilon_bits, mzd_t* delta_bits);
   void contract_state(stabiliser_state_t* state);
 #ifdef __cplusplus
 }

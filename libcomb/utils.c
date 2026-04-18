@@ -56,8 +56,8 @@ extern "C" {
     state->delta_vector->nrows--;
     state->epsilon_vector->nrows--;
   }
-  void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* m_i,mzd_t* epsilon_bits, mzd_t* delta_bits){ // moves m_i to row j of x_parts, and clears row j of z_parts
-    mzd_copy_row(x_parts,j,m_i,0);
+  void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* x_measurement_matrix,int i,mzd_t* epsilon_bits, mzd_t* delta_bits){ // moves m_i to row j of x_parts, and clears row j of z_parts
+    mzd_copy_row(x_parts,j,x_measurement_matrix,i);
     mzd_row_clear_offset(z_parts,j,0);
     mzd_write_bit(epsilon_bits,j,0,0);
     mzd_write_bit(delta_bits,j,0,0); // we are done, so return
@@ -96,8 +96,15 @@ extern "C" {
     temp_n_n_plus_one=mzd_init(n,n+1);
     temp_n_plus_one_n=mzd_init(n+1,n);
   }
-
-
+  void permute_coset(pauli_z_coset_t* coset, mzd_t* permutation){
+    
+  }
+  void permute_row_vector(mzd_t* row_vector, mzd_t* permutation){
+    
+  }
+  void permute_column_vector(mzd_t* row_vector, mzd_t* permutation){
+    
+  }
 
 #ifdef __cplusplus
 }
