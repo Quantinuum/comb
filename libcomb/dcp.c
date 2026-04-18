@@ -190,8 +190,37 @@ extern "C" {
         }
       }
     }
+    // verify that z parts, for i less than r, are full rank (linearly independent)
+    mzd_t* coeff = mzd_init(r,n);
+      mzp_t* p = mzp_init(r);
+      mzp_t* q = mzp_init(n);
+      mzd_submatrix(coeff,state->z_parts,0,0,r,n);
+      int rank = mzd_pluq(coeff,p,q,0);
+      mzp_free(p);
+      mzp_free(q);
+      mzd_free(coeff);
+      if(rank!=r){
+        lwlog_err("state->z_parts not linearly independent: rank = %d, r=%d",rank,r);
+        exit(1);
+      }
     // verify that x parts, for all greater than r, are in rref
-    // TODO
+      for(int row = 0; row < n; row++){
+        int leading_column = -1;
+        for(int col = 0; (leading_column==-1) && col < n; col++){
+          if(mzd_read_bit(state->x_parts,row,col))leading_column=col;
+        }
+        if(leading_column!=-1){
+          // check to see if its not shared with any other rows
+          for(int row2 = 0; row2 < n; row2++){
+            if(row!=row2){
+              if(mzd_read_bit(state->x_parts,row2,leading_column)){
+                lwlog_err( "state->x_parts[%d]{%d], state->x_parts[%d]{%d] not zero",row,leading_column,row2,leading_column);
+                exit(1);
+              }
+            }
+          }
+        }
+      }
     #endif
     // Now read off results and store them in coset
     coset->set_generators->nrows=n; // bring back up to size
