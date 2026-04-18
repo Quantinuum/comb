@@ -122,13 +122,18 @@ extern "C" {
   }
   // 4. Turn a stabiliser state into a coset. Idea: reduce size of stabiliser state by means of the permutation first? you know it will have zero support on ancilla qubits. what's the point in doing too much pluq. you can do it simply on the reduced data indices.
 #define VERIFY_COSET_RREF 1
+  int row_empty_p(mzd_t* M, int row){
+    for(int col = 0; col < M->ncols; col++)
+      if(mzd_read_bit(M,row,col))return 0;
+    return 1;
+}
   void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state){
     int n = STATE_N(state);
     int r = n;
     mzd_t* row_mask = mzd_init(1,n);
     lwlog_debug("State before gaussian elimination:\n %s",print_stabiliser_state(state,1));
     // Gaussian elimination on Z parts - ensuring that last n-r stabilisers have no Z parts
-    for(int row = 0; row < n; row++){
+    for(int row = 0; (r>0) && row < n; row++){
       // search for leading entry.
       int leading_column=-1;
       for(int col = 0; (leading_column==-1) && col < n; col++){
@@ -138,7 +143,9 @@ extern "C" {
       }
       if(leading_column==-1){
         // row was zero. swap it to the end and try again.
-        r--;
+        do {
+          r--;
+        } while(r > 0 && row_empty_p(state->z_parts,r));
         swap_rows(state,row,r);
         row--; // have to now check the new row again, so decf row
       }
@@ -153,6 +160,7 @@ extern "C" {
         }
       }
     }
+
     lwlog_debug("State after gaussian elimination on Z parts: r = %d\n %s",r,print_stabiliser_state(state,1));
     // Gaussian elimination on X parts of last n-r stabilisers
     for(int col = 0; col < n; col++){
