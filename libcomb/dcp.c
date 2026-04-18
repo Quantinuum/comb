@@ -133,7 +133,7 @@ extern "C" {
     mzd_t* row_mask = mzd_init(1,n);
     lwlog_debug("State before gaussian elimination:\n %s",print_stabiliser_state(state,1));
     // Gaussian elimination on Z parts - ensuring that last n-r stabilisers have no Z parts
-    for(int row = 0; (r>0) && row < n; row++){
+    for(int row = 0; (r>=0) && row < n; row++){
       // search for leading entry.
       int leading_column=-1;
       for(int col = 0; (leading_column==-1) && col < n; col++){
@@ -142,11 +142,12 @@ extern "C" {
         }
       }
       if(leading_column==-1){
-        // row was zero. swap it to the end and try again.
+        // row was zero. try to swap it to the end and try again.
+
         do {
           r--;
-        } while(r > 0 && row_empty_p(state->z_parts,r));
-        swap_rows(state,row,r);
+        } while(r >= 0 && row_empty_p(state->z_parts,r));
+        if(r > -1)swap_rows(state,row,r);
         row--; // have to now check the new row again, so decf row
       }
       else{
@@ -160,7 +161,7 @@ extern "C" {
         }
       }
     }
-
+    if(r<0)r=0;
     lwlog_debug("State after gaussian elimination on Z parts: r = %d\n %s",r,print_stabiliser_state(state,1));
     // Gaussian elimination on X parts of last n-r stabilisers
     for(int col = 0; col < n; col++){
@@ -172,7 +173,7 @@ extern "C" {
             row_to_add=row;
           }
           else{
-            add_row(state,row,row_to_add);
+            add_row(state,row_to_add,row);
           }
         }
       }
