@@ -26,8 +26,6 @@ extern "C" {
   } // no transposing here either... note that as F is symmetric, and x the identity, state can choose which transposition convention it wants. It probably shouldn't, but either way this shows that this method will never ever transpose.
 
   // 3. Carry out measurements on a stabiliser state.
-  // First, we'll need to be able to reorder the generators according to some specified row operations.
-
 
   int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, mzd_t* x_measurement_matrix, mzd_t* delta_bits, mzd_t* epsilon_bits,char* x_measurement_string){
     int n_x = x_measurement_matrix->nrows;
@@ -62,8 +60,8 @@ extern "C" {
           clear_rows(state,z_parts,n);
 
           for(int i = 0; i < n; i++){
-            if(mzd_read_bit(x_parts,n,i))printf("warning: x_parts %d not zero",i);
-            if(mzd_read_bit(z_parts,n,i))printf("warning: z_parts %d not zero",i);
+            //if(mzd_read_bit(x_parts,n,i))printf("warning: x_parts %d not zero",i);
+            // if(mzd_read_bit(z_parts,n,i))printf("warning: z_parts %d not zero",i);
           }
           BIT identity_sign = mzd_read_bit(epsilon_bits,n,0);
           contract_state(state);

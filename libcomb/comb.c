@@ -172,6 +172,9 @@ extern "C" {
     for(int i = 0; i < z_measurement_count; i++){
       mzd_copy_row(z_measurements_for_x,i,z_measurement_paulis,i);
     }
+    #ifdef TIMING_MODE
+    while(*fault_counter < TIMING_MODE){
+    #endif
     for (int i = 0; i < k; i++) {
       current_combination[i] = 0;
       for (int j = 0; j < i; j++) {
@@ -233,7 +236,15 @@ extern "C" {
         return BAD_FAULT_FOUND;
       }
   } while (ft_iteration_combination_incf(s, fault_location_partitions, fault_location_count, first_balls, last_balls,
-                                         current_combination));
+                                         current_combination)
+           #ifdef TIMING_MODE
+           && *fault_counter < TIMING_MODE
+           #endif
+
+           );
+      #ifdef TIMING_MODE
+    }
+    #endif
       return ALL_FAULTS_GOOD; // got to end of loop, so all faults are good
   }
   comb_code_t comb_verify_css_magic_state( uint32_t n_all, ///< number of qubits in code + all ancillas
@@ -257,7 +268,7 @@ extern "C" {
                                            uint32_t z_measurement_count, // number of z measurement paulis
                                            comb_pauli_z_t* _z_measurement_paulis){
 
-    init_temps(n_all);
+    //init_temps(n_all);
     lwlog_info("start timing \n");
     // Start timing
     struct timespec start, finish;

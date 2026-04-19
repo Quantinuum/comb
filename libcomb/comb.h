@@ -9,6 +9,11 @@ extern "C" {
 #include <m4ri/m4ri.h>
 #include "lwlog.h"
 #define MAX_SIZE_COUNT 1024
+  // if TIMING_MODE is set, then repeat until all faults good
+#define TIMING_MODE 1000000
+#ifdef TIMING_MODE
+#define BAD_FAULT_FOUND ALL_FAULTS_GOOD
+#endif
   // Functions
 
   // idea. do rref in c? maybe a todo later. people should do it themselves...
@@ -97,7 +102,7 @@ uint32_t gray_bit_to_switch(uint32_t n);
 
   void init_dcp_to_size(dcp_t* tableau, uint32_t n);
 
-  uint32_t mzd_data(mzd_t* mzd);
+  word mzd_data(mzd_t* mzd);
   void  permute_qubits(pauli_z_coset_t* coset,int n, mzd_t* c, mzd_t* temp, mzd_t* big_c);
   // conversion
   void convert_dcp(dcp_t* dcp, comb_dcp_t* value);
@@ -112,8 +117,6 @@ uint32_t gray_bit_to_switch(uint32_t n);
   void init_temps(int n);
   // utils
 
-  void make_upper_diagonal(int r, mzd_t* M);
-  void fill_rows_with_identity(mzd_t* temp_transpose, int r, int n);
   BIT row_product(mzd_t* x, int i, mzd_t* z, int j);
 
   void fix_dcp(dcp_t* dcp);
