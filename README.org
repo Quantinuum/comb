@@ -1,8 +1,18 @@
 #+AUTHOR: Selwyn Simsek
-* comb
+* Comb
+A library to aid in the verification of the fault tolerant properties of state preparation circuits that use the CNOT + T gate set.
 
-A library to aid in the verification of the fault tolerant properties of state preparation circuits.
+* Build
+Comb depends on [[https://github.com/malb/m4ri][m4ri]], so first build and install a recent version of that. GNU Make and a C compiler are also required by the build process.
 
-Focuses principally on the ~CNOT + T~ and Clifford gatesets.
-
-This branch is under development.
+In order to build, issue the following
+#+BEGIN_SRC shell
+  make libcomb.so
+#+END_SRC
+from ~libcomb/~.
+* Documentation
+[[https://www.doxygen.nl/][Doxygen]] is needed to build the documentation. In order to build it, issue the following
+#+BEGIN_SRC shell
+  make docs
+#+END_SRC
+from ~libcomb/~ to build the docs in ~/libcomb/docs/~.
