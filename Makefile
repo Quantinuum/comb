@@ -14,14 +14,14 @@ c_files := $(wildcard src/*.c)
 obj_files := $(patsubst src/%.c,%.o,$(wildcard src/*.c))
 
 
-libcomb.so: $(obj_files)
+libcomb.so: m4ri $(obj_files)
 	$(CC) -shared -o libcomb.so $(CFLAGS) -rdynamic $(obj_files) $(M4RI)
 
 m4ri:
-	cd $(TMPDIR) && git clone $(M4RI_REPO)  -b $(BRANCH) &&	cd m4ri/ && autoreconf --install && ./configure	$(M4RI_CONFIGURE_OPTIONS) && $(MAKE) && $(MAKE) check && $(MAKE) install
+	cd $(TMPDIR) && git clone $(M4RI_REPO) -b $(BRANCH) &&	cd m4ri/ && autoreconf --install && ./configure	$(M4RI_CONFIGURE_OPTIONS) && $(MAKE) && $(MAKE) check && $(MAKE) install
 
-%.o : src/%.c
-	$(CC) $(CFLAGS) -Wall -Werror -O3 -fPIC -c $^ -o $@
+%.o : src/%.c m4ri
+	$(CC) $(CFLAGS) -Wall -Werror -O3 -fPIC -c $< -o $@
 
 m4ri-clean:
 	rm -rf m4ri/
@@ -33,3 +33,7 @@ clean:
 
 docs:
 	doxygen Doxyfile
+
+# TODO fix these
+test/% : test/%.c $(obj_files) comb.h lwlog.h
+	$(CC) $(CFLAGS) -I. $< -fPIC -o $@ $(M4RI) $(CFLAGS) $(obj_files)
