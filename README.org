@@ -3,19 +3,16 @@
 A library to aid in the verification of the fault tolerant properties of state preparation circuits that use the CNOT + T gate set.
 
 * Build
-Comb depends on [[https://github.com/malb/m4ri][m4ri]]. In order to build and install it locally, issue
-#+BEGIN_SRC shell
-  make m4ri
-#+END_SRC
+Comb depends on [[https://github.com/malb/m4ri][m4ri]]. This is automatically built and installed into a subdirectory as part of the build process.
 
 In order to build Comb, issue the following
 #+BEGIN_SRC shell
-    make libcomb.so
+    make -j8
 #+END_SRC
-from ~libcomb~.
+from the project root.
 * Documentation
 [[https://www.doxygen.nl/][Doxygen]] is needed to build the documentation. In order to build it, issue the following
 #+BEGIN_SRC shell
   make docs
 #+END_SRC
-from ~libcomb/~ to build the docs in ~/libcomb/docs/~.
+from the project root.
