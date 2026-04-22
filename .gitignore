@@ -1,6 +1,5 @@
 *.o
 *.so
-test-comb
-test-libft
+test-bin/
 m4ri/
 libcomb/docs/
