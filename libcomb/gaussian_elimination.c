@@ -1,13 +1,13 @@
 // row operations
 #include "comb.h"
 
-
   void swap_rows(stabiliser_state_t* state, int i, int j){
     mzd_row_swap(state->x_parts,i,j);
     mzd_row_swap(state->z_parts,i,j);
     mzd_row_swap(state->delta_vector,i,j);
     mzd_row_swap(state->epsilon_vector,i,j);
   }
+
   void add_row(stabiliser_state_t* state, int sourcerow, int destrow){
     // Adds rows and stores them in destrow.
     BIT delta1 = mzd_read_bit(state->delta_vector,sourcerow,0);
