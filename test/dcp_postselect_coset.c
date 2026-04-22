@@ -12,11 +12,11 @@ int main(int argv, char** args){
   mzd_t* z_measurement_matrix = mzd_from_str(2,3,args[5]);
 
   stabiliser_state_t* state = init_state(3);
-  stabiliser_state_t* new_state = init_state(3);
+ // stabiliser_state_t* new_state = init_state(3);
   pauli_z_coset_t* coset= init_pauli_z_coset(3,3);
   set_stabiliser_state_to_dcp(state,dcp);
-  mzp_t *p = mzp_init(3);
-  mzp_t *q = mzp_init(3);
+ // mzp_t *p = mzp_init(3);
+//  mzp_t *q = mzp_init(3);
   fprintf(stderr,"%s",print_stabiliser_state(state,1));
   fprintf(stderr,"postselection %d",postselect_on_measuring_plus_one_x(state,x_measurement_matrix));
   fprintf(stderr,"%s",print_stabiliser_state(state,1));

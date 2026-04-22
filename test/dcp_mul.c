@@ -2,7 +2,7 @@
 #include "comb.h"
 
 int main(int argv, char** args){
-  init_temps();
+//  init_temps();
   dcp_t* dcp1 = init_dcp(3);
   dcp1->F = mzd_from_str(3,3,args[1]);
   dcp1->h_x = mzd_from_str(3,1,args[2]);
