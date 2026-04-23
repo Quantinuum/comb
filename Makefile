@@ -6,13 +6,13 @@ TMPDIR := $(shell mktemp -d)
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 M4RI_CONFIGURE_OPTIONS = --with-pic --prefix=$(ROOT_DIR)/m4ri --disable-png --disable-dependency-tracking
 
-CFLAGS =  -fPIC -I./m4ri/include  -Wall -Werror -O3 -fPIC # -lm4ri for dynamic linking, and LD_LIBRARY_PATH=/usr/local/lib at runtime
-CC = gcc #g++?
+CFLAGS =  -fPIC -I./m4ri/include  -Wall -Werror -O3 -fPIC
+CC = gcc
 M4RI = m4ri/lib/libm4ri.a
 
-c_files := $(wildcard src/*.c)
+c_files := $(wildcard src/c/*.c)
 test_files :=$(wildcard test/*.c)
-obj_files := $(patsubst src/%.c,%.o,$(wildcard src/*.c))
+obj_files := $(patsubst src/c/%.c,%.o,$(wildcard src/c/*.c))
 test_executables := $(patsubst test/%.c,test_%,$(wildcard test/*.c))
 
 
@@ -20,9 +20,9 @@ libcomb.so: m4ri $(obj_files)
 	$(CC) -shared -o libcomb.so $(CFLAGS) -lm -rdynamic $(obj_files) $(M4RI)
 
 m4ri:
-	cd $(TMPDIR) && git clone $(M4RI_REPO) -b $(BRANCH) &&	cd m4ri/ && autoreconf --install && ./configure	$(M4RI_CONFIGURE_OPTIONS) && $(MAKE) && $(MAKE) check && $(MAKE) install
+	cd $(TMPDIR) && git clone $(M4RI_REPO) -b $(BRANCH) && cd m4ri/ && autoreconf --install && ./configure $(M4RI_CONFIGURE_OPTIONS) && $(MAKE) && $(MAKE) check && $(MAKE) install
 
-%.o : src/%.c m4ri
+%.o : src/c/%.c m4ri
 	$(CC) $(CFLAGS) -c $< -o $@
 
 m4ri-clean:
