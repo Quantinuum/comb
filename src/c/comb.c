@@ -1,8 +1,4 @@
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 #include <time.h>
 #include "comb.h"
@@ -287,8 +283,8 @@ extern "C" {
       lwlog_err("z stabilisers not in rref");
       return INVALID_INPUT;
     }
-    dcp_t* dcp_stabilisers = malloc(k * sizeof(dcp_t));
-    dcp_t* output_errors = malloc(output_error_count * sizeof(dcp_t));
+    dcp_t* dcp_stabilisers = (dcp_t*)malloc(k * sizeof(dcp_t));
+    dcp_t* output_errors = (dcp_t*)malloc(output_error_count * sizeof(dcp_t));
     mzd_t* x_measurement_paulis = mzd_init(x_measurement_count,n_all);
     mzd_t* z_measurement_paulis = mzd_init(z_measurement_count,n_all);
     mzd_t* x_stabilisers = mzd_init(n_x,n);
@@ -336,7 +332,7 @@ extern "C" {
   // Stop timing
   clock_gettime( CLOCK_MONOTONIC, &finish );
   double seconds = (finish.tv_sec - start.tv_sec) + 1.0e-9 * (finish.tv_nsec - start.tv_nsec);
-  printf("Took %f seconds, %lld faults checked.\n", seconds, fault_counter);
+  printf("Took %f seconds, %lld fault combinations checked.\n", seconds, fault_counter);
   lwlog_debug("freeing memory");
   free_dcp_array(k,dcp_stabilisers);
   free_dcp_array(output_error_count,output_errors);
@@ -346,6 +342,3 @@ extern "C" {
   mzd_free(z_stabilisers);
   return return_code;
   }
-#ifdef __cplusplus
-}
-#endif

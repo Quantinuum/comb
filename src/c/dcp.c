@@ -1,6 +1,3 @@
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include "comb.h"
 
   // 1. Multiply DCPs together
@@ -55,13 +52,32 @@ extern "C" {
         expand_state(state); // ensure state has enough room for n+1 stabiliser generators
         set_row(x_parts,z_parts,n,x_measurement_matrix,i, epsilon_bits, delta_bits); // copy measurement operator to last row
         // now do gaussian elimination to ensure that final row is either -I or I. if this is not possible signal an error
-        // something better than this needed? there's no row swapping
-        clear_rows(state,x_parts,n);
-        clear_rows(state,z_parts,n);
+        for(int qubit_index = 0; qubit_index < n; qubit_index++){
+          // elimination on z_i
+          int row_found_p = -1;
+          for(int row = 0; row <= n; row++){
+            if(mzd_read_bit(z_parts,row,qubit_index)){
+              if(row_found_p == -1)row_found_p = row;
+              else add_row(state,row_found_p, row);
+            }
+          }
+          // elimination on x_i
+          row_found_p = -1;
+          for(int row = 0; row <= n; row++){
+            if(mzd_read_bit(x_parts,row,qubit_index)){
+              if(row_found_p == -1)row_found_p = row;
+              else add_row(state,row_found_p, row);
+            }
+          }
+        }
 
         for(int i = 0; i < n; i++){
-          //if(mzd_read_bit(x_parts,n,i))printf("warning: x_parts %d not zero",i);
-          // if(mzd_read_bit(z_parts,n,i))printf("warning: z_parts %d not zero",i);
+          if(mzd_read_bit(x_parts,n,i)){
+            lwlog_warning("warning: x_parts %d not zero",i);
+          }
+          if(mzd_read_bit(z_parts,n,i)){
+            lwlog_warning("warning: z_parts %d not zero",i);
+          }
         }
         BIT identity_sign = mzd_read_bit(epsilon_bits,n,0);
         contract_state(state);
@@ -202,7 +218,3 @@ extern "C" {
     mask_row_vector(coset->factor_transpose,row_mask);
     mzd_free(row_mask);
   }
-
-#ifdef __cplusplus
-}
-#endif

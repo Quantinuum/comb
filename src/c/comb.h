@@ -1,8 +1,5 @@
 // Putative new interface for libcomb
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 // need fixed width integers
 #include "comb_external.h"
@@ -132,7 +129,3 @@ uint32_t gray_bit_to_switch(uint32_t n);
   void contract_state(stabiliser_state_t* state);
   unsigned compress4(unsigned x, unsigned m);
   void permute_columns(mzd_t* data, unsigned mask);
-#ifdef __cplusplus
-}
-#endif
-

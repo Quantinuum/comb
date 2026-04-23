@@ -1,6 +1,3 @@
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include "comb.h"
 
   void fix_dcp(dcp_t* dcp){
@@ -106,6 +103,3 @@ extern "C" {
       mzd_write_bit(M,row,i,TestBit(vector->data,i)?1:0);
     }
   }
-#ifdef __cplusplus
-}
-#endif
