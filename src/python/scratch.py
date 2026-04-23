@@ -16,7 +16,7 @@ from pathlib import Path
 
 # If libcomb is not found, then try to build it
 
-# from https://trstringer.com/python-external-commands/
+# subprocess invocation from https://trstringer.com/python-external-commands/ (under cc by 4.0 https://creativecommons.org/licenses/by/4.0/deed.en)
 if not Path("../../libcomb.so").is_file():
     cp = subprocess.run(
     "cd ../.. && make -j8",
