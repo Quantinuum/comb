@@ -41,9 +41,9 @@ n_x = 3
 n_z = 3
 k = 1
 x_stabilisers = lib.comb_calloc_vector(n_x, n_all)
-x_lookup_table = lib.comb_alloc_bit_array(2 ** n_x)
+x_lookup_table = lib.comb_alloc_bit_array(2 ** (n- n_x))
 z_stabilisers = lib.comb_calloc_vector(n_z, n_all)
-z_lookup_table = lib.comb_alloc_bit_array(2 ** n_z)
+z_lookup_table = lib.comb_alloc_bit_array(2 ** (n - n_z))
 dcp_stabilisers = lib.comb_calloc_dcp(k, n_all)
 fault_location_count = 10
 fault_location_partitions = ffi.new("uint32_t[{}]".format(fault_location_count))
@@ -57,9 +57,6 @@ z_measurement_count = 1
 z_measurement_paulis = lib.comb_calloc_vector(z_measurement_count,n_all)
 
 for stabilisers in [x_stabilisers, z_stabilisers]:
-    for i in range(n_all):
-        for j in range(n_x):
-            lib.comb_set_cvector_aref(stabilisers, j, i, 0)
     for i, j in [(0, [0, 2, 4, 6]), (1, [1, 2, 4 ,5]), (2, [3, 4, 5, 6])]:
         for index in j:
             lib.comb_set_cvector_aref(stabilisers, i, index, 1)
