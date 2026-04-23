@@ -28,8 +28,8 @@ void convert_permutation(mzd_t* permutation, uint32_t n_z, uint32_t n, uint32_t 
     }
   }
 
-  comb_bit_array_t comb_alloc_bit_array(int n){
-    return (comb_bit_array_t)calloc(n,sizeof(comb_bit_word_t));
+  comb_bit_array_t comb_alloc_bit_array(int n){ // TODO the size should be calculated properly, these are too big
+    return (comb_bit_array_t)calloc(1 + (  n / sizeof(comb_bit_word_t)), sizeof(comb_bit_word_t));
   }
   void comb_free_bit_array(comb_bit_array_t p){
     free(p);
