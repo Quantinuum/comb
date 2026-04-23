@@ -68,3 +68,12 @@ print(lib.comb_verify_css_magic_state(n_all, n, n_x, n_z, k, x_stabilisers, x_lo
                                       fault_location_partitions, s, bad_fault_array, output_error_count,
                                       output_errors, x_measurement_count, x_measurement_paulis,
                                       z_measurement_count, z_measurement_paulis))
+
+lib.comb_cfree_dcp(k, dcp_stabilisers)
+lib.comb_cfree_dcp(output_error_count, output_errors)
+lib.comb_cfree_vector(n_x, x_stabilisers)
+lib.comb_cfree_vector(n_z, z_stabilisers)
+lib.comb_cfree_vector(x_measurement_count, x_measurement_paulis)
+lib.comb_cfree_vector(z_measurement_count, z_measurement_paulis)
+lib.comb_free_bit_array(x_lookup_table)
+lib.comb_free_bit_array(z_lookup_table)
