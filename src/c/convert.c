@@ -29,8 +29,7 @@ void convert_permutation(mzd_t* permutation, uint32_t n_z, uint32_t n, uint32_t 
   }
 
   comb_bit_array_t comb_alloc_bit_array(int n){
-    //lwlog_debug("allocating bit array of size %d",n);
-    return (comb_bit_array_t)malloc(n);
+    return (comb_bit_array_t)calloc(n,sizeof(comb_bit_word_t));
   }
   void comb_free_bit_array(comb_bit_array_t p){
     free(p);

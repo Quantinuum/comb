@@ -73,7 +73,7 @@ extern "C" {
   }
 
   comb_dcp_t *comb_calloc_dcp(int count, int n){
-    comb_dcp_t* pointer = malloc(count * sizeof(comb_dcp_t));
+    comb_dcp_t* pointer = calloc(count , sizeof(comb_dcp_t));
     for(int i =0; i <count; i++){
       pointer[i].F.m=n;
       pointer[i].F.n=n;
@@ -100,7 +100,7 @@ extern "C" {
     free(pointer);
   }
   comb_vector_t *comb_calloc_vector(int count, int n){
-    comb_vector_t* pointer = (comb_vector_t*)malloc(count * sizeof(comb_vector_t));
+    comb_vector_t* pointer = (comb_vector_t*)calloc(count , sizeof(comb_vector_t));
     for(int i =0; i < count; i++){
       pointer[i].n=n;
       pointer[i].data=comb_alloc_bit_array(n);
