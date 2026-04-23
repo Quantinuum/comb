@@ -38,7 +38,7 @@ typedef comb_bit_word_t* comb_bit_array_t;
  * A bit vector.
  */
 typedef struct {
-  uint32_t n; /// The length of the vector
+  uint32_t n; ///< The length of the vector
   /**
    * Bit array that stores the entries of the vector.
    * Must have enough space for n bits.

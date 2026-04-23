@@ -2,4 +2,4 @@
 *.so
 test-bin/
 m4ri/
-libcomb/docs/
+docs/
