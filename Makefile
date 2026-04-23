@@ -7,7 +7,6 @@ ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
 M4RI_CONFIGURE_OPTIONS = --with-pic --prefix=$(ROOT_DIR)/m4ri --disable-png --disable-dependency-tracking
 
 CFLAGS =  -fPIC -I./m4ri/include  -Wall -Werror -O3 -fPIC
-CC = gcc
 M4RI = m4ri/lib/libm4ri.a
 
 c_files := $(wildcard src/c/*.c)
