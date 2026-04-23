@@ -1,23 +1,21 @@
 # Python FFI to Comb using CFFI
 
 import cffi
-
-ffi = cffi.FFI()
-
-header_file=open("../c/comb_external.h","r")
-
-# Strip lines beginning with # - preprocessor macros - from the header file as FFI can't deal with them
-lines = [line for line in header_file.readlines() if not line[0] == '#']
-ffi.cdef("".join(lines))
-
 import subprocess
 import sys
 from pathlib import Path
 
+library_path = "../../libcomb.so"
+ffi = cffi.FFI()
+
+# Strip lines beginning with # - preprocessor macros - from the header file as FFI can't deal with them
+header_file = open("../c/comb_external.h","r")
+ffi.cdef("".join([line for line in header_file.readlines() if not line[0] == '#']))
+
 # If libcomb is not found, then try to build it
 
 # subprocess invocation from https://trstringer.com/python-external-commands/ (under cc by 4.0 https://creativecommons.org/licenses/by/4.0/deed.en)
-if not Path("../../libcomb.so").is_file():
+if not Path(library_path).is_file():
     cp = subprocess.run(
     "cd ../.. && make -j8",
     shell=True,
@@ -34,7 +32,7 @@ if not Path("../../libcomb.so").is_file():
         sys.exit(cp.returncode)
 
 # Load the library
-lib = ffi.dlopen("../../libcomb.so");
+lib = ffi.dlopen(library_path);
 
 # Test to see if it works
 
