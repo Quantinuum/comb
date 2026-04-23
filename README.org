@@ -5,6 +5,8 @@ A library to aid in the verification of the fault tolerant properties of state p
 * Build
 Comb depends on [[https://github.com/malb/m4ri][m4ri]]. This is automatically built and installed into a subdirectory as part of the build process.
 
+Ensure that autoconf, automake, Git, and Make are installed on your system.
+
 In order to build Comb, issue the following
 #+BEGIN_SRC shell
     make -j8
