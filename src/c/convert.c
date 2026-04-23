@@ -1,8 +1,4 @@
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 #include "comb.h"
 
@@ -75,7 +71,3 @@ void convert_permutation(mzd_t* permutation, uint32_t n_z, uint32_t n, uint32_t 
       }
     }
   }
-
-#ifdef __cplusplus
-}
-#endif

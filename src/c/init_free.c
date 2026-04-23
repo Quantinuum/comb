@@ -1,6 +1,3 @@
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include "comb.h"
 
 
@@ -73,7 +70,7 @@ extern "C" {
   }
 
   comb_dcp_t *comb_calloc_dcp(int count, int n){
-    comb_dcp_t* pointer = calloc(count , sizeof(comb_dcp_t));
+    comb_dcp_t* pointer = (comb_dcp_t*)calloc(count , sizeof(comb_dcp_t));
     for(int i =0; i <count; i++){
       pointer[i].F.m=n;
       pointer[i].F.n=n;
@@ -107,7 +104,3 @@ extern "C" {
     }
     return pointer;
   }
-
-#ifdef __cplusplus
-}
-#endif

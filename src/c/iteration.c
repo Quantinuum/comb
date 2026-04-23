@@ -89,10 +89,10 @@ int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_ball
           return 0;
         }
 
-        int j = 0;
+        int j2 = 0;
         for (int i = 0; i < n; i++) {
           if (TestBit(v, (n - 1) - i)) {
-            current_combination[j++] = first_balls[i];
+            current_combination[j2++] = first_balls[i];
           }
         }
         return 1;

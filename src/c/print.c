@@ -1,6 +1,3 @@
-#ifdef __cplusplus
-extern "C" {
-#endif
 #include "comb.h"
 
   #define PRINT_SIZE 4096
@@ -97,7 +94,3 @@ extern "C" {
     if(print_newline_p)counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"\n");
     return print_buffer;
   }
-
-#ifdef __cplusplus
-}
-#endif
