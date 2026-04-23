@@ -34,7 +34,40 @@ if not Path(library_path).is_file():
 # Load the library
 lib = ffi.dlopen(library_path);
 
-# Test to see if it works
+# Example usage (inspired by goto)
+n_all = 8
+n = 7
+n_x = 3
+n_z = 3
+k = 1
+x_stabilisers = lib.comb_calloc_vector(n_x, n_all)
+x_lookup_table = lib.comb_alloc_bit_array(2 ** n_x)
+z_stabilisers = lib.comb_calloc_vector(n_z, n_all)
+z_lookup_table = lib.comb_alloc_bit_array(2 ** n_z)
+dcp_stabilisers = lib.comb_calloc_dcp(k, n_all)
+fault_location_count = 10
+fault_location_partitions = ffi.new("uint32_t[{}]".format(fault_location_count))
+s = 1
+bad_fault_array = ffi.new("uint32_t[{}]".format(s))
+output_error_count = 100
+output_errors = lib.comb_calloc_dcp(output_error_count, n_all)
+x_measurement_count = 1
+x_measurement_paulis = lib.comb_calloc_vector(x_measurement_count,n_all)
+z_measurement_count = 1
+z_measurement_paulis = lib.comb_calloc_vector(z_measurement_count,n_all)
 
-print(lib.comb_alloc_bit_array(6))
-print(lib.comb_verify_css_magic_state) 
+for stabilisers in [x_stabilisers, z_stabilisers]:
+    for i in range(n_all):
+        for j in range(n_x):
+            lib.comb_set_cvector_aref(stabilisers, j, i, 0)
+    for i, j in [(0, [0, 2, 4, 6]), (1, [1, 2, 4 ,5]), (2, [3, 4, 5, 6])]:
+        for index in j:
+            lib.comb_set_cvector_aref(stabilisers, i, index, 1)
+
+# Here, you would use the comb_set_* methods to set the other values of the foreign data
+
+print(lib.comb_verify_css_magic_state(n_all, n, n_x, n_z, k, x_stabilisers, x_lookup_table, z_stabilisers,
+                                      z_lookup_table, dcp_stabilisers, fault_location_count,
+                                      fault_location_partitions, s, bad_fault_array, output_error_count,
+                                      output_errors, x_measurement_count, x_measurement_paulis,
+                                      z_measurement_count, z_measurement_paulis))
