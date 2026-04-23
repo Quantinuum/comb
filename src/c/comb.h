@@ -10,7 +10,7 @@ extern "C" {
 #include "lwlog.h"
 #define MAX_SIZE_COUNT 1024
   // if TIMING_MODE is set, then repeat until all faults good
-#define TIMING_MODE 1000000
+//#define TIMING_MODE 1000000
 #ifdef TIMING_MODE
 #define BAD_FAULT_FOUND ALL_FAULTS_GOOD
 #endif
