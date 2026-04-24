@@ -111,11 +111,11 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
   }
   lwlog_debug("State after gaussian elimination on Z parts (r = %d):\n %s",r,print_stabiliser_state(state,1));
   // now do gaussian elimination on the x parts from 0 to r
-  row_to_start_eliminating=0;
+  row_to_start_eliminating=r;
   for(int col = 0; col < n; col++){
     // Try to eliminate starting from row_to_start_eliminating down. We dont want to add rows that have already been used to eliminate others
     int found_row=-1;
-    for(int row = row_to_start_eliminating; row < r; row++){
+    for(int row = row_to_start_eliminating; row < n; row++){
       if(mzd_read_bit(state->x_parts, row, col)){
         if(found_row == -1)found_row = row;
         else add_row(state, found_row, row);
