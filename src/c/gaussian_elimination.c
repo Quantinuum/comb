@@ -16,12 +16,12 @@
     //char epsilon1 = mzd_read_bit(state->epsilon_vector,i,0);
     //char epsilon2 = mzd_read_bit(state->epsilon_vector,j,0);
 
+    BIT a2TUa1 = row_product(state->x_parts,sourcerow,state->z_parts,destrow); // this is symmetric under x <-> z for stabiliser states actually
     mzd_row_add(state->x_parts, sourcerow, destrow);
     mzd_row_add(state->z_parts, sourcerow, destrow);
     mzd_row_add(state->delta_vector, sourcerow, destrow);
     mzd_row_add(state->epsilon_vector, sourcerow, destrow);
     // correct epsilon
-    BIT a2TUa1 = row_product(state->x_parts,sourcerow,state->z_parts,destrow); // this is symmetric under x <-> z for stabiliser states actually
     BIT epsilon_bit = mzd_read_bit(state->epsilon_vector,destrow,0);
     mzd_write_bit(state->epsilon_vector,destrow,0,epsilon_bit ^ (delta1 & delta2) ^ a2TUa1);
   }
@@ -55,7 +55,7 @@ int form_identity_ge(stabiliser_state_t* state){
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
         }
-    lwlog_debug("after trying to eliminate x_%d: \n %s",col,print_stabiliser_state(state,1));
+    //lwlog_debug("after trying to eliminate x_%d: \n %s",col,print_stabiliser_state(state,1));
     // same for z
     found_row=-1;
     for(int row = row_to_start_eliminating; row <= n; row++){
@@ -73,7 +73,7 @@ int form_identity_ge(stabiliser_state_t* state){
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
         }
-    lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
+    //lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
   }
 
 
@@ -87,10 +87,10 @@ int form_identity_ge(stabiliser_state_t* state){
       lwlog_err("warning: z_parts %d not zero",i);
       exit(1);
     }
-    if(mzd_read_bit(state->delta_vector, n, 0)){
-      lwlog_err("error: delta bits %d not zero",n);
-      exit(1);
-    }
+  }
+  if(mzd_read_bit(state->delta_vector, n, 0)){
+    lwlog_err("error: delta bits %d not zero",n);
+    exit(1);
   }
   #endif
   BIT identity_sign = mzd_read_bit(state->epsilon_vector,n,0);
@@ -126,13 +126,23 @@ int verify_coset_ge(int r, stabiliser_state_t* state){
     return 0;
   }
   // verify that x parts, for all greater than r, are in rref
+  int last_leading_column = -2;
+  int started_to_find_zeros_p=0;
   for(int row = r; row < n; row++){
     int leading_column = -1;
     for(int col = 0; (leading_column==-1) && col < n; col++){
       if(mzd_read_bit(state->x_parts,row,col))leading_column=col;
     }
     if(leading_column!=-1){
+      if(started_to_find_zeros_p){
+        lwlog_debug("non trivial leading column found after a zero row was detected");
+      }
       // check to see if its not shared with any other rows
+      if(last_leading_column >= leading_column){
+        lwlog_debug("leading column not to the right of a previous leading column %d, %d",leading_column, last_leading_column);
+        return 0;
+      }
+      else last_leading_column=leading_column;
       for(int row2 = 0; row2 < n; row2++){
         if(row!=row2){
           if(mzd_read_bit(state->x_parts,row2,leading_column)){
@@ -141,6 +151,9 @@ int verify_coset_ge(int r, stabiliser_state_t* state){
           }
         }
       }
+    }
+    else{
+      started_to_find_zeros_p=1;
     }
   }
   return 1;
