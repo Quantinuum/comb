@@ -137,7 +137,10 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
   for(int row = 0; row < n; row++){
     int leading_column = -1;
     for(int col = 0; (leading_column == -1) && col < n; col++){
-      if(mzd_read_bit(state->x_parts,row,col))leading_column = col;
+      if(mzd_read_bit(state->x_parts,row,col)){
+        leading_column = col;
+        mzd_write_bit(row_mask,0,col,1);
+      }
     }
     if(leading_column != -1){ // eliminate any rows above
       for(int row2 = row-1; row2 >=0; row2--){

@@ -126,7 +126,7 @@ int verify_coset_ge(int r, stabiliser_state_t* state){
     return 0;
   }
   // verify that x parts, for all greater than r, are in rref
-  for(int row = 0; row < n; row++){
+  for(int row = r; row < n; row++){
     int leading_column = -1;
     for(int col = 0; (leading_column==-1) && col < n; col++){
       if(mzd_read_bit(state->x_parts,row,col))leading_column=col;
