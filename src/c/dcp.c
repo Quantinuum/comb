@@ -82,57 +82,81 @@ int row_empty_p(mzd_t* M, int row){
 }
 void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state){
   int n = STATE_N(state);
-  int r = n;
+  int r = n; // the number of linearly independent z parts
   mzd_t* row_mask = mzd_init(1,n);
   // TODO bit ad hoc this
   lwlog_debug("State before gaussian elimination:\n %s",print_stabiliser_state(state,1));
-  // Gaussian elimination on Z parts - ensuring that last n-r stabilisers have no Z parts
-  for(int row = 0; (r>=0) && row < n; row++){
-    // search for leading entry.
-    int leading_column=-1;
-    for(int col = 0; (leading_column==-1) && col < n; col++){
-      if(mzd_read_bit(state->z_parts,row,col)){
-        leading_column = col;
+
+  int row_to_start_eliminating=0;
+  for(int col = 0; col < n; col++){
+    // Try to eliminate starting from row_to_start_eliminating down. We dont want to add rows that have already been used to eliminate others
+    int found_row=-1;
+    for(int row = row_to_start_eliminating; row < n; row++){
+      if(mzd_read_bit(state->z_parts, row, col)){
+        if(found_row == -1)found_row = row;
+        else add_row(state, found_row, row);
       }
     }
-    if(leading_column==-1){
-      // row was zero. try to swap it to the end and try again.
-      do {
-        r--;
-      } while(r >= 0 && row_empty_p(state->z_parts,r));
-      if(r > -1)swap_rows(state,row,r);
-      row--; // have to now check the new row again, so decf row
+    if(found_row == -1){
+      // means we have a zero column. ignore it but means that the rank can be reduced by one
+      r--;
     }
     else{
-      // do gaussian elimination on the column.
-      for(int row2 = 0; row2 < n; row2++){
-        if(row2!=row){
-          if(mzd_read_bit(state->z_parts,row2,leading_column)){
-            add_row(state,row,row2);
-          }
+      // swap the found row with the starting row, so that its in rref
+      swap_rows(state,found_row,row_to_start_eliminating);
+      // now incf row_to_start eliminating so we dont do it again
+      row_to_start_eliminating++;
         }
-      }
-    }
+    lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
   }
-  if(r<0)r=0;
-  lwlog_debug("State after gaussian elimination on Z parts: r = %d\n %s",r,print_stabiliser_state(state,1));
-  // Gaussian elimination on X parts of last n-r stabilisers
+  lwlog_debug("State after gaussian elimination on Z parts (r = %d):\n %s",r,print_stabiliser_state(state,1));
+  // now do gaussian elimination on the x parts from 0 to r
+  row_to_start_eliminating=0;
   for(int col = 0; col < n; col++){
-    int row_to_add=-1;
-    for(int row = r; row < n; row++){
-      if(mzd_read_bit(state->x_parts,row,col)){
-        mzd_write_bit(row_mask,0,col,1);
-        if(row_to_add==-1){ // no row yet found with a 1 in this column; if there are any others, then add this one to them.
-          row_to_add=row;
-        }
-        else{
-          add_row(state,row_to_add,row);
+    // Try to eliminate starting from row_to_start_eliminating down. We dont want to add rows that have already been used to eliminate others
+    int found_row=-1;
+    for(int row = row_to_start_eliminating; row < r; row++){
+      if(mzd_read_bit(state->x_parts, row, col)){
+        if(found_row == -1)found_row = row;
+        else add_row(state, found_row, row);
+      }
+    }
+    if(found_row == -1){
+      // means we have a zero column. ignore it
+    }
+    else{
+      // swap the found row with the starting row, so that its in rref
+      swap_rows(state,found_row,row_to_start_eliminating);
+      // now incf row_to_start eliminating so we dont do it again
+      row_to_start_eliminating++;
+    }
+    lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
+  }
+  lwlog_debug("State after gaussian elimination on X parts from 0 to %d:\n %s",r,print_stabiliser_state(state,1));
+  // now need to put x parts in rref
+  for(int row = 0; row < n; row++){
+    int leading_column = -1;
+    for(int col = 0; (leading_column == -1) && col < n; col++){
+      if(mzd_read_bit(state->x_parts,row,col))leading_column = col;
+    }
+    if(leading_column != -1){ // eliminate any rows above
+      for(int row2 = row-1; row2 >=0; row2--){
+        if(mzd_read_bit(state->x_parts,row2,leading_column)){
+          add_row(state,row,row2);
         }
       }
     }
-    // column should only have one 1 now.
   }
-  lwlog_debug("State after gaussian elimination on X parts:\n %s",print_stabiliser_state(state,1));
+
+
+
+
+
+
+
+
+
+  
   // optional: verify state is in rref if debug is on
 #if LOG_LEVEL >= DEBUG
   if(!verify_coset_ge(r,state)){
