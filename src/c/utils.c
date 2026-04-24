@@ -43,17 +43,6 @@ void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* x_measurement_matrix,
   mzd_write_bit(delta_bits,j,0,0);
 }
 
-uint32_t gray_bit_to_switch(uint32_t n) // allocation free */
-{
-  uint32_t n_add_one = n + 1;
-  uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
-  return n ? 31 - __builtin_clz(diff) : 0;
-}
-
-word mzd_data(mzd_t* mzd){ // assumes mzd is a row vector
-  return mzd->data[0];
-}
-
 inline unsigned compress4(unsigned x, unsigned m) { // from hacker's delight
     unsigned mk, mp, mv, t;
     int i;

@@ -1,6 +1,5 @@
 // Putative new interface for libcomb
 
-
 // need fixed width integers
 #include "comb_external.h"
 #include <m4ri/m4ri.h>
@@ -11,16 +10,6 @@
 #ifdef TIMING_MODE
 #define BAD_FAULT_FOUND ALL_FAULTS_GOOD
 #endif
-  // Functions
-
-  // idea. do rref in c? maybe a todo later. people should do it themselves...
-  // it goes against the philosophy of the library
-  // also cant be done as it precludes reuse of lookup tables
-
-  // These are all internal definitions
-
-  // use m4ri for matrix multiplication
-  // no need to implement addition / multiplication etc.
 
   // Conventions:
   // vectors are stored as column matrices by default (n x 1) matrices.
@@ -49,12 +38,17 @@
   } pauli_z_coset_t;
   // Useful macros
 
-uint32_t gray_bit_to_switch(uint32_t n);
-
 #define DCP_N(t) ((t)->F->nrows)
 #define STATE_N(t) ((((t)->x_parts->nrows)))
 #define COSET_K(t) ((((t)->set_generators->nrows)))
 #define COSET_N(t) ((((t)->set_generators->ncols)))
+
+inline uint32_t gray_bit_to_switch(uint32_t n)
+{
+  uint32_t n_add_one = n + 1;
+  uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
+  return n ? 31 - __builtin_clz(diff) : 0;
+}
 
   // Creation
   dcp_t* init_dcp(uint32_t n);
@@ -98,7 +92,9 @@ uint32_t gray_bit_to_switch(uint32_t n);
 
   void init_dcp_to_size(dcp_t* tableau, uint32_t n);
 
-  word mzd_data(mzd_t* mzd);
+inline word mzd_data(const mzd_t* mzd){ // assumes mzd is a row vector
+    return mzd->data[0];
+  }
   void  permute_qubits(pauli_z_coset_t* coset,int n, mzd_t* c, mzd_t* temp, mzd_t* big_c);
   // conversion
   void convert_dcp(dcp_t* dcp, comb_dcp_t* value);
@@ -106,11 +102,6 @@ uint32_t gray_bit_to_switch(uint32_t n);
   void convert_row(mzd_t* M, int row, comb_vector_t* vector);
 
   void free_dcp_array(uint32_t count, dcp_t* array);
-
-  // temporary variables (won't be thread safe.. probably replace later)
-  extern mzd_t *temp_n_n_1,*temp_n_n_2,*temp_n_plus_one_n,*temp_n_n_plus_one;
-  void init_temps(int n);
-  // utils
 
   BIT row_product(mzd_t* x, int i, mzd_t* z, int j);
 

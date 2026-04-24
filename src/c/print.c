@@ -1,7 +1,6 @@
 #include "comb.h"
 
   #define PRINT_SIZE 4096
-  #define PRINT_DEBUG_INFORMATION
   char print_buffer[PRINT_SIZE];
 
   int do_print_pauli(mzd_t* x_parts, mzd_t* z_parts, mzd_t* delta_vector, mzd_t* epsilon_vector,
@@ -37,7 +36,7 @@
     }
     return print_buffer;
   }
-  char* print_dcp(dcp_t* dcp, char print_newline_p){ // print_newline_p ignored actually
+  char* print_dcp(dcp_t* dcp, char print_newline_p){
     int n = DCP_N(dcp);
     int counter = 0;
     mzd_t* zero = mzd_init(n,n);
@@ -47,12 +46,9 @@
     mzd_set_ui(zero_vector,0);
     mzd_set_ui(identity,1);
     for(int i = 0 ; i < n ; i++){
-      // print pauli x_i
       counter = do_print_pauli(identity,zero,zero_vector,zero_vector,i,0,counter);
       counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"  ->");
       counter = do_print_pauli(identity,dcp->F,dcp->F_diagonal,dcp->h_z,i,1,counter);
-      // check h_z is the right way around
-      // print pauli z_i
       counter = do_print_pauli(zero,identity,zero_vector,zero_vector,i,0,counter);
       counter += snprintf(print_buffer+counter, PRINT_SIZE-counter,"  ->");
       counter = do_print_pauli(zero,identity,zero_vector,dcp->h_x,i,1,counter);
