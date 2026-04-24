@@ -10,6 +10,7 @@ CFLAGS =  -fPIC -I./m4ri/include -Wall -Werror -O3 -fPIC
 M4RI = m4ri/lib/libm4ri.a
 
 c_files := $(wildcard src/c/*.c)
+header_files := $(wildcard src/c/*.h)
 test_files :=$(wildcard test/*.c)
 obj_files := $(patsubst src/c/%.c,%.o,$(wildcard src/c/*.c))
 test_executables := $(patsubst test/%.c,test_%,$(wildcard test/*.c))
@@ -21,7 +22,7 @@ libcomb.so: m4ri $(obj_files)
 m4ri:
 	cd $(TMPDIR) && git clone $(M4RI_REPO) -b $(BRANCH) && cd m4ri/ && autoreconf --install && ./configure $(M4RI_CONFIGURE_OPTIONS) && $(MAKE) && $(MAKE) check && $(MAKE) install
 
-%.o : src/c/%.c m4ri
+%.o : src/c/%.c m4ri $(header_files)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 m4ri-clean:
