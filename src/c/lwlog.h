@@ -51,7 +51,7 @@ SOFTWARE.
 #define DEBUG (7)
 
 #ifndef LOG_LEVEL
-#define LOG_LEVEL (DEBUG)
+#define LOG_LEVEL (ERR)
 #endif
 
 // colors
