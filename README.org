@@ -18,3 +18,34 @@ from the project root.
   make docs
 #+END_SRC
 from the project root.
+* Potential improvements
+** Reduce the amount of Gaussian elimination
+At present, a round of Gaussian elimination is done for each measurement.
+
+Some of these rounds can be combined.
+
+For example, all of the Z measurements anticommute with at least one stabiliser generator of the DCP state.
+
+This means that all the Z measurements stabilise the state after measurement, and can be added as stabiliser generators.
+
+Furthermore, exactly the same sequence of row operations can be applied to the prior stabiliser generators to generate a new set of linearly independent generators that commute with all the measurement operators.
+
+Consequently, all the Z measurements can be done by combining the stabiliser generators in a way that can be calculated in advance and is the same for all states.
+
+This should be much more performant than simply measuring each Z stabiliser in turn.
+
+It remains to implement this and see if something similar is possible for the subsequent X measurements.
+** Use Gaussian elimination over finite fields
+m4ri has subcubic implementations of Gaussian elimination over F2 via matrix decomposition.
+
+However, we do not use them. We cannot use such matrix decompositions without destroying crucial information about the signs of the Paulis, because the sign bits of the Paulis don't add linearly.
+
+If this could be somehow circumvented, perhaps by using some alternate means to keep track of the signs, we would be able to use more efficient methods of Gaussian elimination.
+** SIMD implementation via GFNI or AVX
+It may be possible to do Gaussian elimination on several stabiliser states at once via SIMD.
+
+Gaussian elimination can be reduced to matrix multiplication (arXiv:1112.5717v2), and matrix multiplication can be done in SIMD via e.g. [[https://www.felixcloutier.com/x86/gf2p8affineqb][GF2P8AFFINEQB]].
+** Multithreading
+This implementation is serial at present. But the algorithm is amenable to parallelisation by simply assigning different sets of fault combinations to different cores.
+
+The algorithm ought to involve only writes to thread-local temporary storage of fixed size for the most part.
