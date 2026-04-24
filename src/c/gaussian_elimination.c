@@ -136,6 +136,7 @@ int verify_coset_ge(int r, stabiliser_state_t* state){
     if(leading_column!=-1){
       if(started_to_find_zeros_p){
         lwlog_debug("non trivial leading column found after a zero row was detected");
+        return 0;
       }
       // check to see if its not shared with any other rows
       if(last_leading_column >= leading_column){
