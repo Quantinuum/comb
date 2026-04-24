@@ -53,9 +53,12 @@ int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, 
       set_row(x_parts,z_parts,n,x_measurement_matrix,i, epsilon_bits, delta_bits); // copy measurement operator to last row
       // Now do gaussian elimination to ensure that final row is either -I or I. if this is not possible signal an error
       int identity_sign = form_identity_ge(state);
+      lwlog_debug("after form_identity_ge:\n %s",print_stabiliser_state(state,1));
       contract_state(state);
-      if(identity_sign) // -I was formed so we postselect. Otherwise, have to continue with other measurements.
+      if(identity_sign){ // -I was formed so we postselect. Otherwise, have to continue with other measurements.
+        lwlog_debug("-I measured, returning 1");
         return 1;
+      }
     }
   }
   return 0;
@@ -83,7 +86,6 @@ int row_empty_p(mzd_t* M, int row){
 void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state){
   int n = STATE_N(state);
   int r = n; // the number of linearly independent z parts
-  mzd_t* row_mask = mzd_init(1,n);
   // TODO bit ad hoc this
   lwlog_debug("State before gaussian elimination:\n %s",print_stabiliser_state(state,1));
 
@@ -107,9 +109,9 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
         }
-    lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
+    //lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
   }
-  lwlog_debug("State after gaussian elimination on Z parts (r = %d):\n %s",r,print_stabiliser_state(state,1));
+  //lwlog_debug("State after gaussian elimination on Z parts (r = %d):\n %s",r,print_stabiliser_state(state,1));
   // now do gaussian elimination on the x parts from 0 to r
   row_to_start_eliminating=r;
   for(int col = 0; col < n; col++){
@@ -130,16 +132,15 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
     }
-    lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
+    //lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
   }
-  lwlog_debug("State after gaussian elimination on X parts from 0 to %d:\n %s",r,print_stabiliser_state(state,1));
+  //lwlog_debug("State after gaussian elimination on X parts from 0 to %d:\n %s",r,print_stabiliser_state(state,1));
   // now need to put x parts in rref
   for(int row = 0; row < n; row++){
     int leading_column = -1;
     for(int col = 0; (leading_column == -1) && col < n; col++){
       if(mzd_read_bit(state->x_parts,row,col)){
         leading_column = col;
-        mzd_write_bit(row_mask,0,col,1);
       }
     }
     if(leading_column != -1){ // eliminate any rows above
@@ -156,9 +157,6 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
 
 
 
-
-
-
   
   // optional: verify state is in rref if debug is on
 #if LOG_LEVEL >= DEBUG
@@ -167,7 +165,7 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
     exit(1);
   }
   else{
-    lwlog_debug("state %s verified to be in appropriate form",print_stabiliser_state(state,1));
+    lwlog_debug("state %s verified to be in appropriate form (r=%d)",print_stabiliser_state(state,1),r);
   }
 #endif
   // Now read off results and store them in coset
@@ -176,11 +174,20 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
   coset->set_generators->nrows=r; // only r of them are valid
   mzd_set_ui(coset->factor_transpose,0);
   for(int i = r; i < n; i++){
-    if(mzd_read_bit(state->epsilon_vector,i,0))
-      mzd_combine(coset->factor_transpose,0,0,
-                  coset->factor_transpose,0,0,
-                  state->x_parts,i,0); // if the sign bit is 1, add it to the coset element
+    if(mzd_read_bit(state->epsilon_vector,i,0)){
+      int leading_column = -1;
+      for(int col = 0; (leading_column == -1) && col < n; col++){
+        if(mzd_read_bit(state->x_parts,i,col)){
+          leading_column=col;
+        }
+      }
+      if(leading_column==-1){
+        lwlog_err("error: leading column not been found; -I in state\n %s",print_stabiliser_state(state,1));
+        exit(1);
+      }
+      else{
+        mzd_write_bit(coset->factor_transpose,0,leading_column,1);
+      }
+    }
   }
-  mask_row_vector(coset->factor_transpose,row_mask);
-  mzd_free(row_mask);
 }

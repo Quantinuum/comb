@@ -72,6 +72,7 @@
     for(int i = 0; i < (1 << COSET_K(coset)); i++){
       lwlog_debug("Testing Z error %d in coset %s",i,print_row_vector_as_pauli(coset->factor_transpose,0,"Z"));
       int reduced_z_error = mzd_data(coset->factor_transpose);
+      lwlog_debug("number is %d",reduced_z_error);
       if(!TestBit(z_lookup_table,reduced_z_error)){
         lwlog_debug("z error in coset is high weight, so error is bad");
         return 1;
