@@ -86,7 +86,6 @@ int row_empty_p(mzd_t* M, int row){
 void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state){
   int n = STATE_N(state);
   int r = n; // the number of linearly independent z parts
-  // TODO bit ad hoc this
   lwlog_debug("State before gaussian elimination:\n %s",print_stabiliser_state(state,1));
 
   int row_to_start_eliminating=0;
@@ -100,7 +99,7 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
       }
     }
     if(found_row == -1){
-      // means we have a zero column. ignore it but means that the rank can be reduced by one
+      // means we have a zero column. dont need to increment the row but means that the rank can be reduced by one
       r--;
     }
     else{
