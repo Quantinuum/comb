@@ -16,8 +16,13 @@ obj_files := $(patsubst src/c/%.c,%.o,$(wildcard src/c/*.c))
 test_executables := $(patsubst test/%.c,test_%,$(wildcard test/*.c))
 
 
-libcomb.so: m4ri $(obj_files)
-	$(CC) -shared -o libcomb.so $(CFLAGS) -lm -rdynamic $(obj_files) $(M4RI)
+libcomb.so: build
+	ln -s build/libcomb.so libcomb.so
+
+build: m4ri $(obj_files)
+	mkdir -p build
+	mv $(obj_files) build
+	cd build && $(CC) -shared -o libcomb.so $(CFLAGS) -lm -rdynamic $(obj_files) ../$(M4RI)
 
 m4ri:
 	cd $(TMPDIR) && git clone $(M4RI_REPO) -b $(BRANCH) && cd m4ri/ && autoreconf --install && ./configure $(M4RI_CONFIGURE_OPTIONS) && $(MAKE) && $(MAKE) check && $(MAKE) install
@@ -31,6 +36,7 @@ m4ri-clean:
 clean:
 	rm -f *.o
 	rm -f *.so
+	rm -rf build
 	rm -rf docs
 	rm -rf test-bin
 	rm -f test_*
