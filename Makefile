@@ -12,29 +12,27 @@ M4RI = m4ri/lib/libm4ri.a
 c_files := $(wildcard src/c/*.c)
 header_files := $(wildcard src/c/*.h)
 test_files :=$(wildcard test/*.c)
-obj_files := $(patsubst src/c/%.c,%.o,$(wildcard src/c/*.c))
+obj_files := $(patsubst src/c/%.c,build/%.o,$(wildcard src/c/*.c))
 test_executables := $(patsubst test/%.c,test_%,$(wildcard test/*.c))
 
-
-libcomb.so: build
+libcomb.so: $(obj_files)
+	$(CC) -shared -o build/libcomb.so $(CFLAGS) -lm -rdynamic $(obj_files) $(M4RI)
+	rm -f libcomb.so
 	ln -s build/libcomb.so libcomb.so
-
-build: m4ri $(obj_files)
-	mkdir -p build
-	mv $(obj_files) build
-	cd build && $(CC) -shared -o libcomb.so $(CFLAGS) -lm -rdynamic $(obj_files) ../$(M4RI)
 
 m4ri:
 	cd $(TMPDIR) && git clone $(M4RI_REPO) -b $(BRANCH) && cd m4ri/ && autoreconf --install && ./configure $(M4RI_CONFIGURE_OPTIONS) && $(MAKE) && $(MAKE) check && $(MAKE) install
 
-%.o : src/c/%.c m4ri $(header_files)
+build:
+	mkdir -p build
+
+build/%.o : src/c/%.c m4ri $(header_files) build
 	$(CC) $(CFLAGS) -c $< -o $@
 
 m4ri-clean:
 	rm -rf m4ri/
 
 clean:
-	rm -f *.o
 	rm -f *.so
 	rm -rf build
 	rm -rf docs
