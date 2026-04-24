@@ -9,9 +9,6 @@
  *
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -149,7 +146,5 @@ comb_code_t comb_verify_css_magic_state( // 1. Describing the magic state
                                            uint32_t z_measurement_count, ///< The number of ancilla measurements made in the Z basis.
                                            comb_pauli_z_t* z_measurement_paulis ///< A pointer to the measurement operators corresponding to postselected measurements made in the Z basis. There must be at least z_measurement_count of these
                                          );
-#ifdef __cplusplus
-}
-#endif
+
 
