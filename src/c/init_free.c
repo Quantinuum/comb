@@ -19,7 +19,6 @@
     state->epsilon_vector->nrows=n;
     return state;
   }
-  
 
   void init_dcp_to_size(dcp_t* tableau, uint32_t n){
     tableau->F=mzd_init(n,n);

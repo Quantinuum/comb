@@ -40,23 +40,7 @@ void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* x_measurement_matrix,
   mzd_copy_row(x_parts,j,x_measurement_matrix,i);
   mzd_row_clear_offset(z_parts,j,0);
   mzd_write_bit(epsilon_bits,j,0,0);
-  mzd_write_bit(delta_bits,j,0,0); // we are done, so return
-}
-void clear_rows(stabiliser_state_t* state, mzd_t* parts, int n){ // cubic?
-  for(int col = 0; col < n; col++){
-    // go down the rows until you find one with a non zero entry.
-    int row_found_p = -1;
-    for(int row = 0; row < n && (row_found_p==-1); row++){
-      if(mzd_read_bit(parts,row,col))row_found_p=row;
-    }
-    if(row_found_p!=-1){
-      // if a row was found, eliminate all rows below it with elementary ops.
-      // otherwise, can carry on with the loop
-      for(int row_to_clear= row_found_p + 1; row_to_clear < n+1 ; row_to_clear++){
-        if(mzd_read_bit(parts,row_to_clear,col))add_row(state,row_found_p,row_to_clear);
-      }
-    }
-  }
+  mzd_write_bit(delta_bits,j,0,0);
 }
 
 uint32_t gray_bit_to_switch(uint32_t n) // allocation free */
@@ -66,17 +50,15 @@ uint32_t gray_bit_to_switch(uint32_t n) // allocation free */
   return n ? 31 - __builtin_clz(diff) : 0;
 }
 
-word mzd_data(mzd_t* mzd){ // allocation free */
+word mzd_data(mzd_t* mzd){ // assumes mzd is a row vector
   return mzd->data[0];
 }
 
 inline unsigned compress4(unsigned x, unsigned m) { // from hacker's delight
     unsigned mk, mp, mv, t;
     int i;
-    
     x = x & m;           // Clear irrelevant bits.
     mk = ~m << 1;        // We will count 0's to right.
-    
     for (i = 0; i < 5; i++) {
       mp = mk ^ (mk << 1);              // Parallel suffix.
       mp = mp ^ (mp << 2);
@@ -101,5 +83,14 @@ void permute_columns(mzd_t* data, unsigned mask){
 void convert_row(mzd_t* M, int row, comb_vector_t* vector){
   for(int i = 0; i < M->ncols; i++){
     mzd_write_bit(M,row,i,TestBit(vector->data,i)?1:0);
+  }
+}
+
+void add_and_column_vector(mzd_t* result, mzd_t* F1, mzd_t* F2){
+  // assumes that f1, f2, and result are congruous column vectors
+  // necessarily linear time.
+  int n = result->nrows;
+  for(int i = 0; i < n; i++){
+    mzd_write_bit(result,i,0,(mzd_read_bit(result,i,0) ^ (mzd_read_bit(F1,i,0) & mzd_read_bit(F2,i,0))));
   }
 }

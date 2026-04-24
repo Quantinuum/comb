@@ -77,7 +77,8 @@
         lwlog_debug("z error in coset is high weight, so error is bad");
         return 1;
       }
-      if((i+1)!=(1 << COSET_K(coset)))incf_coset(coset,i);
+      if((i+1)!=(1 << COSET_K(coset))) // multiply the coset factor by a generator of the vector space according to a gray code
+        coset->factor_transpose->data[0]^=mzd_row(coset->set_generators,gray_bit_to_switch(i))[0];
     }
     lwlog_debug("all errors in coset were low weight, so error is good");
     return 0;
@@ -135,8 +136,6 @@
                                            unsigned z_permutation,
                                            unsigned long long* fault_counter
                                            ){
-
-
     lwlog_debug("setting up the iteration");
     int current_combination[MAX_SIZE_COUNT] = {0};
     int first_balls[MAX_SIZE_COUNT];
