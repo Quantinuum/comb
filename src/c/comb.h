@@ -129,3 +129,6 @@ uint32_t gray_bit_to_switch(uint32_t n);
   void contract_state(stabiliser_state_t* state);
   unsigned compress4(unsigned x, unsigned m);
   void permute_columns(mzd_t* data, unsigned mask);
+
+int form_identity_ge(stabiliser_state_t* state);
+int verify_coset_ge(int r, stabiliser_state_t* state);

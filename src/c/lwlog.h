@@ -35,9 +35,6 @@ SOFTWARE.
 #include <errno.h>
 #include <string.h>
 
-#ifndef LOG_LEVEL
-#define LOG_LEVEL (5)
-#endif
 
 #ifndef LOG_COLOR
 #define LOG_COLOR (1)
@@ -52,6 +49,10 @@ SOFTWARE.
 #define NOTICE (5)
 #define INFO (6)
 #define DEBUG (7)
+
+#ifndef LOG_LEVEL
+#define LOG_LEVEL (ERR)
+#endif
 
 // colors
 #define NONE                 "\e[0m"
