@@ -70,7 +70,6 @@ uint32_t gray_bit_to_switch(uint32_t n);
   char* print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
   char* print_stabiliser_state(stabiliser_state_t *coset, char print_newline_p);
   // more convenient creation
-  void add_and_row_vector(mzd_t* result, mzd_t* F1,mzd_t* F2);
   void add_and_column_vector(mzd_t* result, mzd_t* F1,mzd_t* F2);
   // Converting
   void convert_dcp(dcp_t* dcp, comb_dcp_t* comb);
@@ -107,7 +106,6 @@ uint32_t gray_bit_to_switch(uint32_t n);
   void convert_row(mzd_t* M, int row, comb_vector_t* vector);
 
   void free_dcp_array(uint32_t count, dcp_t* array);
-  void incf_coset(pauli_z_coset_t *coset, int index);
 
   // temporary variables (won't be thread safe.. probably replace later)
   extern mzd_t *temp_n_n_1,*temp_n_n_2,*temp_n_plus_one_n,*temp_n_n_plus_one;
@@ -118,12 +116,9 @@ uint32_t gray_bit_to_switch(uint32_t n);
 
   void fix_dcp(dcp_t* dcp);
 
-  void mask_row_vector(mzd_t* result, mzd_t* mask);
   stabiliser_state_t* init_state(int n);
 
   void expand_state(stabiliser_state_t* state);
-
-  void clear_rows(stabiliser_state_t* state, mzd_t* parts, int n);
 
   void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* x_measurement_matrix, int i,mzd_t* epsilon_bits, mzd_t* delta_bits);
   void contract_state(stabiliser_state_t* state);

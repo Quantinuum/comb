@@ -27,21 +27,16 @@ void set_stabiliser_state_to_dcp(stabiliser_state_t* state, dcp_t* dcp){
 int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, mzd_t* x_measurement_matrix, mzd_t* delta_bits, mzd_t* epsilon_bits,char* x_measurement_string){
   int n_x = x_measurement_matrix->nrows;
   int n = x_measurement_matrix->ncols;
-  //mzd_t* m_i = mzd_init(1,n); // row vector
-  //mzd_t* z_j = mzd_init(1,n); // current stabiliser: row vector
   for(int i = 0; i < n_x; i++){
     lwlog_debug("measuring operator %d: %s",i,print_row_vector_as_pauli(x_measurement_matrix,i,x_measurement_string));
-    //mzd_copy_row(m_i,0,x_measurement_matrix,i); // get the measurement out
     int anticommuting_stabiliser_found = 0;
     for(int j = 0; j < n && !anticommuting_stabiliser_found; j++){
-      //mzd_copy_row(z_j,0,z_parts,j);
       int anticommuting_p = row_product(x_measurement_matrix,i,z_parts,j);
       if(anticommuting_p){ // An anticommuting stabiliser was found
         anticommuting_stabiliser_found=1;
         for(int k = j+1; k < n; k++){
-          if(row_product(z_parts,k,x_measurement_matrix,i)){ // if k-th row anticommutes with the measurement operator...
+          if(row_product(z_parts,k,x_measurement_matrix,i)) // if k-th row anticommutes with the measurement operator...
             add_row(state,j,k); // add row j to k
-          }
         }
         // now set the row equal to the measurement operator.
         set_row(x_parts,z_parts,j,x_measurement_matrix,i,epsilon_bits, delta_bits);
@@ -78,16 +73,11 @@ int postselect_on_measuring_plus_one_z(stabiliser_state_t* state, mzd_t* z_measu
   return _postselect_on_x(state, state->z_parts, state->x_parts, z_measurement_matrix, state->delta_vector, state->epsilon_vector,"Z");
 }
 // 4. Turn a stabiliser state into a coset. Idea: reduce size of stabiliser state by means of the permutation first? you know it will have zero support on ancilla qubits. what's the point in doing too much pluq. you can do it simply on the reduced data indices.
-int row_empty_p(mzd_t* M, int row){
-  for(int col = 0; col < M->ncols; col++)
-    if(mzd_read_bit(M,row,col))return 0;
-  return 1;
-}
+
 void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state){
   int n = STATE_N(state);
   int r = n; // the number of linearly independent z parts
   lwlog_debug("State before gaussian elimination:\n %s",print_stabiliser_state(state,1));
-
   int row_to_start_eliminating=0;
   for(int col = 0; col < n; col++){
     // Try to eliminate starting from row_to_start_eliminating down. We dont want to add rows that have already been used to eliminate others
@@ -98,20 +88,15 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
         else add_row(state, found_row, row);
       }
     }
-    if(found_row == -1){
+    if(found_row == -1)r--;
       // means we have a zero column. dont need to increment the row but means that the rank can be reduced by one
-      r--;
-    }
     else{
       // swap the found row with the starting row, so that its in rref
       swap_rows(state,found_row,row_to_start_eliminating);
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
-        }
-    //lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
+    }
   }
-  //lwlog_debug("State after gaussian elimination on Z parts (r = %d):\n %s",r,print_stabiliser_state(state,1));
-  // now do gaussian elimination on the x parts from 0 to r
   row_to_start_eliminating=r;
   for(int col = 0; col < n; col++){
     // Try to eliminate starting from row_to_start_eliminating down. We dont want to add rows that have already been used to eliminate others
@@ -150,13 +135,6 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
       }
     }
   }
-
-
-
-
-
-
-  
   // optional: verify state is in rref if debug is on
 #if LOG_LEVEL >= DEBUG
   if(!verify_coset_ge(r,state)){

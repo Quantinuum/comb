@@ -21,7 +21,7 @@
     mzd_row_add(state->z_parts, sourcerow, destrow);
     mzd_row_add(state->delta_vector, sourcerow, destrow);
     mzd_row_add(state->epsilon_vector, sourcerow, destrow);
-    // correct epsilon
+    // correct epsilon according to dehaene and de moor
     BIT epsilon_bit = mzd_read_bit(state->epsilon_vector,destrow,0);
     mzd_write_bit(state->epsilon_vector,destrow,0,epsilon_bit ^ (delta1 & delta2) ^ a2TUa1);
   }
