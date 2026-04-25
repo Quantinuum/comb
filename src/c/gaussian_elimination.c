@@ -12,10 +12,6 @@ void add_row(stabiliser_state_t* state, int sourcerow, int destrow){
   // Adds rows and stores them in destrow.
   BIT delta1 = mzd_read_bit(state->delta_vector,sourcerow,0);
   BIT delta2 = mzd_read_bit(state->delta_vector,destrow,0);
-
-  //char epsilon1 = mzd_read_bit(state->epsilon_vector,i,0);
-  //char epsilon2 = mzd_read_bit(state->epsilon_vector,j,0);
-
   BIT a2TUa1 = row_product(state->x_parts,sourcerow,state->z_parts,destrow); // this is symmetric under x <-> z for stabiliser states actually
   mzd_row_add(state->x_parts, sourcerow, destrow);
   mzd_row_add(state->z_parts, sourcerow, destrow);
@@ -33,7 +29,6 @@ void add_row(stabiliser_state_t* state, int sourcerow, int destrow){
  * The return value is undefined if neither I or -I were formed.
  */
 int form_identity_ge(stabiliser_state_t* state){
-  // if in debug mode, check manually
   lwlog_debug("in form_identity_ge:\n %s",print_stabiliser_state(state,1));
   int n = state->x_parts->ncols; // its extended so not a good idea to use STATE_N - its not square
   int row_to_start_eliminating=0;
@@ -55,7 +50,6 @@ int form_identity_ge(stabiliser_state_t* state){
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
     }
-    //lwlog_debug("after trying to eliminate x_%d: \n %s",col,print_stabiliser_state(state,1));
     // same for z
     found_row=-1;
     for(int row = row_to_start_eliminating; row <= n; row++){
@@ -73,7 +67,6 @@ int form_identity_ge(stabiliser_state_t* state){
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
     }
-    //lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
   }
 
 
