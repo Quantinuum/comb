@@ -1,6 +1,6 @@
 #include "comb.h"
 
-  // 1. Multiply DCPs together
+// 1. Multiply DCPs together
 dcp_t *dcp_mul(dcp_t *result, dcp_t *c2, dcp_t *c1){ // allocation free. does not check sizes
   if(!result)result = init_dcp(DCP_N(c1));
   mzd_add(result->F_diagonal,c2->F_diagonal,c1->F_diagonal); // F parts add
@@ -89,7 +89,7 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
       }
     }
     if(found_row == -1)r--;
-      // means we have a zero column. dont need to increment the row but means that the rank can be reduced by one
+    // means we have a zero column. dont need to increment the row but means that the rank can be reduced by one
     else{
       // swap the found row with the starting row, so that its in rref
       swap_rows(state,found_row,row_to_start_eliminating);

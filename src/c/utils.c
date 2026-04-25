@@ -44,23 +44,23 @@ void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* x_measurement_matrix,
 }
 
 inline unsigned compress4(unsigned x, unsigned m) { // from hacker's delight
-    unsigned mk, mp, mv, t;
-    int i;
-    x = x & m;           // Clear irrelevant bits.
-    mk = ~m << 1;        // We will count 0's to right.
-    for (i = 0; i < 5; i++) {
-      mp = mk ^ (mk << 1);              // Parallel suffix.
-      mp = mp ^ (mp << 2);
-      mp = mp ^ (mp << 4);
-      mp = mp ^ (mp << 8);
-      mp = mp ^ (mp << 16);
-      mv = mp & m;                      // Bits to move.
-      m = (m ^ mv) | (mv >> (1 << i));    // Compress m.
-      t = x & mv;
-      x = (x ^ t) | (t >> (1 << i));      // Compress x.
-      mk = mk & ~mp;
-    }
-    return x;
+  unsigned mk, mp, mv, t;
+  int i;
+  x = x & m;           // Clear irrelevant bits.
+  mk = ~m << 1;        // We will count 0's to right.
+  for (i = 0; i < 5; i++) {
+    mp = mk ^ (mk << 1);              // Parallel suffix.
+    mp = mp ^ (mp << 2);
+    mp = mp ^ (mp << 4);
+    mp = mp ^ (mp << 8);
+    mp = mp ^ (mp << 16);
+    mv = mp & m;                      // Bits to move.
+    m = (m ^ mv) | (mv >> (1 << i));    // Compress m.
+    t = x & mv;
+    x = (x ^ t) | (t >> (1 << i));      // Compress x.
+    mk = mk & ~mp;
+  }
+  return x;
 }
 void permute_columns(mzd_t* data, unsigned mask){
   for(int i = 0 ; i < data->nrows; i++){
