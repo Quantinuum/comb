@@ -143,7 +143,8 @@ comb_code_t comb_verify_css_magic_state( // 1. Describing the magic state
                                          uint32_t x_measurement_count, ///< The number of ancilla measurements made in the X basis.
                                          comb_pauli_x_t* x_measurement_paulis, ///< A pointer to the measurement operators corresponding to postselected measurements made in the X basis. There must be at least x_measurement_count of these
                                          uint32_t z_measurement_count, ///< The number of ancilla measurements made in the Z basis.
-                                         comb_pauli_z_t* z_measurement_paulis ///< A pointer to the measurement operators corresponding to postselected measurements made in the Z basis. There must be at least z_measurement_count of these
+                                         comb_pauli_z_t* z_measurement_paulis, ///< A pointer to the measurement operators corresponding to postselected measurements made in the Z basis. There must be at least z_measurement_count of these
+                                         uint32_t thread_count ///< Number of threads to use. At present this parameter is unused but there for future compatibility.
                                          );
 
 

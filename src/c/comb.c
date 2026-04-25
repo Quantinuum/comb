@@ -256,7 +256,8 @@ comb_code_t comb_verify_css_magic_state( uint32_t n_all, ///< number of qubits i
                                          uint32_t x_measurement_count, // number of x measurement paulis
                                          comb_pauli_x_t* _x_measurement_paulis, // postselections made in x basis. at least x_measurement_count of these
                                          uint32_t z_measurement_count, // number of z measurement paulis
-                                         comb_pauli_z_t* _z_measurement_paulis){
+                                         comb_pauli_z_t* _z_measurement_paulis,
+                                         uint32_t thread_count){
   lwlog_info("start timing \n");
 
   struct timespec start, finish;
