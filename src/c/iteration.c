@@ -25,15 +25,6 @@ int incf_bit_vector(int *v, int n) {
   }
   return 1;
 }
-void print_bit_vector(int *v, int n) {
-  for (int m = 0; m < n; m++)
-    if (TestBit(v, m))
-      printf("1");
-    else
-      printf("0");
-  printf("\n");
-}
-
 // Increments the fault combination n_0, ... , n_(k-1) and returns 0. if not
 // possible it returns 1.
 int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_balls,
@@ -85,7 +76,7 @@ int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_ball
         }
 
         if (incf_bit_vector(v, n)) {
-          printf("incf bit vector returned 1; should not be here\n");
+          lwlog_err("incf bit vector returned 1; should not be here\n");
           return 0;
         }
 
