@@ -22,8 +22,6 @@ void set_stabiliser_state_to_dcp(stabiliser_state_t* state, dcp_t* dcp){
   mzd_copy(state->delta_vector,dcp->F_diagonal); //? think it works
 } // no transposing here either... note that as F is symmetric, and x the identity, state can choose which transposition convention it wants. It probably shouldn't, but either way this shows that this method will never ever transpose.
 
-  // 3. Carry out measurements on a stabiliser state.
-
 int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, mzd_t* x_measurement_matrix, mzd_t* delta_bits, mzd_t* epsilon_bits,char* x_measurement_string){
   int n_x = x_measurement_matrix->nrows;
   int n = x_measurement_matrix->ncols;
@@ -60,19 +58,14 @@ int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, 
 }
 
 // Postselect a stabiliser state on a set of X measurements.
-int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, mzd_t* x_measurement_matrix /* n_x x n; rows are paulis*/
-                                       ){
+int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, mzd_t* x_measurement_matrix /* n_x x n; rows are paulis*/ ){
   return _postselect_on_x(state, state->x_parts, state->z_parts, x_measurement_matrix, state->delta_vector, state->epsilon_vector,"X");
 }
 
-
-
 // Postselect a stabiliser state on a set of Z measurements.
-int postselect_on_measuring_plus_one_z(stabiliser_state_t* state, mzd_t* z_measurement_matrix /* n_z x n*/
-                                       ){
+int postselect_on_measuring_plus_one_z(stabiliser_state_t* state, mzd_t* z_measurement_matrix /* n_z x n*/ ){
   return _postselect_on_x(state, state->z_parts, state->x_parts, z_measurement_matrix, state->delta_vector, state->epsilon_vector,"Z");
 }
-// 4. Turn a stabiliser state into a coset. Idea: reduce size of stabiliser state by means of the permutation first? you know it will have zero support on ancilla qubits. what's the point in doing too much pluq. you can do it simply on the reduced data indices.
 
 void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state){
   int n = STATE_N(state);
@@ -93,8 +86,7 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
     else{
       // swap the found row with the starting row, so that its in rref
       swap_rows(state,found_row,row_to_start_eliminating);
-      // now incf row_to_start eliminating so we dont do it again
-      row_to_start_eliminating++;
+      row_to_start_eliminating++; // now incf row_to_start eliminating so we dont do it again
     }
   }
   row_to_start_eliminating=r;
@@ -116,9 +108,7 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
     }
-    //lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
   }
-  //lwlog_debug("State after gaussian elimination on X parts from 0 to %d:\n %s",r,print_stabiliser_state(state,1));
   // now need to put x parts in rref
   for(int row = 0; row < n; row++){
     int leading_column = -1;
