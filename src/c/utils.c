@@ -78,8 +78,7 @@ void convert_row(mzd_t* M, int row, comb_vector_t* vector){
 void add_and_column_vector(mzd_t* result, mzd_t* F1, mzd_t* F2){
   // assumes that f1, f2, and result are congruous column vectors
   // necessarily linear time.
-  int n = result->nrows;
-  for(int i = 0; i < n; i++){
+  for(int i = 0; i < result->nrows; i++){
     mzd_write_bit(result,i,0,(mzd_read_bit(result,i,0) ^ (mzd_read_bit(F1,i,0) & mzd_read_bit(F2,i,0))));
   }
 }

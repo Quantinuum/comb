@@ -99,10 +99,7 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *s
         else add_row(state, found_row, row);
       }
     }
-    if(found_row == -1){
-      // means we have a zero column. ignore it
-    }
-    else{
+    if(found_row != -1){
       // swap the found row with the starting row, so that its in rref
       swap_rows(state,found_row,row_to_start_eliminating);
       // now incf row_to_start eliminating so we dont do it again
