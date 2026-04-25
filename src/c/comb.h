@@ -40,78 +40,67 @@ typedef struct {
 #define COSET_K(t) ((((t)->set_generators->nrows)))
 #define COSET_N(t) ((((t)->set_generators->ncols)))
 
+// convert.c
+void convert_permutation(mzd_t* permutation, uint32_t n_z, uint32_t n, uint32_t *rrefs);
+void convert_dcp(dcp_t* dcp, comb_dcp_t* value);
+
+// dcp.c
+dcp_t *dcp_mul(dcp_t *result, dcp_t *c2, dcp_t *c1);
+void set_stabiliser_state_to_dcp(stabiliser_state_t* state, dcp_t* dcp);
+int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, mzd_t* x_measurement_matrix);
+int postselect_on_measuring_plus_one_z(stabiliser_state_t* state, mzd_t* x_measurement_matrix);
+int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, mzd_t* x_measurement_matrix, mzd_t* delta_bits, mzd_t* epsilon_bits,char* x_measurement_string);
+void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state);
+
+// gaussian_elimination.c
+void swap_rows(stabiliser_state_t* state, int i, int j);
+void add_row(stabiliser_state_t* state, int sourcerow, int destrow);
+int form_identity_ge(stabiliser_state_t* state);
+int verify_coset_ge(int r, stabiliser_state_t* state);
+
+// init_free.c
+dcp_t* init_dcp(uint32_t n);
+stabiliser_state_t* init_state(int n);
+void init_dcp_to_size(dcp_t* tableau, uint32_t n);
+pauli_z_coset_t* init_pauli_z_coset(uint32_t n, uint32_t k);
+void free_dcp_array(uint32_t count, dcp_t* array);
+void free_dcp(dcp_t* dcp);
+void free_pauli_z_coset(pauli_z_coset_t* coset);
+void set_dcp_to(dcp_t* a, dcp_t *b);
+
+// iteration.c
+int incf_bit_vector(int *v, int n);
+int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_balls,
+                                  int *last_balls, int *current_combination);
+
+// print.c
+int do_print_pauli(mzd_t* x_parts, mzd_t* z_parts, mzd_t* delta_vector, mzd_t* epsilon_vector,
+                   int row_number, char print_newline_p, int counter);
+char* print_row_vector_as_pauli(mzd_t* row_vector, int row, const char* character);
+char* print_dcp(dcp_t* dcp, char print_newline_p);
+char* print_stabiliser_state(stabiliser_state_t *state, char print_newline_p);
+char* print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
+
+// utils.c
+void fix_dcp(dcp_t* dcp);
+BIT row_product(mzd_t* x, int i, mzd_t* z, int j);
+void expand_state(stabiliser_state_t* state);
+void contract_state(stabiliser_state_t* state);
+void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* x_measurement_matrix,
+             int i, mzd_t* epsilon_bits, mzd_t* delta_bits);
+void permute_columns(mzd_t* data, unsigned mask);
+void convert_row(mzd_t* M, int row, comb_vector_t* vector);
+void add_and_column_vector(mzd_t* result, mzd_t* F1, mzd_t* F2);
+
+// inline functions
+
+inline word mzd_data(const mzd_t* mzd){ // assumes mzd is a row vector
+  return mzd->data[0];
+}
+
 inline uint32_t gray_bit_to_switch(uint32_t n)
 {
   uint32_t n_add_one = n + 1;
   uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
   return n ? 31 - __builtin_clz(diff) : 0;
 }
-
-// Creation
-dcp_t* init_dcp(uint32_t n);
-pauli_z_coset_t* init_pauli_z_coset(uint32_t n, uint32_t k);
-// Freeing
-void free_dcp(dcp_t* dcp);
-void free_pauli_z_coset(pauli_z_coset_t* coset);
-// Setting
-// ? what to put here. they are structs so not that much point?
-void set_dcp_to(dcp_t *a, dcp_t* b); // assigns b to a: a = b.
-// Printing
-char* print_dcp(dcp_t *dcp, char print_newline_p);
-char* print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
-char* print_stabiliser_state(stabiliser_state_t *coset, char print_newline_p);
-// more convenient creation
-void add_and_column_vector(mzd_t* result, mzd_t* F1,mzd_t* F2);
-// Converting
-void convert_dcp(dcp_t* dcp, comb_dcp_t* comb);
-
-char* print_row_vector_as_pauli(mzd_t* row_vector, int row, const char* character);
-// for algorithm:
-// 1. Multiplies DCP operators
-dcp_t *dcp_mul(dcp_t *result, dcp_t *c1, dcp_t *c2);
-// 2. Sets a stabiliser state to the diagonal part of a DCP
-void set_stabiliser_state_to_dcp(stabiliser_state_t* state, dcp_t* dcp);
-// 3. Manipulate stabiliser states more easily
-void swap_rows(stabiliser_state_t* state, int i, int j);
-void add_row(stabiliser_state_t* state, int sourcerow, int destrow);
-void left_multiply(stabiliser_state_t* state, mzd_t* M, stabiliser_state_t* new_state);
-
-// 3. Postselects on a stabiliser state (destructive). Can be used to canonicalise too...
-int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, mzd_t* x_measurement_matrix);
-int postselect_on_measuring_plus_one_z(stabiliser_state_t* state, mzd_t* z_measurement_matrix);
-
-// 4. Applies the diagonal clifford structure theorem to express a clifford as a linear combination of a set of paulis.
-void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state);
-// iteration
-
-int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_balls,
-                                  int *last_balls, int *current_combination);
-
-void init_dcp_to_size(dcp_t* tableau, uint32_t n);
-
-inline word mzd_data(const mzd_t* mzd){ // assumes mzd is a row vector
-  return mzd->data[0];
-}
-void  permute_qubits(pauli_z_coset_t* coset,int n, mzd_t* c, mzd_t* temp, mzd_t* big_c);
-// conversion
-void convert_dcp(dcp_t* dcp, comb_dcp_t* value);
-void convert_permutation(mzd_t* permutation, uint32_t n, uint32_t n_z, uint32_t *rrefs);
-void convert_row(mzd_t* M, int row, comb_vector_t* vector);
-
-void free_dcp_array(uint32_t count, dcp_t* array);
-
-BIT row_product(mzd_t* x, int i, mzd_t* z, int j);
-
-void fix_dcp(dcp_t* dcp);
-
-stabiliser_state_t* init_state(int n);
-
-void expand_state(stabiliser_state_t* state);
-
-void set_row(mzd_t* x_parts, mzd_t* z_parts, int j, mzd_t* x_measurement_matrix, int i,mzd_t* epsilon_bits, mzd_t* delta_bits);
-void contract_state(stabiliser_state_t* state);
-unsigned compress4(unsigned x, unsigned m);
-void permute_columns(mzd_t* data, unsigned mask);
-
-int form_identity_ge(stabiliser_state_t* state);
-int verify_coset_ge(int r, stabiliser_state_t* state);
