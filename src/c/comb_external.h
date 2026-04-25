@@ -9,7 +9,6 @@
  *
  */
 
-
 #include <stdint.h>
 #include <stdlib.h>
 
@@ -124,27 +123,27 @@ void comb_cfree_dcp(int count/*!< The length of the array.*/, comb_dcp_t* pointe
  * @return A code indicating the result of the verification. If BAD_FAULT_FOUND, then bad_fault_array is set to the indices of the bad faults in output_error_array.
  */
 comb_code_t comb_verify_css_magic_state( // 1. Describing the magic state
-                                           uint32_t n_all, ///< The number of qubits that comprise the code and all the ancillas.
-                                           uint32_t n, ///< The number of qubits in the code.
-                                           uint32_t n_x, ///< The number of independent stabiliser generators of X type in the code.
-                                           uint32_t n_z, ///< The number of independent stabiliser generators of Z type in the code.
-                                           uint32_t k, ///< The number of logical qubits in the code.
-                                           comb_pauli_x_t* x_stabilisers, ///< An pointer to the stabiliser generators of X type. They must be in reduced row echelon form. There must be n_x stabiliser generators.
-                                           comb_bit_array_t x_lookup_table, ///< A bit array that is the lookup table that determines whether the X parts of the postselected errors are good or not. The lookup table must be of size \f$2^{n-n_x} \f$ bits.
-                                           comb_pauli_z_t* z_stabilisers, ///< A pointer to the stabiliser generators of Z type. They must be in reduced row echelon form. There must be n_z stabiliser generators.
-                                           comb_bit_array_t z_lookup_table,///< A bit array that is the lookup table that determines whether the Z parts of the postselected errors are good or not. The lookup table must be of size \f$2^{n-n_z} \f$ bits.
-                                           comb_dcp_t* dcp_stabilisers, ///< A pointer to the logical DCP operators that stabilise the magic state and thus characterise it uniquely. There must be k such operators.
-                                           // 2. Other parameters
-                                           uint32_t fault_location_count, ///< The number of fault locations in the circuit.
-                                           uint32_t *fault_location_partitions, ///< A pointer to the numbers of faults at each fault location. There must be at least fault_location_count of them.
-                                           uint32_t s, ///< The number of faults that make up each fault combination.
-                                           uint32_t *bad_fault_array, ///< A pointer to where indices of bad faults can be stored. It must have enough space for s elements.
-                                           uint32_t output_error_count, ///< The number of output errors that result from propagating all the faults. This number should be at least the sum of all the fault_location_partitions.
-                                           comb_dcp_t* output_errors, ///< A pointer to the DCP output errors that result from propagating each fault to the end of the circuit. There must be at least output_error_count errors.
-                                           uint32_t x_measurement_count, ///< The number of ancilla measurements made in the X basis.
-                                           comb_pauli_x_t* x_measurement_paulis, ///< A pointer to the measurement operators corresponding to postselected measurements made in the X basis. There must be at least x_measurement_count of these
-                                           uint32_t z_measurement_count, ///< The number of ancilla measurements made in the Z basis.
-                                           comb_pauli_z_t* z_measurement_paulis ///< A pointer to the measurement operators corresponding to postselected measurements made in the Z basis. There must be at least z_measurement_count of these
+                                         uint32_t n_all, ///< The number of qubits that comprise the code and all the ancillas.
+                                         uint32_t n, ///< The number of qubits in the code.
+                                         uint32_t n_x, ///< The number of independent stabiliser generators of X type in the code.
+                                         uint32_t n_z, ///< The number of independent stabiliser generators of Z type in the code.
+                                         uint32_t k, ///< The number of logical qubits in the code.
+                                         comb_pauli_x_t* x_stabilisers, ///< An pointer to the stabiliser generators of X type. They must be in reduced row echelon form. There must be n_x stabiliser generators.
+                                         comb_bit_array_t x_lookup_table, ///< A bit array that is the lookup table that determines whether the X parts of the postselected errors are good or not. The lookup table must be of size \f$2^{n-n_x} \f$ bits.
+                                         comb_pauli_z_t* z_stabilisers, ///< A pointer to the stabiliser generators of Z type. They must be in reduced row echelon form. There must be n_z stabiliser generators.
+                                         comb_bit_array_t z_lookup_table,///< A bit array that is the lookup table that determines whether the Z parts of the postselected errors are good or not. The lookup table must be of size \f$2^{n-n_z} \f$ bits.
+                                         comb_dcp_t* dcp_stabilisers, ///< A pointer to the logical DCP operators that stabilise the magic state and thus characterise it uniquely. There must be k such operators.
+                                         // 2. Other parameters
+                                         uint32_t fault_location_count, ///< The number of fault locations in the circuit.
+                                         uint32_t *fault_location_partitions, ///< A pointer to the numbers of faults at each fault location. There must be at least fault_location_count of them.
+                                         uint32_t s, ///< The number of faults that make up each fault combination.
+                                         uint32_t *bad_fault_array, ///< A pointer to where indices of bad faults can be stored. It must have enough space for s elements.
+                                         uint32_t output_error_count, ///< The number of output errors that result from propagating all the faults. This number should be at least the sum of all the fault_location_partitions.
+                                         comb_dcp_t* output_errors, ///< A pointer to the DCP output errors that result from propagating each fault to the end of the circuit. There must be at least output_error_count errors.
+                                         uint32_t x_measurement_count, ///< The number of ancilla measurements made in the X basis.
+                                         comb_pauli_x_t* x_measurement_paulis, ///< A pointer to the measurement operators corresponding to postselected measurements made in the X basis. There must be at least x_measurement_count of these
+                                         uint32_t z_measurement_count, ///< The number of ancilla measurements made in the Z basis.
+                                         comb_pauli_z_t* z_measurement_paulis ///< A pointer to the measurement operators corresponding to postselected measurements made in the Z basis. There must be at least z_measurement_count of these
                                          );
 
 

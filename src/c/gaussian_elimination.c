@@ -1,30 +1,30 @@
 // row operations
 #include "comb.h"
 
-  void swap_rows(stabiliser_state_t* state, int i, int j){
-    mzd_row_swap(state->x_parts,i,j);
-    mzd_row_swap(state->z_parts,i,j);
-    mzd_row_swap(state->delta_vector,i,j);
-    mzd_row_swap(state->epsilon_vector,i,j);
-  }
+void swap_rows(stabiliser_state_t* state, int i, int j){
+  mzd_row_swap(state->x_parts,i,j);
+  mzd_row_swap(state->z_parts,i,j);
+  mzd_row_swap(state->delta_vector,i,j);
+  mzd_row_swap(state->epsilon_vector,i,j);
+}
 
-  void add_row(stabiliser_state_t* state, int sourcerow, int destrow){
-    // Adds rows and stores them in destrow.
-    BIT delta1 = mzd_read_bit(state->delta_vector,sourcerow,0);
-    BIT delta2 = mzd_read_bit(state->delta_vector,destrow,0);
+void add_row(stabiliser_state_t* state, int sourcerow, int destrow){
+  // Adds rows and stores them in destrow.
+  BIT delta1 = mzd_read_bit(state->delta_vector,sourcerow,0);
+  BIT delta2 = mzd_read_bit(state->delta_vector,destrow,0);
 
-    //char epsilon1 = mzd_read_bit(state->epsilon_vector,i,0);
-    //char epsilon2 = mzd_read_bit(state->epsilon_vector,j,0);
+  //char epsilon1 = mzd_read_bit(state->epsilon_vector,i,0);
+  //char epsilon2 = mzd_read_bit(state->epsilon_vector,j,0);
 
-    BIT a2TUa1 = row_product(state->x_parts,sourcerow,state->z_parts,destrow); // this is symmetric under x <-> z for stabiliser states actually
-    mzd_row_add(state->x_parts, sourcerow, destrow);
-    mzd_row_add(state->z_parts, sourcerow, destrow);
-    mzd_row_add(state->delta_vector, sourcerow, destrow);
-    mzd_row_add(state->epsilon_vector, sourcerow, destrow);
-    // correct epsilon according to dehaene and de moor
-    BIT epsilon_bit = mzd_read_bit(state->epsilon_vector,destrow,0);
-    mzd_write_bit(state->epsilon_vector,destrow,0,epsilon_bit ^ (delta1 & delta2) ^ a2TUa1);
-  }
+  BIT a2TUa1 = row_product(state->x_parts,sourcerow,state->z_parts,destrow); // this is symmetric under x <-> z for stabiliser states actually
+  mzd_row_add(state->x_parts, sourcerow, destrow);
+  mzd_row_add(state->z_parts, sourcerow, destrow);
+  mzd_row_add(state->delta_vector, sourcerow, destrow);
+  mzd_row_add(state->epsilon_vector, sourcerow, destrow);
+  // correct epsilon according to dehaene and de moor
+  BIT epsilon_bit = mzd_read_bit(state->epsilon_vector,destrow,0);
+  mzd_write_bit(state->epsilon_vector,destrow,0,epsilon_bit ^ (delta1 & delta2) ^ a2TUa1);
+}
 
 /* Attempts to form either I or -I from the rows of the extended stabiliser tableau via Gaussian elimination.
  * If LOG_LEVEL is greater than or equal to DEBUG, additional verifications are made to check that this is done
@@ -54,7 +54,7 @@ int form_identity_ge(stabiliser_state_t* state){
       swap_rows(state,found_row,row_to_start_eliminating);
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
-        }
+    }
     //lwlog_debug("after trying to eliminate x_%d: \n %s",col,print_stabiliser_state(state,1));
     // same for z
     found_row=-1;
@@ -72,12 +72,12 @@ int form_identity_ge(stabiliser_state_t* state){
       swap_rows(state,found_row,row_to_start_eliminating);
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
-        }
+    }
     //lwlog_debug("after trying to eliminate z_%d: \n %s",col,print_stabiliser_state(state,1));
   }
 
 
-  #if LOG_LEVEL >= DEBUG
+#if LOG_LEVEL >= DEBUG
   for(int i = 0; i < n; i++){
     if(mzd_read_bit(state->x_parts, n, i)){
       lwlog_err("warning: x_parts %d not zero",i);
@@ -92,7 +92,7 @@ int form_identity_ge(stabiliser_state_t* state){
     lwlog_err("error: delta bits %d not zero",n);
     exit(1);
   }
-  #endif
+#endif
   BIT identity_sign = mzd_read_bit(state->epsilon_vector,n,0);
   return identity_sign;
 }
