@@ -13,13 +13,12 @@ BIT row_product(mzd_t* x, int i, mzd_t* z, int j){
   // Forms the inner product of row i of x and row j of z (viewing both rows as vectors over F2).
   word* row1 = mzd_row(x,i);
   word* row2 = mzd_row(z,j);
-  wi_t const wide     = x->width;
   word acc = 0;
-  for(int i = 0; i < wide; i++){
+  for(int i = 0; i < x->width; i++){
     word part_of_product = row1[i] & row2[i];
     acc+=__builtin_popcount(part_of_product);
   }
-  return acc&1;
+  return acc & 1;
 }
 
 void expand_state(stabiliser_state_t* state){
@@ -64,8 +63,7 @@ inline unsigned compress4(unsigned x, unsigned m) { // from hacker's delight
 }
 void permute_columns(mzd_t* data, unsigned mask){
   for(int i = 0 ; i < data->nrows; i++){
-    word *b = mzd_row(data,i);
-    // assume small enough so that only have to do the first 64 bits
+    word *b = mzd_row(data,i); // assume small enough so that only have to do the first 64 bits
     b[0]=compress4(b[0],mask);
   }
 }
@@ -76,8 +74,7 @@ void convert_row(mzd_t* M, int row, comb_vector_t* vector){
 }
 
 void add_and_column_vector(mzd_t* result, mzd_t* F1, mzd_t* F2){
-  // assumes that f1, f2, and result are congruous column vectors
-  // necessarily linear time.
+  // assumes that f1, f2, and result are congruous column vectors. necessarily linear time.
   for(int i = 0; i < result->nrows; i++){
     mzd_write_bit(result,i,0,(mzd_read_bit(result,i,0) ^ (mzd_read_bit(F1,i,0) & mzd_read_bit(F2,i,0))));
   }
