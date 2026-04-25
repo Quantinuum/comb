@@ -55,6 +55,7 @@ x_measurement_count = 1
 x_measurement_paulis = lib.comb_calloc_vector(x_measurement_count,n_all)
 z_measurement_count = 1
 z_measurement_paulis = lib.comb_calloc_vector(z_measurement_count,n_all)
+thread_count=1
 
 for stabilisers in [x_stabilisers, z_stabilisers]:
     for i, j in [(0, [0, 2, 4, 6]), (1, [1, 2, 4 ,5]), (2, [3, 4, 5, 6])]:
@@ -67,7 +68,7 @@ print(lib.comb_verify_css_magic_state(n_all, n, n_x, n_z, k, x_stabilisers, x_lo
                                       z_lookup_table, dcp_stabilisers, fault_location_count,
                                       fault_location_partitions, s, bad_fault_array, output_error_count,
                                       output_errors, x_measurement_count, x_measurement_paulis,
-                                      z_measurement_count, z_measurement_paulis))
+                                      z_measurement_count, z_measurement_paulis, thread_count))
 
 lib.comb_cfree_dcp(k, dcp_stabilisers)
 lib.comb_cfree_dcp(output_error_count, output_errors)
