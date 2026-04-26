@@ -12,6 +12,13 @@ In order to build Comb, issue the following
     make -j8
 #+END_SRC
 from the project root.
+
+Some features of Comb can be set as build time, such as the logging level and a special timing mode that iterates over a given number of fault combinations in order to infer the performance.
+
+In order to set these, one can specify the pertinent macro definitions via the appropriate make invocation as in the following example,
+#+BEGIN_SRC shell
+  make -j8 CFLAGS='-DTIMING_MODE=1000000 -DLOG_LEVEL=8'
+#+END_SRC
 * Documentation
 [[https://www.doxygen.nl/][Doxygen]] is needed to build the documentation. In order to build it, issue the following
 #+BEGIN_SRC shell

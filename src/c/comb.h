@@ -3,8 +3,7 @@
 #include "comb_external.h"
 #include "lwlog.h"
 #define MAX_SIZE_COUNT 1024
-// if TIMING_MODE is set, then repeat until all faults good
-// #define TIMING_MODE 1000000
+// if TIMING_MODE is set to an integer, then repeat until TIMING_MODE faults have been iterated over
 #ifdef TIMING_MODE
 #define BAD_FAULT_FOUND ALL_FAULTS_GOOD
 #endif
