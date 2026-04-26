@@ -1,54 +1,74 @@
 #include "comb.h"
 
 // 1. Multiply DCPs together
-dcp_t *dcp_mul(dcp_t *result, dcp_t *c2, dcp_t *c1){ // allocation free. does not check sizes
-  if(!result)result = init_dcp(DCP_N(c1));
-  mzd_add(result->F_diagonal,c2->F_diagonal,c1->F_diagonal); // F parts add
-  mzd_add(result->F,c2->F,c1->F); // F parts add
-  mzd_add(result->h_x,c2->h_x,c1->h_x); // h_x
-  mzd_add(result->h_x_transpose,c2->h_x_transpose,c1->h_x_transpose); // h_x_transpose
-  mzd_add(result->h_z,c2->h_z,c1->h_z); // h_z
-  _mzd_mul_naive(result->h_z,c1->F,c2->h_x_transpose,0);
-  add_and_column_vector(result->h_z,c1->F_diagonal,c2->F_diagonal);
+dcp_t *dcp_mul(dcp_t *result, dcp_t *c2,
+               dcp_t *c1) {  // allocation free. does not check sizes
+  if (!result) result = init_dcp(DCP_N(c1));
+  mzd_add(result->F_diagonal, c2->F_diagonal, c1->F_diagonal);  // F parts add
+  mzd_add(result->F, c2->F, c1->F);                             // F parts add
+  mzd_add(result->h_x, c2->h_x, c1->h_x);                       // h_x
+  mzd_add(result->h_x_transpose, c2->h_x_transpose,
+          c1->h_x_transpose);              // h_x_transpose
+  mzd_add(result->h_z, c2->h_z, c1->h_z);  // h_z
+  _mzd_mul_naive(result->h_z, c1->F, c2->h_x_transpose, 0);
+  add_and_column_vector(result->h_z, c1->F_diagonal, c2->F_diagonal);
   return result;
-} // doesnt transpose. need add_and to work on column matrices though. keep track of h_x and h_x transpose? should be able to avoid all transposing when multiplying dcp operators.
+}  // doesnt transpose. need add_and to work on column matrices though. keep
+   // track of h_x and h_x transpose? should be able to avoid all transposing
+   // when multiplying dcp operators.
 
-  // 2. Turn a DCP into a stabiliser state
-void set_stabiliser_state_to_dcp(stabiliser_state_t* state, dcp_t* dcp){
+// 2. Turn a DCP into a stabiliser state
+void set_stabiliser_state_to_dcp(stabiliser_state_t *state, dcp_t *dcp) {
   lwlog_debug("setting stabiliser state to dcp");
-  mzd_copy(state->epsilon_vector,dcp->h_z);
-  mzd_set_ui(state->x_parts,1);
-  mzd_copy(state->z_parts,dcp->F);
-  mzd_copy(state->delta_vector,dcp->F_diagonal); //? think it works
-} // no transposing here either... note that as F is symmetric, and x the identity, state can choose which transposition convention it wants. It probably shouldn't, but either way this shows that this method will never ever transpose.
+  mzd_copy(state->epsilon_vector, dcp->h_z);
+  mzd_set_ui(state->x_parts, 1);
+  mzd_copy(state->z_parts, dcp->F);
+  mzd_copy(state->delta_vector, dcp->F_diagonal);  //? think it works
+}  // no transposing here either... note that as F is symmetric, and x the
+   // identity, state can choose which transposition convention it wants. It
+   // probably shouldn't, but either way this shows that this method will never
+   // ever transpose.
 
-int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, mzd_t* x_measurement_matrix, mzd_t* delta_bits, mzd_t* epsilon_bits,char* x_measurement_string){
+int _postselect_on_x(stabiliser_state_t *state, mzd_t *x_parts, mzd_t *z_parts,
+                     mzd_t *x_measurement_matrix, mzd_t *delta_bits,
+                     mzd_t *epsilon_bits, char *x_measurement_string) {
   int n_x = x_measurement_matrix->nrows;
   int n = x_measurement_matrix->ncols;
-  for(int i = 0; i < n_x; i++){
-    lwlog_debug("measuring operator %d: %s",i,print_row_vector_as_pauli(x_measurement_matrix,i,x_measurement_string));
+  for (int i = 0; i < n_x; i++) {
+    lwlog_debug("measuring operator %d: %s", i,
+                print_row_vector_as_pauli(x_measurement_matrix, i,
+                                          x_measurement_string));
     int anticommuting_stabiliser_found = 0;
-    for(int j = 0; j < n && !anticommuting_stabiliser_found; j++){
-      int anticommuting_p = row_product(x_measurement_matrix,i,z_parts,j);
-      if(anticommuting_p){ // An anticommuting stabiliser was found
-        anticommuting_stabiliser_found=1;
-        for(int k = j+1; k < n; k++){
-          if(row_product(z_parts,k,x_measurement_matrix,i)) // if k-th row anticommutes with the measurement operator...
-            add_row(state,j,k); // add row j to k
+    for (int j = 0; j < n && !anticommuting_stabiliser_found; j++) {
+      int anticommuting_p = row_product(x_measurement_matrix, i, z_parts, j);
+      if (anticommuting_p) {  // An anticommuting stabiliser was found
+        anticommuting_stabiliser_found = 1;
+        for (int k = j + 1; k < n; k++) {
+          if (row_product(z_parts, k, x_measurement_matrix,
+                          i))  // if k-th row anticommutes with the measurement
+                               // operator...
+            add_row(state, j, k);  // add row j to k
         }
         // now set the row equal to the measurement operator.
-        set_row(x_parts,z_parts,j,x_measurement_matrix,i,epsilon_bits, delta_bits);
+        set_row(x_parts, z_parts, j, x_measurement_matrix, i, epsilon_bits,
+                delta_bits);
       }
     }
-    if(!anticommuting_stabiliser_found){
-      // if no stabiliser was found, we need to find out whether the measurement operator or its opposite is generated by the stabiliser group. otherwise, we can continue to the next operator.
-      expand_state(state); // ensure state has enough room for n+1 stabiliser generators
-      set_row(x_parts,z_parts,n,x_measurement_matrix,i, epsilon_bits, delta_bits); // copy measurement operator to last row
-      // Now do gaussian elimination to ensure that final row is either -I or I. if this is not possible signal an error
+    if (!anticommuting_stabiliser_found) {
+      // if no stabiliser was found, we need to find out whether the measurement
+      // operator or its opposite is generated by the stabiliser group.
+      // otherwise, we can continue to the next operator.
+      expand_state(state);
+      set_row(x_parts, z_parts, n, x_measurement_matrix, i, epsilon_bits,
+              delta_bits);  // copy measurement operator to last row
+      // Now do gaussian elimination to ensure that final row is either -I or I.
+      // if this is not possible signal an error
       int identity_sign = form_identity_ge(state);
-      lwlog_debug("after form_identity_ge:\n %s",print_stabiliser_state(state,1));
+      lwlog_debug("after form_identity_ge:\n %s",
+                  print_stabiliser_state(state, 1));
       contract_state(state);
-      if(identity_sign){ // -I was formed so we postselect. Otherwise, have to continue with other measurements.
+      if (identity_sign) {  // -I was formed so we postselect. Otherwise, have
+                            // to continue with other measurements.
         lwlog_debug("-I measured, returning 1");
         return 1;
       }
@@ -58,100 +78,116 @@ int _postselect_on_x(stabiliser_state_t* state, mzd_t* x_parts, mzd_t* z_parts, 
 }
 
 // Postselect a stabiliser state on a set of X measurements.
-int postselect_on_measuring_plus_one_x(stabiliser_state_t* state, mzd_t* x_measurement_matrix /* n_x x n; rows are paulis*/ ){
-  return _postselect_on_x(state, state->x_parts, state->z_parts, x_measurement_matrix, state->delta_vector, state->epsilon_vector,"X");
+int postselect_on_measuring_plus_one_x(stabiliser_state_t *state,
+                                       mzd_t *x_measurement_matrix) {
+  return _postselect_on_x(state, state->x_parts, state->z_parts,
+                          x_measurement_matrix, state->delta_vector,
+                          state->epsilon_vector, "X");
 }
 
 // Postselect a stabiliser state on a set of Z measurements.
-int postselect_on_measuring_plus_one_z(stabiliser_state_t* state, mzd_t* z_measurement_matrix /* n_z x n*/ ){
-  return _postselect_on_x(state, state->z_parts, state->x_parts, z_measurement_matrix, state->delta_vector, state->epsilon_vector,"Z");
+int postselect_on_measuring_plus_one_z(stabiliser_state_t *state,
+                                       mzd_t *z_measurement_matrix) {
+  return _postselect_on_x(state, state->z_parts, state->x_parts,
+                          z_measurement_matrix, state->delta_vector,
+                          state->epsilon_vector, "Z");
 }
 
-void set_coset_to_stabiliser_state(pauli_z_coset_t *coset, stabiliser_state_t *state){
+void set_coset_to_stabiliser_state(pauli_z_coset_t *coset,
+                                   stabiliser_state_t *state) {
   int n = STATE_N(state);
-  int r = n; // the number of linearly independent z parts
-  lwlog_debug("State before gaussian elimination:\n %s",print_stabiliser_state(state,1));
-  int row_to_start_eliminating=0;
-  for(int col = 0; col < n; col++){
-    // Try to eliminate starting from row_to_start_eliminating down. We dont want to add rows that have already been used to eliminate others
-    int found_row=-1;
-    for(int row = row_to_start_eliminating; row < n; row++){
-      if(mzd_read_bit(state->z_parts, row, col)){
-        if(found_row == -1)found_row = row;
-        else add_row(state, found_row, row);
+  int r = n;  // the number of linearly independent z parts
+  lwlog_debug("State before gaussian elimination:\n %s",
+              print_stabiliser_state(state, 1));
+  int row_to_start_eliminating = 0;
+  for (int col = 0; col < n; col++) {
+    // Try to eliminate starting from row_to_start_eliminating down. We dont
+    // want to add rows that have already been used to eliminate others
+    int found_row = -1;
+    for (int row = row_to_start_eliminating; row < n; row++) {
+      if (mzd_read_bit(state->z_parts, row, col)) {
+        if (found_row == -1)
+          found_row = row;
+        else
+          add_row(state, found_row, row);
       }
     }
-    if(found_row == -1)r--;
-    // means we have a zero column. dont need to increment the row but means that the rank can be reduced by one
-    else{
+    if (found_row == -1) r--;
+    // means we have a zero column. dont need to increment the row but means
+    // that the rank can be reduced by one
+    else {
       // swap the found row with the starting row, so that its in rref
-      swap_rows(state,found_row,row_to_start_eliminating);
-      row_to_start_eliminating++; // now incf row_to_start eliminating so we dont do it again
+      swap_rows(state, found_row, row_to_start_eliminating);
+      row_to_start_eliminating++;  // now incf row_to_start eliminating so we
+                                   // dont do it again
     }
   }
-  row_to_start_eliminating=r;
-  for(int col = 0; col < n; col++){
-    // Try to eliminate starting from row_to_start_eliminating down. We dont want to add rows that have already been used to eliminate others
-    int found_row=-1;
-    for(int row = row_to_start_eliminating; row < n; row++){
-      if(mzd_read_bit(state->x_parts, row, col)){
-        if(found_row == -1)found_row = row;
-        else add_row(state, found_row, row);
+  row_to_start_eliminating = r;
+  for (int col = 0; col < n; col++) {
+    // Try to eliminate starting from row_to_start_eliminating down. We dont
+    // want to add rows that have already been used to eliminate others
+    int found_row = -1;
+    for (int row = row_to_start_eliminating; row < n; row++) {
+      if (mzd_read_bit(state->x_parts, row, col)) {
+        if (found_row == -1)
+          found_row = row;
+        else
+          add_row(state, found_row, row);
       }
     }
-    if(found_row != -1){
+    if (found_row != -1) {
       // swap the found row with the starting row, so that its in rref
-      swap_rows(state,found_row,row_to_start_eliminating);
+      swap_rows(state, found_row, row_to_start_eliminating);
       // now incf row_to_start eliminating so we dont do it again
       row_to_start_eliminating++;
     }
   }
   // now need to put x parts in rref
-  for(int row = 0; row < n; row++){
+  for (int row = 0; row < n; row++) {
     int leading_column = -1;
-    for(int col = 0; (leading_column == -1) && col < n; col++){
-      if(mzd_read_bit(state->x_parts,row,col)){
+    for (int col = 0; (leading_column == -1) && col < n; col++) {
+      if (mzd_read_bit(state->x_parts, row, col)) {
         leading_column = col;
       }
     }
-    if(leading_column != -1){ // eliminate any rows above
-      for(int row2 = row-1; row2 >=0; row2--){
-        if(mzd_read_bit(state->x_parts,row2,leading_column)){
-          add_row(state,row,row2);
+    if (leading_column != -1) {  // eliminate any rows above
+      for (int row2 = row - 1; row2 >= 0; row2--) {
+        if (mzd_read_bit(state->x_parts, row2, leading_column)) {
+          add_row(state, row, row2);
         }
       }
     }
   }
   // optional: verify state is in rref if debug is on
 #if LOG_LEVEL >= DEBUG
-  if(!verify_coset_ge(r,state)){
-    lwlog_err("state %s NOT verified to be in appropriate form",print_stabiliser_state(state,1));
+  if (!verify_coset_ge(r, state)) {
+    lwlog_err("state %s NOT verified to be in appropriate form",
+              print_stabiliser_state(state, 1));
     exit(1);
-  }
-  else{
-    lwlog_debug("state %s verified to be in appropriate form (r=%d)",print_stabiliser_state(state,1),r);
+  } else {
+    lwlog_debug("state %s verified to be in appropriate form (r=%d)",
+                print_stabiliser_state(state, 1), r);
   }
 #endif
   // Now read off results and store them in coset
-  coset->set_generators->nrows=n; // bring back up to size
-  mzd_copy(coset->set_generators,state->z_parts);
-  coset->set_generators->nrows=r; // only r of them are valid
-  mzd_set_ui(coset->factor_transpose,0);
-  for(int i = r; i < n; i++){
-    if(mzd_read_bit(state->epsilon_vector,i,0)){
+  coset->set_generators->nrows = n;  // bring back up to size
+  mzd_copy(coset->set_generators, state->z_parts);
+  coset->set_generators->nrows = r;  // only r of them are valid
+  mzd_set_ui(coset->factor_transpose, 0);
+  for (int i = r; i < n; i++) {
+    if (mzd_read_bit(state->epsilon_vector, i, 0)) {
       int leading_column = -1;
-      for(int col = 0; (leading_column == -1) && col < n; col++){
-        if(mzd_read_bit(state->x_parts,i,col)){
-          leading_column=col;
+      for (int col = 0; (leading_column == -1) && col < n; col++) {
+        if (mzd_read_bit(state->x_parts, i, col)) {
+          leading_column = col;
         }
       }
-      if(leading_column==-1){
-        lwlog_err("error: leading column not been found; -I in state\n %s",print_stabiliser_state(state,1));
+      if (leading_column == -1) {
+        lwlog_err("error: leading column not been found; -I in state\n %s",
+                  print_stabiliser_state(state, 1));
         exit(1);
-      }
-      else{
-        mzd_write_bit(coset->factor_transpose,0,leading_column,1);
-      }
+      } else
+        mzd_write_bit(coset->factor_transpose, 0, leading_column, 1);
     }
   }
 }

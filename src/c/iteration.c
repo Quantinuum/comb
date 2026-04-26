@@ -4,20 +4,17 @@
 // possible, 0 otherwise.
 int incf_bit_vector(int *v, int n) {
   for (int m = (n - 1); m >= 0; m--) {
-    if (TestBit(v, m)) { // m the index of the rightmost 1
+    if (TestBit(v, m)) {  // m the index of the rightmost 1
       for (int i = (m - 1); i >= 0; i--) {
         if (TestBit(v, i) == 0) {
           SetBit(v, i);
           ClearBit(v, i + 1);
           int onecount = 0;
           for (int k = (1 + i); k < n; k++) {
-            if (TestBit(v, k))
-              onecount++;
+            if (TestBit(v, k)) onecount++;
           }
-          for (int k = i + 2; k < (n - onecount); k++)
-            ClearBit(v, k);
-          for (int k = (n - onecount); k < n; k++)
-            SetBit(v, k);
+          for (int k = i + 2; k < (n - onecount); k++) ClearBit(v, k);
+          for (int k = (n - onecount); k < n; k++) SetBit(v, k);
           return 0;
         }
       }
@@ -27,22 +24,22 @@ int incf_bit_vector(int *v, int n) {
 }
 // Increments the fault combination n_0, ... , n_(k-1) and returns 0. if not
 // possible it returns 1.
-int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_balls,
-                                  int *last_balls, int *current_combination) {
+int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
+                                  int *first_balls, int *last_balls,
+                                  int *current_combination) {
   // k number of balls to take - size of current_combination
   // n number of sizes/baskets
   for (int i = 0; i < k; i++) {
     if (last_balls[n - k + i] !=
-        current_combination[i]) { // this means we are not at the final fault
-                                  // combination yet
+        current_combination[i]) {  // this means we are not at the final fault
+                                   // combination yet
       for (int j = 0; j < n; j++) {
         // move from left to right, if you encounter a basket with a ball under
         // it, incf that ball and set baskets to the left
         for (int i = 0; i < k; i++) {
           int last_ball_p = 0;
           for (int p = 0; p < n; p++) {
-            if (last_balls[p] == current_combination[i])
-              last_ball_p = 1;
+            if (last_balls[p] == current_combination[i]) last_ball_p = 1;
           }
           if (!last_ball_p) {
             for (int j = 0; j < i; j++) {
@@ -57,21 +54,20 @@ int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_ball
               current_combination[j] = first_balls[basket_ref];
             }
             current_combination[i]++;
-            return 1; // incf was successful
+            return 1;  // incf was successful
           }
         }
         // we know that every ball is a last one.
         // this means that seeing if the y-th basket is occupied is equivalent
         // to checking if last_ball[y] is in current_combination.
 
-        int v[MAX_SIZE_COUNT >> 5]; // v the bit string which has the y-th entry
-                                    // as 1 if the y-th basket is occupied.
-        for (int i = 0; i < n; i++)
-          ClearBit(v, i);
+        int v[MAX_SIZE_COUNT >>
+              5];  // v the bit string which has the y-th entry
+                   // as 1 if the y-th basket is occupied.
+        for (int i = 0; i < n; i++) ClearBit(v, i);
         for (int i = 0; i < n; i++) {
           for (int j = 0; j < k; j++) {
-            if (last_balls[i] == current_combination[j])
-              SetBit(v, (n - 1) - i);
+            if (last_balls[i] == current_combination[j]) SetBit(v, (n - 1) - i);
           }
         }
 
@@ -90,6 +86,6 @@ int ft_iteration_combination_incf(int k, uint32_t *sizes, int n, int *first_ball
       }
     }
   }
-  return 0; // we had the last element so return 0 to indicate there is no
-            // successor
+  return 0;  // we had the last element so return 0 to indicate there is no
+             // successor
 }
