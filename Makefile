@@ -50,4 +50,4 @@ test_%: test/%.c libcomb.so
 	$(CC) $(CFLAGS) -I./src $< -o $@ $(M4RI) $(obj_files) -lm
 
 format:
-	clang-format-20 -i $(c_files) $(header_files)
+	clang-format --style=Google --verbose -i $(c_files) $(header_files)
