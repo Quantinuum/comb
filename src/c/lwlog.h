@@ -48,10 +48,6 @@
 #define INFO (6)
 #define DEBUG (7)
 
-#ifndef LOG_LEVEL
-#define LOG_LEVEL ERR
-#endif
-
 // colors
 #define NONE "\e[0m"
 #define BLACK "\e[0;30m"
