@@ -25,33 +25,44 @@ In order to set these, one can specify the pertinent macro definitions via the a
   make docs
 #+END_SRC
 from the project root.
-* Potential improvements
+* Future work
+There are a variety of improvements to be made which I haven't gotten around to yet. If you are feeling ambitious then try to make a PR!
+
+As always, be aware that performance optimisation can turn out to be not worth it and even make matters worse.
+
+It is unlikely that changes will be merged unless they can demonstrate a benefit and can be seen to preserve correctness of the library.
+
+In order to avoid disappointment, remember to follow standard practices such as benchmarking performance using a profiler, identifying bottlenecks and so forth.
+
+The ideas presented below are not guaranteed to improve performance, they are just what I think is worth looking at.
 ** Reduce the amount of Gaussian elimination
 At present, a round of Gaussian elimination is done for each measurement.
 
 Some of these rounds can be combined.
 
-For example, all of the Z measurements anticommute with at least one stabiliser generator of the DCP state.
+For example, all of the $Z$ measurements anticommute with at least one stabiliser generator of the DCP state.
 
-This means that all the Z measurements stabilise the state after measurement, and can be added as stabiliser generators.
+This means that all the $Z$ measurements stabilise the state after measurement, and can be added as stabiliser generators.
 
 Furthermore, exactly the same sequence of row operations can be applied to the prior stabiliser generators to generate a new set of linearly independent generators that commute with all the measurement operators.
 
-Consequently, all the Z measurements can be done by combining the stabiliser generators in a way that can be calculated in advance and is the same for all states.
+Consequently, all the $Z$ measurements can be done by combining the stabiliser generators in a way that can be calculated in advance and is the same for all states.
 
-This should be much more performant than simply measuring each Z stabiliser in turn.
+This should be much more performant than simply measuring each $Z$ stabiliser in turn.
 
-It remains to implement this and see if something similar is possible for the subsequent X measurements.
+It remains to implement this and see if something similar is possible for the subsequent $X$ measurements.
 ** Use Gaussian elimination over finite fields
-m4ri has subcubic implementations of Gaussian elimination over F2 via matrix decomposition.
+m4ri has subcubic implementations of Gaussian elimination over $\mathbb{F}_2$ via matrix decomposition.
 
-However, we do not use them. We cannot use such matrix decompositions without destroying crucial information about the signs of the Paulis, because the sign bits of the Paulis don't add linearly.
+However, we do not use them. We cannot use such matrix decompositions at present without destroying crucial information about the signs of the Paulis, because the sign bits of the Paulis don't add linearly.
 
 If this could be somehow circumvented, perhaps by using some alternate means to keep track of the signs, we would be able to use more efficient methods of Gaussian elimination.
-** SIMD implementation via GFNI or AVX
+** SIMD implementation via AVX-512 and/or GFNI
 It may be possible to do Gaussian elimination on several stabiliser states at once via SIMD.
 
-Gaussian elimination can be reduced to matrix multiplication (arXiv:1112.5717v2), and matrix multiplication can be done in SIMD via e.g. [[https://www.felixcloutier.com/x86/gf2p8affineqb][GF2P8AFFINEQB]].
+Gaussian elimination can be reduced to matrix multiplication (arXiv:1112.5717v2), and matrix multiplication can be done in SIMD via e.g. [[https://www.felixcloutier.com/x86/gf2p8affineqb][GF2P8AFFINEQB]], or VBMACXOR16x16x16.
+
+It's also possible to iterate over $Z$ errors in the coset using Gray codes with SIMD.
 ** Multithreading
 This implementation is serial at present. But the algorithm is amenable to parallelisation by simply assigning different sets of fault combinations to different cores.
 
