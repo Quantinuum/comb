@@ -31,35 +31,35 @@ function comb_calloc_dcp(count, n)
 end
 
 function comb_set_cvector_aref(vector, n, i, value)
-    return @ccall "./libcomb.so".comb_set_cvector_aref()::Cvoid
+    return @ccall "./libcomb.so".comb_set_cvector_aref(vector::Ptr{Cvoid},n::Cint,i::Cint,value::Cint)::Cvoid
 end
 
 function comb_set_cdcp_F_aref(dcp, n, i, j, value)
-    return @ccall "./libcomb.so".comb_set_cdcp_F_aref()::Cvoid
+    return @ccall "./libcomb.so".comb_set_cdcp_F_aref(dcp::Ptr{Cvoid},n::Cint,i::Cint,j::Cint,value::Cint)::Cvoid
 end
 
 function comb_set_cdcp_h_x_aref(dcp, n, i, value)
-    return @ccall "./libcomb.so".comb_set_cdcp_h_x_aref()::Cvoid
+    return @ccall "./libcomb.so".comb_set_cdcp_h_x_aref(dcp::Ptr{Cvoid},n::Cint,i::Cint,value::Cint)::Cvoid
 end
 
 function comb_set_cdcp_h_z_aref(dcp, n, i, value)
-    return @ccall "./libcomb.so".comb_set_cdcp_h_z_aref()::Cvoid
+    return @ccall "./libcomb.so".comb_set_cdcp_h_z_aref(dcp::Ptr{Cvoid},n::Cint,i::Cint,value::Cint)::Cvoid
 end
 
 function comb_set_bit_array_aref(array, i, value)
-    return @ccall "./libcomb.so".comb_set_bit_array_aref()::Cvoid
+    return @ccall "./libcomb.so".comb_set_bit_array_aref(array::Ptr{Cvoid},n::Cint,i::Cint,value::Cint)::Cvoid
 end
 
 function comb_free_bit_array(pointer)
-    return @ccall "./libcomb.so".comb_free_bit_array()::Cvoid
+    return @ccall "./libcomb.so".comb_free_bit_array(pointer::Ptr{Cvoid})::Cvoid
 end
 
 function comb_cfree_vector(count, pointer)
-    return @ccall "./libcomb.so".comb_cfree_vector()::Cvoid
+    return @ccall "./libcomb.so".comb_cfree_vector(count::Cint,pointer::Ptr{Cvoid})::Cvoid
 end
 
 function comb_cfree_dcp(count, pointer)
-    return @ccall "./libcomb.so".comb_cfree_dcp()::Cvoid
+    return @ccall "./libcomb.so".comb_cfree_dcp(count::Cint,pointer::Ptr{Cvoid})::Cvoid
 end
 
 function comb_verify_css_magic_state(n_all,n,n_x,n_z,k,x_stabilisers,x_lookup_table,z_stabilisers,z_lookup_table,dcp_stabilisers,fault_location_count,fault_location_partitions,s,bad_fault_array,output_error_count,output_errors,x_measurement_count,x_measurement_paulis,z_measurement_count,z_measurement_paulis,thread_count)
