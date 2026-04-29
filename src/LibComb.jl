@@ -79,9 +79,9 @@ function comb_demo()
     z_lookup_table = comb_alloc_bit_array(2 ^ (n - n_z))
     dcp_stabilisers = comb_calloc_dcp(k, n_all)
     fault_location_count = 10
-    fault_location_partitions = Vector{UInt32}(undef, fault_location_count);#ffi.new("uint32_t[{}]".format(fault_location_count))
+    fault_location_partitions = Vector{UInt32}(undef, fault_location_count);
     s = 1
-    bad_fault_array = Vector{UInt32}(undef, s)#ffi.new("uint32_t[{}]".format(s))
+    bad_fault_array = Vector{UInt32}(undef, s)
     output_error_count = 100
     output_errors = comb_calloc_dcp(output_error_count, n_all)
     x_measurement_count = 1
