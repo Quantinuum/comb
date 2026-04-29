@@ -28,7 +28,7 @@ function comb_calloc_vector(count, n)
 end
 
 function comb_calloc_dcp(count, n)
-    return @ccall "./libcomb.so".comb_calloc_vector(count::Cint,n::Cint)::Ptr{Cvoid}
+    return @ccall "./libcomb.so".comb_calloc_dcp(count::Cint,n::Cint)::Ptr{Cvoid}
 end
 
 function comb_set_cvector_aref(vector, n, i, value)
