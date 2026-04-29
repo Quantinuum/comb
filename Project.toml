@@ -1,0 +1,13 @@
+name = "LibComb"
+uuid = "5bf063bf-f40f-4828-9f74-da43f97f57a4"
+authors = ["Selwyn Simsek, Callum Macpherson"]
+version = "1.0.0-DEV"
+
+[compat]
+julia = "1.10.10"
+
+[extras]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
+[targets]
+test = ["Test"]

@@ -1,0 +1,10 @@
+# This file is machine-generated - editing it directly is not advised
+
+julia_version = "1.12.5"
+manifest_format = "2.0"
+project_hash = "651799040a8b58913cd72d69de06e19e28c8c9fb"
+
+[[deps.LibComb]]
+path = "src/julia"
+uuid = "5bf063bf-f40f-4828-9f74-da43f97f57a4"
+version = "1.0.0-DEV"
