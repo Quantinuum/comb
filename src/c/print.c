@@ -1,6 +1,6 @@
 #include "comb.h"
 
-#define PRINT_SIZE 4096
+#define PRINT_SIZE 1000000
 char print_buffer[PRINT_SIZE];
 
 int do_print_pauli(mzd_t *x_parts, mzd_t *z_parts, mzd_t *delta_vector,

@@ -208,7 +208,7 @@ comb_code_t __do_verify_css_magic_state(
     }
     do {
       ++*fault_counter;
-      lwlog_debug("checking fault number %lld\n", *fault_counter);
+      if(*fault_counter % 1000 == 0)printf("checking fault number %lld\n", *fault_counter);
       // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(current_dcp_output_combination,
                  &(output_errors[current_combination[0]]));
@@ -253,6 +253,7 @@ comb_code_t __do_verify_css_magic_state(
         }
         return BAD_FAULT_FOUND;
       }
+      lwlog_debug("about to incf on fault number %lld",*fault_counter);
     } while (ft_iteration_combination_incf(s, fault_location_partitions,
                                            fault_location_count, first_balls,
                                            last_balls, current_combination)

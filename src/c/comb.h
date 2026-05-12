@@ -79,7 +79,7 @@ void free_pauli_z_coset(pauli_z_coset_t *coset);
 void set_dcp_to(dcp_t *a, dcp_t *b);
 
 // iteration.c
-int incf_bit_vector(int *v, int n);
+int incf_bit_vector(comb_bit_array_t v, int n);
 int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
                                   int *first_balls, int *last_balls,
                                   int *current_combination);

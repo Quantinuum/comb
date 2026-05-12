@@ -2,7 +2,7 @@
 
 // Attempts to increment the bit vector v in place. Returns 1 if this is not
 // possible, 0 otherwise.
-int incf_bit_vector(int *v, int n) {
+int incf_bit_vector(comb_bit_array_t v, int n) {
   for (int m = (n - 1); m >= 0; m--) {
     if (TestBit(v, m)) {  // m the index of the rightmost 1
       for (int i = (m - 1); i >= 0; i--) {
@@ -61,8 +61,7 @@ int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
         // this means that seeing if the y-th basket is occupied is equivalent
         // to checking if last_ball[y] is in current_combination.
 
-        int v[MAX_SIZE_COUNT >>
-              5];  // v the bit string which has the y-th entry
+        comb_bit_word_t v[MAX_SIZE_COUNT];  // v the bit string which has the y-th entry
                    // as 1 if the y-th basket is occupied.
         for (int i = 0; i < n; i++) ClearBit(v, i);
         for (int i = 0; i < n; i++) {

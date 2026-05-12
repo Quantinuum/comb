@@ -12,14 +12,20 @@ void fix_dcp(dcp_t *dcp) {
 BIT row_product(mzd_t *x, int i, mzd_t *z, int j) {
   // Forms the inner product of row i of x and row j of z (viewing both rows as
   // vectors over F2).
+  //int w = x->ncols;
   word *row1 = mzd_row(x, i);
   word *row2 = mzd_row(z, j);
   word acc = 0;
-  for (int i = 0; i < x->width; i++) {
+	// slow impl:
+  //for (int k = 0; k < w; k++) {
+  //  if(mzd_read_bit(x,i,k) && mzd_read_bit(z,j,k))acc=1-acc;
+ // }
+  //return acc;
+   for (int i = 0; i < x->width; i++) {
     word part_of_product = row1[i] & row2[i];
     acc += __builtin_popcount(part_of_product);
-  }
-  return acc & 1;
+   }
+   return acc & 1;
 }
 
 void expand_state(stabiliser_state_t *state) {
