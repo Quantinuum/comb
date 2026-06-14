@@ -37,10 +37,10 @@ typedef struct {
   // parameters that will be thread dependent:
   unsigned long long total_number_of_faults; // set by caller
   unsigned long long fault_counter; //  updated by callee
+  unsigned long long starting_fault; // set by caller: fault id to start at
 } thread_config_t;
 
-int dcp_fault_bad_p_css(
-                        dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
+int dcp_fault_bad_p_css(dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
     mzd_t *z_measurements_for_x,
     unsigned x_permutation,  // permutation mask for x canonicalisation
     unsigned z_permutation,  // permutation mask for z canonicalisation
@@ -305,9 +305,12 @@ void* __do_verify_css_magic_state(void* arg) {
       }
       last_balls[i]--;
     }
+    unsigned long long current_index = 0;
     do {
+      if(current_index >= config->starting_fault){
+
+
       ++config->fault_counter;
-#ifndef DRY_RUN
 #ifdef FAULT_COUNTER_PRINT
       if(config->fault_counter % FAULT_COUNTER_PRINT == 0){
         time_t currentTime;
@@ -316,9 +319,7 @@ void* __do_verify_css_magic_state(void* arg) {
         fprintf(stderr, "%s: checking fault number %lld\n",ctime(&currentTime), *fault_counter);
       }
       #endif
-#ifdef FAULT_COUNTER_CUTOFF
-      if(config->fault_counter >= FAULT_COUNTER_CUTOFF){
-#endif
+
       // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(current_dcp_output_combination,
                  &(config->output_errors[current_combination[0]]));
@@ -373,24 +374,55 @@ void* __do_verify_css_magic_state(void* arg) {
         }
         return BAD_FAULT_FOUND;
       }
-#ifdef FAULT_COUNTER_CUTOFF
-      }
-#endif
+
       lwlog_debug("about to incf on fault number %lld",*fault_counter);
-#endif
+      }
+      current_index++;
+
     } while ((config->fault_counter <= config->total_number_of_faults) && ft_iteration_combination_incf(config->s, config->fault_location_partitions,
                                                                                                         config->fault_location_count, first_balls,
                                            last_balls, current_combination)
-#ifdef TIMING_MODE
-             && config->fault_counter < TIMING_MODE
-#endif
+
 
     );
-#ifdef TIMING_MODE
-  }
-#endif
+
   return ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
 }
+
+  unsigned long long count_faults(int s, uint32_t fault_location_count, uint32_t* fault_location_partitions){
+  unsigned long long counter = 0;
+
+  int current_combination[MAX_SIZE_COUNT] = {0};
+  int first_balls[MAX_SIZE_COUNT];
+  int last_balls[MAX_SIZE_COUNT];
+  for (int i = 0; i < s; i++) {
+    current_combination[i] = 0;
+    for (int j = 0; j < i; j++) {
+      current_combination[i] += fault_location_partitions[j];
+    }
+  }
+  for (int i = 0; i < fault_location_count; i++) {
+    first_balls[i] = 0;
+    for (int j = 0; j < i; j++) {
+      first_balls[i] += fault_location_partitions[j];
+    }
+  }
+  for (int i = 0; i < fault_location_count; i++) {
+    last_balls[i] = 0;
+    for (int j = 0; j < i + 1; j++) {
+      last_balls[i] += fault_location_partitions[j];
+    }
+    last_balls[i]--;
+  }
+  do {
+    counter ++;
+  }while(ft_iteration_combination_incf(s, fault_location_partitions,
+                                       fault_location_count, first_balls,
+                                       last_balls, current_combination));
+  return counter;
+
+}
+
 comb_code_t comb_verify_css_magic_state(
     uint32_t n_all,  ///< number of qubits in code + all ancillas
     uint32_t n,      // number of qubits in code
@@ -499,7 +531,17 @@ comb_code_t comb_verify_css_magic_state(
 
   // set up a thread
   pthread_attr_t      attr;
-  void* return_code_pointer;
+
+  int status = pthread_attr_init(&attr);
+  if(status != 0)return OTHER_ERROR;
+
+  pthread_t* thread_ids = calloc(thread_count, sizeof(pthread_t));
+  void** return_code_pointers = calloc(thread_count, sizeof(void*));
+
+  unsigned long long total_fault_count = count_faults(s, fault_location_count, fault_location_partitions);
+  unsigned long long fault_count_per_thread = total_fault_count / thread_count;
+
+  for(int i = 0; i < thread_count; i++){
   thread_config_t config;
   config.n_all=n_all;
   config.n=n;
@@ -514,7 +556,7 @@ comb_code_t comb_verify_css_magic_state(
   config.fault_location_count=fault_location_count;
   config.fault_location_partitions=fault_location_partitions;
   config.s=s;
-  config.bad_fault_array=calloc(s,sizeof(uint32_t));
+  config.bad_fault_array=bad_fault_array;
   config.output_error_count=output_error_count;
   config.output_errors=output_errors;
   config.x_measurement_count=x_measurement_count;
@@ -526,31 +568,33 @@ comb_code_t comb_verify_css_magic_state(
   config.x_permutation=x_permutation;
   config.z_permutation=z_permutation;
   config.fault_counter=0;
-  config.total_number_of_faults=1000000000000000;
+  config.total_number_of_faults=fault_count_per_thread + thread_count;
+  config.starting_fault = (i * fault_count_per_thread);
 
 
-  int status = pthread_attr_init(&attr);
-  if(status != 0)return OTHER_ERROR;
-  pthread_t thread_id;
 
-  pthread_create(&thread_id, &attr, &__do_verify_css_magic_state, &config);
-
+  pthread_create(&(thread_ids[i]), &attr, &__do_verify_css_magic_state, &config);
+  }
   // wait for it to finish
 
-  pthread_join(thread_id, &return_code_pointer);
-
-  for(int i = 0; i < s; i++){
-    bad_fault_array[i]=config.bad_fault_array[i];
+  unsigned long long total_faults_checked=0;
+  comb_code_t return_code = ALL_FAULTS_GOOD;
+  for(int i = 0 ; i < thread_count; i++){
+    pthread_join(thread_ids[i], &(return_code_pointers[i]));
+    comb_code_t thread_return_code = (comb_code_t)return_code_pointers[i];
+    switch(thread_return_code){
+    case ALL_FAULTS_GOOD: break; // dont do anything
+    case BAD_FAULT_FOUND: return_code = BAD_FAULT_FOUND; break;
+    default: return_code = thread_return_code; // some other error
+    }
   }
-
-  comb_code_t return_code = (comb_code_t)return_code_pointer;
 
   // Stop timing
   clock_gettime(CLOCK_MONOTONIC, &finish);
   double seconds = (finish.tv_sec - start.tv_sec) +
                    1.0e-9 * (finish.tv_nsec - start.tv_nsec);
   printf("Took %f seconds, %lld fault combinations checked.\n", seconds,
-         config.fault_counter);
+         total_faults_checked);
   lwlog_debug("freeing memory");
   free_dcp_array(k, dcp_stabilisers);
   free_dcp_array(output_error_count, output_errors);
