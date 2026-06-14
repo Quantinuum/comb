@@ -3,6 +3,41 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
+typedef struct {
+  uint32_t n_all;  ///< number of qubits in code + all ancillas
+  uint32_t n;      // number of qubits in code
+  uint32_t n_x;    // number of independent x stabiliser generators in code
+  uint32_t n_z;    // number of independent z stabiliser generators in code
+  uint32_t k;  // number of logical qubits in code. equivalently, number of
+                 // logical dcp operators that stabilise the code
+  mzd_t *x_stabilisers;             // n-x of these
+  comb_bit_array_t x_lookup_table;  // x lookup table. of size 2^(n-n_x)
+  mzd_t *z_stabilisers;
+  comb_bit_array_t z_lookup_table;
+  dcp_t *dcp_stabilisers;         // k of these
+  uint32_t fault_location_count;  // number of fault locations
+    uint32_t
+    *fault_location_partitions;  // at least fault_location_count of these.
+                                     // number of faults at each location
+  uint32_t s;  // number of faults to which circuit should be resilient to
+  uint32_t *bad_fault_array;     // where to store indices of bad_faults
+  uint32_t output_error_count;   // number of output errors that result from
+                                   // propagating all the faults. should be at
+                                   // least sum(fault_location_partitions)
+  dcp_t *output_errors;          // at least output_error_count of these
+  uint32_t x_measurement_count;  // number of x measurement paulis
+  mzd_t *x_measurement_paulis;   // postselections made in x basis. at least
+                                   // x_measurement_count of these
+  uint32_t z_measurement_count;  // number of z measurement paulis
+  mzd_t *z_measurement_paulis;
+  uint32_t *rref_x;
+  uint32_t *rref_z;
+  unsigned x_permutation;
+  unsigned z_permutation;
+  // parameters that will be thread dependent:
+  unsigned long long total_number_of_faults; // set by caller
+  unsigned long long fault_counter; //  updated by callee
+} thread_config_t;
 
 int dcp_fault_bad_p_css(
                         dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
@@ -178,64 +213,40 @@ int stabilisers_rref_p(comb_vector_t *operators, uint32_t n, uint32_t m,
   return 1;
 }
 
-comb_code_t __do_verify_css_magic_state(
-    uint32_t n_all,  ///< number of qubits in code + all ancillas
-    uint32_t n,      // number of qubits in code
-    uint32_t n_x,    // number of independent x stabiliser generators in code
-    uint32_t n_z,    // number of independent z stabiliser generators in code
-    uint32_t k,  // number of logical qubits in code. equivalently, number of
-                 // logical dcp operators that stabilise the code
-    mzd_t *x_stabilisers,             // n-x of these
-    comb_bit_array_t x_lookup_table,  // x lookup table. of size 2^(n-n_x)
-    mzd_t *z_stabilisers, comb_bit_array_t z_lookup_table,
-    dcp_t *dcp_stabilisers,         // k of these
-    uint32_t fault_location_count,  // number of fault locations
-    uint32_t
-        *fault_location_partitions,  // at least fault_location_count of these.
-                                     // number of faults at each location
-    uint32_t s,  // number of faults to which circuit should be resilient to
-    uint32_t *bad_fault_array,     // where to store indices of bad_faults
-    uint32_t output_error_count,   // number of output errors that result from
-                                   // propagating all the faults. should be at
-                                   // least sum(fault_location_partitions)
-    dcp_t *output_errors,          // at least output_error_count of these
-    uint32_t x_measurement_count,  // number of x measurement paulis
-    mzd_t *x_measurement_paulis,   // postselections made in x basis. at least
-                                   // x_measurement_count of these
-    uint32_t z_measurement_count,  // number of z measurement paulis
-    mzd_t *z_measurement_paulis, uint32_t *rref_x, uint32_t *rref_z,
-    unsigned x_permutation, unsigned z_permutation,
-    unsigned long long *fault_counter) {
+
+void* __do_verify_css_magic_state(void* arg) {
+  thread_config_t* config = (thread_config_t*)arg;
+
   lwlog_debug("setting up the iteration");
   int current_combination[MAX_SIZE_COUNT] = {0};
   int first_balls[MAX_SIZE_COUNT];
   int last_balls[MAX_SIZE_COUNT];
-  dcp_t *current_dcp_output_combination = init_dcp(n_all);
-  dcp_t *error_with_stabilisers = init_dcp(n_all);
-  stabiliser_state_t *state = init_state(n_all);
-  pauli_z_coset_t *coset = init_pauli_z_coset(n_all, n_all);
-  mzd_t *C_z = mzd_init(z_measurement_count + n_z, n_all);
-  mzd_t *C_x = mzd_init(z_measurement_count + n_z, n_all);
-  mzd_t *P_x = mzd_init(x_measurement_count, n_all);
+  dcp_t *current_dcp_output_combination = init_dcp(config->n_all);
+  dcp_t *error_with_stabilisers = init_dcp(config->n_all);
+  stabiliser_state_t *state = init_state(config->n_all);
+  pauli_z_coset_t *coset = init_pauli_z_coset(config->n_all, config->n_all);
+  mzd_t *C_z = mzd_init(config->z_measurement_count + config->n_z, config->n_all);
+  mzd_t *C_x = mzd_init(config->z_measurement_count + config->n_z, config->n_all);
+  mzd_t *P_x = mzd_init(config->x_measurement_count, config->n_all);
   mzd_t *D =
-      mzd_init(n_all - (z_measurement_count + n_z), z_measurement_count + n_z);
-  mzd_t *z_measurements_for_x = mzd_init(z_measurement_count, n_all);
-  for (int i = 0; i < z_measurement_count; i++) {
+    mzd_init(config->n_all - (config->z_measurement_count + config->n_z), config->z_measurement_count + config->n_z);
+  mzd_t *z_measurements_for_x = mzd_init(config->z_measurement_count, config->n_all);
+  for (int i = 0; i < config->z_measurement_count; i++) {
     // WARNING! wont work for parities. need a matrix solve routine to figure
     // out which x operators anticommute with the z measurement paulis
-    mzd_copy_row(C_z, i, z_measurement_paulis, i);
-    mzd_copy_row(C_x, i, z_measurement_paulis, i);
+    mzd_copy_row(C_z, i, config->z_measurement_paulis, i);
+    mzd_copy_row(C_x, i, config->z_measurement_paulis, i);
   }
-  for (int i = 0; i < n_z; i++) {
-    mzd_write_bit(C_x, i + z_measurement_count, rref_z[i], 1);
-    mzd_copy_row(C_z, i + z_measurement_count, z_stabilisers, i);
+  for (int i = 0; i < config->n_z; i++) {
+    mzd_write_bit(C_x, i + config->z_measurement_count, config->rref_z[i], 1);
+    mzd_copy_row(C_z, i + config->z_measurement_count, config->z_stabilisers, i);
   }
-  for (int i = 0; i < x_measurement_count; i++) {
-    mzd_copy_row(P_x, i, x_measurement_paulis, i);
+  for (int i = 0; i < config->x_measurement_count; i++) {
+    mzd_copy_row(P_x, i, config->x_measurement_paulis, i);
   }
   // now copy z measurements for x
-  for (int i = 0; i < z_measurement_count; i++) {
-    mzd_copy_row(z_measurements_for_x, i, z_measurement_paulis, i);
+  for (int i = 0; i < config->z_measurement_count; i++) {
+    mzd_copy_row(z_measurements_for_x, i, config->z_measurement_paulis, i);
   }
   // Calculate A
   mzd_t *tmp = mzd_copy(0, C_z);
@@ -244,15 +255,15 @@ comb_code_t __do_verify_css_magic_state(
   mzd_t *A = mzd_transpose(0, A_transpose);
   // free to do row ops on A as row ops preserve A C_Z^T = 0.
   mzd_echelonize_naive(A, 1);  // 1 for full rref (Gauss-Jordan elimination)
-  mzp_t *Q = mzp_init(n_all);
-  mzp_t *P = mzp_init(n_all - (n_z + z_measurement_count));
+  mzp_t *Q = mzp_init(config->n_all);
+  mzp_t *P = mzp_init(config->n_all - (config->n_z + config->z_measurement_count));
   mzd_pluq(A, P, Q, 0);  // now the columns of A have been reordered in order to
                          // later on do the row ops in place.
   mzd_free(A_transpose);
   mzd_free(tmp);
   int row_ops_count = 0;
-  for (int i = 0; i < (n_all - (n_z + z_measurement_count)); i++) {
-    for (int j = (n_all - (n_z + z_measurement_count)); j < n_all; j++) {
+  for (int i = 0; i < (config->n_all - (config->n_z + config->z_measurement_count)); i++) {
+    for (int j = (config->n_all - (config->n_z + config->z_measurement_count)); j < config->n_all; j++) {
       if (mzd_read_bit(A, i, j)) {
         row_ops_count++;
       }
@@ -261,8 +272,8 @@ comb_code_t __do_verify_css_magic_state(
   int *row_ops_a = malloc(row_ops_count * sizeof(int));
   int *row_ops_b = malloc(row_ops_count * sizeof(int));
   int count = 0;
-  for (int i = 0; i < (n_all - (n_z + z_measurement_count)); i++) {
-    for (int j = (n_all - (n_z + z_measurement_count)); j < n_all; j++) {
+  for (int i = 0; i < (config->n_all - (config->n_z + config->z_measurement_count)); i++) {
+    for (int j = (config->n_all - (config->n_z + config->z_measurement_count)); j < config->n_all; j++) {
       if (mzd_read_bit(A, i, j)) {
         row_ops_a[count] = i;
         row_ops_b[count] = j;
@@ -275,30 +286,30 @@ comb_code_t __do_verify_css_magic_state(
 #ifdef TIMING_MODE
   while (*fault_counter < TIMING_MODE) {
 #endif
-    for (int i = 0; i < s; i++) {
+    for (int i = 0; i < config->s; i++) {
       current_combination[i] = 0;
       for (int j = 0; j < i; j++) {
-        current_combination[i] += fault_location_partitions[j];
+        current_combination[i] += config->fault_location_partitions[j];
       }
     }
-    for (int i = 0; i < fault_location_count; i++) {
+    for (int i = 0; i < config->fault_location_count; i++) {
       first_balls[i] = 0;
       for (int j = 0; j < i; j++) {
-        first_balls[i] += fault_location_partitions[j];
+        first_balls[i] += config->fault_location_partitions[j];
       }
     }
-    for (int i = 0; i < fault_location_count; i++) {
+    for (int i = 0; i < config->fault_location_count; i++) {
       last_balls[i] = 0;
       for (int j = 0; j < i + 1; j++) {
-        last_balls[i] += fault_location_partitions[j];
+        last_balls[i] += config->fault_location_partitions[j];
       }
       last_balls[i]--;
     }
     do {
-      ++*fault_counter;
+      ++config->fault_counter;
 #ifndef DRY_RUN
 #ifdef FAULT_COUNTER_PRINT
-      if(*fault_counter % FAULT_COUNTER_PRINT == 0){
+      if(config->fault_counter % FAULT_COUNTER_PRINT == 0){
         time_t currentTime;
         time(&currentTime); // Get the current time
 
@@ -306,24 +317,24 @@ comb_code_t __do_verify_css_magic_state(
       }
       #endif
 #ifdef FAULT_COUNTER_CUTOFF
-      if(*fault_counter >= FAULT_COUNTER_CUTOFF){
+      if(config->fault_counter >= FAULT_COUNTER_CUTOFF){
 #endif
       // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(current_dcp_output_combination,
-                 &(output_errors[current_combination[0]]));
-      for (int i = 1; i < s; i++) { // later faults occur earlier (to the left) in the product.
+                 &(config->output_errors[current_combination[0]]));
+      for (int i = 1; i < config->s; i++) { // later faults occur earlier (to the left) in the product.
         #if 1
         if(current_combination[i] <= current_combination[i-1]){
           printf("invalid combination: %d <= %d, fault counter %lld\n", current_combination[i],
-                 current_combination[i-1], *fault_counter);
-          for(int j = 0 ; j <s; j++){
+                 current_combination[i-1], config->fault_counter);
+          for(int j = 0 ; j < config->s; j++){
             printf("comb[%d]=%d, ",j,current_combination[j]);
           }
           exit(1);
         }
         #endif
         //dcp_mulf_left(&(output_errors[current_combination[i]]), current_dcp_output_combination);
-	dcp_mulf_right(current_dcp_output_combination, &(output_errors[current_combination[i]]));
+        dcp_mulf_right(current_dcp_output_combination, &(config->output_errors[current_combination[i]]));
       }
       // output errors multiplied. now, multiply by all combinations of logical
       // operators and test them:
@@ -331,22 +342,22 @@ comb_code_t __do_verify_css_magic_state(
       // really loop over all combinations of dcp stabilisers
       int good_combination_found = 0;
       for (uint32_t dcp_index = 0;
-           dcp_index < (1 << k) && !good_combination_found; dcp_index++) {
+           dcp_index < (1 << config->k) && !good_combination_found; dcp_index++) {
         set_dcp_to(error_with_stabilisers, current_dcp_output_combination);
         //
-        for (int i = 0; i < k && !good_combination_found; i++) {
+        for (int i = 0; i < config->k && !good_combination_found; i++) {
           if (dcp_index & (1 << i)) {
             // multiply the output error on the right by dcp stabilisers
             lwlog_info("multiplying error by logical stabiliser");
             //dcp_mulf_right(error_with_stabilisers, &(dcp_stabilisers[i]));
-            dcp_mulf_left(&(dcp_stabilisers[i]), error_with_stabilisers);
+            dcp_mulf_left(&(config->dcp_stabilisers[i]), error_with_stabilisers);
 	  }
         }
         // now check to see if it is good or not.
         if (!dcp_fault_bad_p_css(error_with_stabilisers, C_z, C_z_transpose, C_x, C_x_transpose,
-                                 P_x, z_measurements_for_x, x_permutation,
-                                 z_permutation, x_lookup_table, z_lookup_table,
-                                 x_stabilisers, rref_x, n_all, n, n_x, n_z,
+                                 P_x, z_measurements_for_x, config->x_permutation,
+                                 config->z_permutation, config->x_lookup_table, config->z_lookup_table,
+                                 config->x_stabilisers, config->rref_x, config->n_all, config->n, config->n_x, config->n_z,
                                  state, coset, D, Q, row_ops_count, row_ops_a,
                                  row_ops_b)) {
           // a good one was found after multiplying by a choice of logicals, set
@@ -357,8 +368,8 @@ comb_code_t __do_verify_css_magic_state(
       if (!good_combination_found) {
         lwlog_debug("no good combination was found: fault combination was bad");
         // set the indices and indicate a bad fault was found
-        for (int i = 0; i < s; i++) {
-          bad_fault_array[i] = current_combination[i];
+        for (int i = 0; i < config->s; i++) {
+          config->bad_fault_array[i] = current_combination[i];
         }
         return BAD_FAULT_FOUND;
       }
@@ -367,11 +378,11 @@ comb_code_t __do_verify_css_magic_state(
 #endif
       lwlog_debug("about to incf on fault number %lld",*fault_counter);
 #endif
-    } while (ft_iteration_combination_incf(s, fault_location_partitions,
-                                           fault_location_count, first_balls,
+    } while ((config->fault_counter <= config->total_number_of_faults) && ft_iteration_combination_incf(config->s, config->fault_location_partitions,
+                                                                                                        config->fault_location_count, first_balls,
                                            last_balls, current_combination)
 #ifdef TIMING_MODE
-             && *fault_counter < TIMING_MODE
+             && config->fault_counter < TIMING_MODE
 #endif
 
     );
@@ -478,19 +489,68 @@ comb_code_t comb_verify_css_magic_state(
                 fault_location_partitions[i]);
   }
   lwlog_debug("all objects converted");
-  comb_code_t return_code = __do_verify_css_magic_state(
-      n_all, n, n_x, n_z, k, x_stabilisers, x_lookup_table, z_stabilisers,
-      z_lookup_table, dcp_stabilisers, fault_location_count,
-      fault_location_partitions, s, bad_fault_array, output_error_count,
-      output_errors, x_measurement_count, x_measurement_paulis,
-      z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
-      z_permutation, &fault_counter);
+  /* comb_code_t return_code = __do_verify_css_magic_state( */
+  /*     n_all, n, n_x, n_z, k, x_stabilisers, x_lookup_table, z_stabilisers, */
+  /*     z_lookup_table, dcp_stabilisers, fault_location_count, */
+  /*     fault_location_partitions, s, bad_fault_array, output_error_count, */
+  /*     output_errors, x_measurement_count, x_measurement_paulis, */
+  /*     z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation, */
+  /*     z_permutation, &fault_counter); */
+
+  // set up a thread
+  pthread_attr_t      attr;
+  void* return_code_pointer;
+  thread_config_t config;
+  config.n_all=n_all;
+  config.n=n;
+  config.n_x=n_x;
+  config.n_z=n_z;
+  config.k=k;
+  config.x_stabilisers=x_stabilisers;
+  config.x_lookup_table=x_lookup_table;
+  config.z_stabilisers=z_stabilisers;
+  config.z_lookup_table=z_lookup_table;
+  config.dcp_stabilisers=dcp_stabilisers;
+  config.fault_location_count=fault_location_count;
+  config.fault_location_partitions=fault_location_partitions;
+  config.s=s;
+  config.bad_fault_array=calloc(s,sizeof(uint32_t));
+  config.output_error_count=output_error_count;
+  config.output_errors=output_errors;
+  config.x_measurement_count=x_measurement_count;
+  config.x_measurement_paulis=x_measurement_paulis;
+  config.z_measurement_count=z_measurement_count;
+  config.z_measurement_paulis=z_measurement_paulis;
+  config.rref_x=rref_x;
+  config.rref_z=rref_z;
+  config.x_permutation=x_permutation;
+  config.z_permutation=z_permutation;
+  config.fault_counter=0;
+  config.total_number_of_faults=1000000000000000;
+
+
+  int status = pthread_attr_init(&attr);
+  if(status != 0)return OTHER_ERROR;
+  pthread_t thread_id;
+
+  pthread_create(&thread_id, &attr, &__do_verify_css_magic_state, &config);
+
+  // wait for it to finish
+
+  pthread_join(thread_id, &return_code_pointer);
+
+  for(int i = 0; i < s; i++){
+    bad_fault_array[i]=config.bad_fault_array[i];
+  }
+
+  comb_code_t return_code = (comb_code_t)return_code_pointer;
+
   // Stop timing
   clock_gettime(CLOCK_MONOTONIC, &finish);
   double seconds = (finish.tv_sec - start.tv_sec) +
                    1.0e-9 * (finish.tv_nsec - start.tv_nsec);
   printf("Took %f seconds, %lld fault combinations checked.\n", seconds,
-         fault_counter);
+         config.fault_counter);
   lwlog_debug("freeing memory");
   free_dcp_array(k, dcp_stabilisers);
   free_dcp_array(output_error_count, output_errors);
