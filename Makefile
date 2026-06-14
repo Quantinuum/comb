@@ -4,7 +4,7 @@ M4RI_REPO = https://github.com/malb/m4ri.git
 BRANCH = release-20240729
 TMPDIR := $(shell mktemp -d)
 ROOT_DIR := $(dir $(realpath $(lastword $(MAKEFILE_LIST))))
-M4RI_CONFIGURE_OPTIONS = --with-pic --prefix=$(ROOT_DIR)/m4ri --disable-png --disable-dependency-tracking
+M4RI_CONFIGURE_OPTIONS = --with-pic --enable-thread-safe --prefix=$(ROOT_DIR)/m4ri --disable-png --disable-dependency-tracking
 
 override CFLAGS += -pthread -fPIC -I./m4ri/include -O3 -fPIC
 M4RI = m4ri/lib/libm4ri.a

@@ -226,6 +226,7 @@ void* __do_verify_css_magic_state(void* arg) {
   stabiliser_state_t *state = init_state(config->n_all);
   pauli_z_coset_t *coset = init_pauli_z_coset(config->n_all, config->n_all);
   mzd_t *C_z = mzd_init(config->z_measurement_count + config->n_z, config->n_all);
+  
   mzd_t *C_x = mzd_init(config->z_measurement_count + config->n_z, config->n_all);
   mzd_t *P_x = mzd_init(config->x_measurement_count, config->n_all);
   mzd_t *D =
@@ -248,17 +249,25 @@ void* __do_verify_css_magic_state(void* arg) {
   for (int i = 0; i < config->z_measurement_count; i++) {
     mzd_copy_row(z_measurements_for_x, i, config->z_measurement_paulis, i);
   }
+  //return ALL_FAULTS_GOOD; // here is fine
   // Calculate A
   mzd_t *tmp = mzd_copy(0, C_z);
+  //return ALL_FAULTS_GOOD; // here is fine
   mzd_t *A_transpose =
       mzd_kernel_left_pluq(tmp, 0);  // C_z A^T = 0 by definition
+  //return ALL_FAULTS_GOOD; here bad
+  
   mzd_t *A = mzd_transpose(0, A_transpose);
+  //return ALL_FAULTS_GOOD; here bad
+  
   // free to do row ops on A as row ops preserve A C_Z^T = 0.
   mzd_echelonize_naive(A, 1);  // 1 for full rref (Gauss-Jordan elimination)
+  
   mzp_t *Q = mzp_init(config->n_all);
   mzp_t *P = mzp_init(config->n_all - (config->n_z + config->z_measurement_count));
   mzd_pluq(A, P, Q, 0);  // now the columns of A have been reordered in order to
                          // later on do the row ops in place.
+ // return ALL_FAULTS_GOOD; // here bad 
   mzd_free(A_transpose);
   mzd_free(tmp);
   int row_ops_count = 0;
@@ -269,6 +278,7 @@ void* __do_verify_css_magic_state(void* arg) {
       }
     }
   }
+  //return ALL_FAULTS_GOOD; // here bad
   int *row_ops_a = malloc(row_ops_count * sizeof(int));
   int *row_ops_b = malloc(row_ops_count * sizeof(int));
   int count = 0;
@@ -305,6 +315,7 @@ void* __do_verify_css_magic_state(void* arg) {
       }
       last_balls[i]--;
     }
+    //return ALL_FAULTS_GOOD; // here bad
     unsigned long long current_index = 0;
     do {
       if(current_index >= config->starting_fault){
@@ -419,7 +430,7 @@ void* __do_verify_css_magic_state(void* arg) {
   }while(ft_iteration_combination_incf(s, fault_location_partitions,
                                        fault_location_count, first_balls,
                                        last_balls, current_combination));
-  return counter;
+  printf("%llu faults to check\n",counter); return counter;
 
 }
 
@@ -575,6 +586,8 @@ comb_code_t comb_verify_css_magic_state(
 
 
   pthread_create(&(thread_ids[i]), &attr, &__do_verify_css_magic_state, &(config[i]));
+ 
+ printf("created thread %d\n",i);
   }
   // wait for it to finish
 
@@ -582,6 +595,7 @@ comb_code_t comb_verify_css_magic_state(
   comb_code_t return_code = ALL_FAULTS_GOOD;
   for(int i = 0 ; i < thread_count; i++){
     pthread_join(thread_ids[i], &(return_code_pointers[i]));
+printf("joined thread %d\n",i);
     comb_code_t thread_return_code = (comb_code_t)return_code_pointers[i];
     switch(thread_return_code){
     case ALL_FAULTS_GOOD: break; // dont do anything
