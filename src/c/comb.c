@@ -541,39 +541,40 @@ comb_code_t comb_verify_css_magic_state(
   unsigned long long total_fault_count = count_faults(s, fault_location_count, fault_location_partitions);
   unsigned long long fault_count_per_thread = total_fault_count / thread_count;
 
+  thread_config_t* config = calloc(thread_count, sizeof(thread_config_t));
+
   for(int i = 0; i < thread_count; i++){
-  thread_config_t config;
-  config.n_all=n_all;
-  config.n=n;
-  config.n_x=n_x;
-  config.n_z=n_z;
-  config.k=k;
-  config.x_stabilisers=x_stabilisers;
-  config.x_lookup_table=x_lookup_table;
-  config.z_stabilisers=z_stabilisers;
-  config.z_lookup_table=z_lookup_table;
-  config.dcp_stabilisers=dcp_stabilisers;
-  config.fault_location_count=fault_location_count;
-  config.fault_location_partitions=fault_location_partitions;
-  config.s=s;
-  config.bad_fault_array=bad_fault_array;
-  config.output_error_count=output_error_count;
-  config.output_errors=output_errors;
-  config.x_measurement_count=x_measurement_count;
-  config.x_measurement_paulis=x_measurement_paulis;
-  config.z_measurement_count=z_measurement_count;
-  config.z_measurement_paulis=z_measurement_paulis;
-  config.rref_x=rref_x;
-  config.rref_z=rref_z;
-  config.x_permutation=x_permutation;
-  config.z_permutation=z_permutation;
-  config.fault_counter=0;
-  config.total_number_of_faults=fault_count_per_thread + thread_count;
-  config.starting_fault = (i * fault_count_per_thread);
+  config[i].n_all=n_all;
+  config[i].n=n;
+  config[i].n_x=n_x;
+  config[i].n_z=n_z;
+  config[i].k=k;
+  config[i].x_stabilisers=x_stabilisers;
+  config[i].x_lookup_table=x_lookup_table;
+  config[i].z_stabilisers=z_stabilisers;
+  config[i].z_lookup_table=z_lookup_table;
+  config[i].dcp_stabilisers=dcp_stabilisers;
+  config[i].fault_location_count=fault_location_count;
+  config[i].fault_location_partitions=fault_location_partitions;
+  config[i].s=s;
+  config[i].bad_fault_array=bad_fault_array;
+  config[i].output_error_count=output_error_count;
+  config[i].output_errors=output_errors;
+  config[i].x_measurement_count=x_measurement_count;
+  config[i].x_measurement_paulis=x_measurement_paulis;
+  config[i].z_measurement_count=z_measurement_count;
+  config[i].z_measurement_paulis=z_measurement_paulis;
+  config[i].rref_x=rref_x;
+  config[i].rref_z=rref_z;
+  config[i].x_permutation=x_permutation;
+  config[i].z_permutation=z_permutation;
+  config[i].fault_counter=0;
+  config[i].total_number_of_faults=fault_count_per_thread + thread_count;
+  config[i].starting_fault = (i * fault_count_per_thread);
 
 
 
-  pthread_create(&(thread_ids[i]), &attr, &__do_verify_css_magic_state, &config);
+  pthread_create(&(thread_ids[i]), &attr, &__do_verify_css_magic_state, &(config[i]));
   }
   // wait for it to finish
 
@@ -587,6 +588,7 @@ comb_code_t comb_verify_css_magic_state(
     case BAD_FAULT_FOUND: return_code = BAD_FAULT_FOUND; break;
     default: return_code = thread_return_code; // some other error
     }
+    total_faults_checked+=config[i].fault_counter;
   }
 
   // Stop timing
