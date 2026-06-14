@@ -12,20 +12,20 @@ void fix_dcp(dcp_t *dcp) {
 BIT row_product(mzd_t *x, int i, mzd_t *z, int j) {
   // Forms the inner product of row i of x and row j of z (viewing both rows as
   // vectors over F2).
-  //int w = x->ncols;
-  word *row1 = mzd_row(x, i);
-  word *row2 = mzd_row(z, j);
+  int w = x->ncols;
+  //word *row1 = mzd_row(x, i);
+  //word *row2 = mzd_row(z, j);
   word acc = 0;
 	// slow impl:
-  //for (int k = 0; k < w; k++) {
-  //  if(mzd_read_bit(x,i,k) && mzd_read_bit(z,j,k))acc=1-acc;
- // }
-  //return acc;
-   for (int i = 0; i < x->width; i++) {
-    word part_of_product = row1[i] & row2[i];
-    acc += __builtin_popcount(part_of_product);
-   }
-   return acc & 1;
+  for (int k = 0; k < w; k++) {
+    if(mzd_read_bit(x,i,k) && mzd_read_bit(z,j,k))acc=1-acc;
+ }
+  return acc;
+ //  for (int i = 0; i < x->width; i++) {
+ //   word part_of_product = row1[i] & row2[i];
+ //   acc += __builtin_popcount(part_of_product);
+ //  }
+ //  return acc & 1;
 }
 
 void expand_state(stabiliser_state_t *state) {
@@ -41,10 +41,20 @@ void contract_state(stabiliser_state_t *state) {
   state->delta_vector->nrows--;
   state->epsilon_vector->nrows--;
 }
+void clear_state(stabiliser_state_t *state) {
+  // clears the state. assumes it hasn't been expanded.
+  expand_state(state);
+  mzd_set_ui(state->x_parts, 0);
+  mzd_set_ui(state->z_parts, 0);
+  mzd_set_ui(state->epsilon_vector, 0);
+  mzd_set_ui(state->delta_vector, 0);
+  contract_state(state);
+}
 void set_row(mzd_t *x_parts, mzd_t *z_parts, int j, mzd_t *x_measurement_matrix,
              int i, mzd_t *epsilon_bits,
              mzd_t *delta_bits) {  // moves m_i to row j of x_parts, and clears
                                    // row j of z_parts
+  mzd_row_clear_offset(x_parts, j, 0);
   mzd_copy_row(x_parts, j, x_measurement_matrix, i);
   mzd_row_clear_offset(z_parts, j, 0);
   mzd_write_bit(epsilon_bits, j, 0, 0);

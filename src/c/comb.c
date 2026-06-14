@@ -5,13 +5,14 @@
 #include <time.h>
 
 int dcp_fault_bad_p_css(
-    dcp_t *error, mzd_t *x_measurement_matrix, mzd_t *z_measurement_matrix,
+                        dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
     mzd_t *z_measurements_for_x,
     unsigned x_permutation,  // permutation mask for x canonicalisation
     unsigned z_permutation,  // permutation mask for z canonicalisation
     comb_bit_array_t x_lookup_table, comb_bit_array_t z_lookup_table,
-    mzd_t *x_stabilisers, uint32_t *rref_x, int n_all, int n, int n_x,
-    stabiliser_state_t *state, pauli_z_coset_t *coset) {
+    mzd_t *x_stabilisers, uint32_t *rref_x, int n_all, int n, int n_x, int n_z,
+    stabiliser_state_t *state, pauli_z_coset_t *coset, mzd_t *D, mzp_t *Q,
+    int row_ops_count, int *row_ops_a, int *row_ops_b) {
   lwlog_debug("Testing %s", print_dcp(error, 0));
   mzd_t *x_error =
       error->h_x_transpose;  // dont need to transpose to get x error
@@ -43,7 +44,7 @@ int dcp_fault_bad_p_css(
   lwlog_debug(
       "Error before permutation and eliminating ancillas is %s (mask %x)",
       print_row_vector_as_pauli(x_error, 0, "X"), x_permutation);
-  x_error->data[0] &= ((1 << (n)) - 1);
+  x_error->data[0] &= ((1UL << (n)) - 1);
   lwlog_debug("Error after eliminating ancilla terms is %s",
               print_row_vector_as_pauli(x_error, 0, "X"));
   permute_columns(x_error, x_permutation);
@@ -57,13 +58,55 @@ int dcp_fault_bad_p_css(
   }
   // Now, test the z part. Start by turning it into a state
   set_stabiliser_state_to_dcp(state, error);
-  // Do first the Z and then the X postselections. If state is postselected can
-  // return 0 (good).
-  if (postselect_on_measuring_plus_one_z(state, z_measurement_matrix)) {
-    lwlog_debug("error detected in z postselections, so error is good");
-    return 0;
+  // Instead of doing all the Z and then X measurements separately, we combine
+  // them (batched gaussian elimination):
+  // 1. Row ops on S_i using A to get S'_i
+  int k = C_z_transpose->ncols;
+  lwlog_debug("before row ops on S_i, state is %s",
+              print_stabiliser_state(state, 0));
+  // In order to do the row ops in place, we first apply a permutation
+  // calculated beforehand via the PLUQ decomposition of A:
+  mzd_apply_p_left(state->x_parts, Q);
+  mzd_apply_p_left(state->z_parts, Q);
+  mzd_apply_p_left(state->delta_vector, Q);
+  mzd_apply_p_left(state->epsilon_vector, Q);
+  // We can now do the row ops in place, specified by the parameters row_ops*
+  for (int i = 0; i < row_ops_count; i++) {
+    add_row_to(state, row_ops_b[i], state, row_ops_a[i]);
   }
-  if (postselect_on_measuring_plus_one_x(state, x_measurement_matrix)) {
+  lwlog_debug("after row ops on S_i, state is %s",
+              print_stabiliser_state(state, 0));
+  // 2. Calculate D using matrix multiplication
+  // D is whether the j-th x measurement anticommutes with the i-th S_i
+  // shrink state->z_parts for the multiplication; want to consider only the
+  // first n_all - k stabs.
+  state->z_parts->nrows = (n_all - k);
+  // D <- Z_parts . C_x_transpose
+  _mzd_mul_m4rm(D,state->z_parts, C_x_transpose, 0, 1);
+  //_mzd_mul_naive(D, state->z_parts, C_x,  1);  // C_x k x n, state->Z_parts is n - k x n
+  // mzd_t* D_transpose = mzd_transpose(0,D); // calculate D^T as well, maybe it
+  // will be needed instead.
+  //  3. Calculate S''_i via matrix multiplication D C_Z
+  //  i.e. multiply the S''_i = S'_i D_ij C_z
+
+  // Z_parts <- Z_parts + D C_z
+  _mzd_mul_m4rm(state->z_parts,D,C_z,0,0);
+
+  //_mzd_mul_naive(state->z_parts, D, C_z_transpose, 0);  // z parts is n-k x n, D is n-k x k, C_z is k x n
+  state->z_parts->nrows = (n_all);
+  // 4. Add the X measurements as stabilisers by filling the lower k elts of
+  // dest_state with C_x
+  for (int i = (n_all - k); i < n_all; i++) {
+    mzd_row_clear_offset(state->x_parts, i, 0);
+    mzd_combine(state->x_parts, i, 0, state->x_parts, i, 0, C_x,
+                i - (n_all - k), 0);
+    mzd_row_clear_offset(state->z_parts, i, 0);
+    mzd_row_clear_offset(state->epsilon_vector, i, 0);
+    mzd_row_clear_offset(state->delta_vector, i, 0);
+  }
+  lwlog_debug("after batch ge, state is %s", print_stabiliser_state(state, 0));
+
+  if (postselect_on_measuring_plus_one_x(state, P_x)) {
     lwlog_debug("error detected in x postselections, so error is good");
     return 0;
   }
@@ -81,6 +124,16 @@ int dcp_fault_bad_p_css(
                 print_row_vector_as_pauli(coset->factor_transpose, 0, "Z"));
     int reduced_z_error = mzd_data(coset->factor_transpose);
     lwlog_debug("number is %d", reduced_z_error);
+#if 0
+    // This was intended to be a test that the reduced z error is not too large.
+    // However, this can result from a missing measurement, so it does not indicate a bug with the code per se.
+    // In the future, this case should be dealt with by sanitising the inputs better. TODO important
+    // Until this is fixed, the behaviour of Comb is undefined if measurements are missing.
+    if(reduced_z_error >= (1 << (n - n_z))){
+      lwlog_err("reduced error too large for lookup table, should not have happened, exiting");
+      exit(1);
+    }
+#endif
     if (!TestBit(z_lookup_table, reduced_z_error)) {
       lwlog_debug("z error in coset is high weight, so error is bad");
       return 1;
@@ -158,36 +211,71 @@ comb_code_t __do_verify_css_magic_state(
   int first_balls[MAX_SIZE_COUNT];
   int last_balls[MAX_SIZE_COUNT];
   dcp_t *current_dcp_output_combination = init_dcp(n_all);
-  dcp_t *temp = init_dcp(n_all);
   dcp_t *error_with_stabilisers = init_dcp(n_all);
   stabiliser_state_t *state = init_state(n_all);
   pauli_z_coset_t *coset = init_pauli_z_coset(n_all, n_all);
-  mzd_t *z_measurement_matrix = mzd_init(z_measurement_count + n_z, n_all);
-  mzd_t *x_measurement_matrix =
-      mzd_init(z_measurement_count + n_z + x_measurement_count, n_all);
+  mzd_t *C_z = mzd_init(z_measurement_count + n_z, n_all);
+  mzd_t *C_x = mzd_init(z_measurement_count + n_z, n_all);
+  mzd_t *P_x = mzd_init(x_measurement_count, n_all);
+  mzd_t *D =
+      mzd_init(n_all - (z_measurement_count + n_z), z_measurement_count + n_z);
   mzd_t *z_measurements_for_x = mzd_init(z_measurement_count, n_all);
   for (int i = 0; i < z_measurement_count; i++) {
-    // WARNING! wont work for parities
-    mzd_copy_row(z_measurement_matrix, i, z_measurement_paulis, i);
-    mzd_copy_row(x_measurement_matrix, i, z_measurement_paulis, i);
+    // WARNING! wont work for parities. need a matrix solve routine to figure
+    // out which x operators anticommute with the z measurement paulis
+    mzd_copy_row(C_z, i, z_measurement_paulis, i);
+    mzd_copy_row(C_x, i, z_measurement_paulis, i);
   }
   for (int i = 0; i < n_z; i++) {
-    mzd_write_bit(x_measurement_matrix, i + z_measurement_count, rref_z[i], 1);
-    mzd_copy_row(z_measurement_matrix, i + z_measurement_count, z_stabilisers,
-                 i);
+    mzd_write_bit(C_x, i + z_measurement_count, rref_z[i], 1);
+    mzd_copy_row(C_z, i + z_measurement_count, z_stabilisers, i);
   }
   for (int i = 0; i < x_measurement_count; i++) {
-    mzd_copy_row(x_measurement_matrix, i + z_measurement_count + n_z,
-                 x_measurement_paulis, i);
+    mzd_copy_row(P_x, i, x_measurement_paulis, i);
   }
   // now copy z measurements for x
   for (int i = 0; i < z_measurement_count; i++) {
     mzd_copy_row(z_measurements_for_x, i, z_measurement_paulis, i);
   }
+  // Calculate A
+  mzd_t *tmp = mzd_copy(0, C_z);
+  mzd_t *A_transpose =
+      mzd_kernel_left_pluq(tmp, 0);  // C_z A^T = 0 by definition
+  mzd_t *A = mzd_transpose(0, A_transpose);
+  // free to do row ops on A as row ops preserve A C_Z^T = 0.
+  mzd_echelonize_naive(A, 1);  // 1 for full rref (Gauss-Jordan elimination)
+  mzp_t *Q = mzp_init(n_all);
+  mzp_t *P = mzp_init(n_all - (n_z + z_measurement_count));
+  mzd_pluq(A, P, Q, 0);  // now the columns of A have been reordered in order to
+                         // later on do the row ops in place.
+  mzd_free(A_transpose);
+  mzd_free(tmp);
+  int row_ops_count = 0;
+  for (int i = 0; i < (n_all - (n_z + z_measurement_count)); i++) {
+    for (int j = (n_all - (n_z + z_measurement_count)); j < n_all; j++) {
+      if (mzd_read_bit(A, i, j)) {
+        row_ops_count++;
+      }
+    }
+  }
+  int *row_ops_a = malloc(row_ops_count * sizeof(int));
+  int *row_ops_b = malloc(row_ops_count * sizeof(int));
+  int count = 0;
+  for (int i = 0; i < (n_all - (n_z + z_measurement_count)); i++) {
+    for (int j = (n_all - (n_z + z_measurement_count)); j < n_all; j++) {
+      if (mzd_read_bit(A, i, j)) {
+        row_ops_a[count] = i;
+        row_ops_b[count] = j;
+        count++;
+      }
+    }
+  }
+  mzd_t *C_z_transpose = mzd_transpose(0, C_z);
+  mzd_t *C_x_transpose = mzd_transpose(0, C_x);
 #ifdef TIMING_MODE
   while (*fault_counter < TIMING_MODE) {
 #endif
-    for (int i = 0; i < k; i++) {
+    for (int i = 0; i < s; i++) {
       current_combination[i] = 0;
       for (int j = 0; j < i; j++) {
         current_combination[i] += fault_location_partitions[j];
@@ -208,14 +296,34 @@ comb_code_t __do_verify_css_magic_state(
     }
     do {
       ++*fault_counter;
-      if(*fault_counter % 1000 == 0)printf("checking fault number %lld\n", *fault_counter);
+#ifndef DRY_RUN
+#ifdef FAULT_COUNTER_PRINT
+      if(*fault_counter % FAULT_COUNTER_PRINT == 0){
+        time_t currentTime;
+        time(&currentTime); // Get the current time
+
+        fprintf(stderr, "%s: checking fault number %lld\n",ctime(&currentTime), *fault_counter);
+      }
+      #endif
+#ifdef FAULT_COUNTER_CUTOFF
+      if(*fault_counter >= FAULT_COUNTER_CUTOFF){
+#endif
       // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(current_dcp_output_combination,
                  &(output_errors[current_combination[0]]));
-      for (int i = 1; i < s; i++) {
-        dcp_mul(temp, current_dcp_output_combination,
-                &(output_errors[current_combination[i]]));
-        set_dcp_to(current_dcp_output_combination, temp);
+      for (int i = 1; i < s; i++) { // later faults occur earlier (to the left) in the product.
+        #if 1
+        if(current_combination[i] <= current_combination[i-1]){
+          printf("invalid combination: %d <= %d, fault counter %lld\n", current_combination[i],
+                 current_combination[i-1], *fault_counter);
+          for(int j = 0 ; j <s; j++){
+            printf("comb[%d]=%d, ",j,current_combination[j]);
+          }
+          exit(1);
+        }
+        #endif
+        //dcp_mulf_left(&(output_errors[current_combination[i]]), current_dcp_output_combination);
+	dcp_mulf_right(current_dcp_output_combination, &(output_errors[current_combination[i]]));
       }
       // output errors multiplied. now, multiply by all combinations of logical
       // operators and test them:
@@ -228,18 +336,19 @@ comb_code_t __do_verify_css_magic_state(
         //
         for (int i = 0; i < k && !good_combination_found; i++) {
           if (dcp_index & (1 << i)) {
-            // multiply the output error by dcp stabilisers
+            // multiply the output error on the right by dcp stabilisers
             lwlog_info("multiplying error by logical stabiliser");
-            dcp_mul(temp, error_with_stabilisers, &(dcp_stabilisers[i]));
-            set_dcp_to(error_with_stabilisers, temp);
-          }
+            //dcp_mulf_right(error_with_stabilisers, &(dcp_stabilisers[i]));
+            dcp_mulf_left(&(dcp_stabilisers[i]), error_with_stabilisers);
+	  }
         }
         // now check to see if it is good or not.
-        if (!dcp_fault_bad_p_css(error_with_stabilisers, x_measurement_matrix,
-                                 z_measurement_matrix, z_measurements_for_x,
-                                 x_permutation, z_permutation, x_lookup_table,
-                                 z_lookup_table, x_stabilisers, rref_x, n_all,
-                                 n, n_x, state, coset)) {
+        if (!dcp_fault_bad_p_css(error_with_stabilisers, C_z, C_z_transpose, C_x, C_x_transpose,
+                                 P_x, z_measurements_for_x, x_permutation,
+                                 z_permutation, x_lookup_table, z_lookup_table,
+                                 x_stabilisers, rref_x, n_all, n, n_x, n_z,
+                                 state, coset, D, Q, row_ops_count, row_ops_a,
+                                 row_ops_b)) {
           // a good one was found after multiplying by a choice of logicals, set
           // the flag
           good_combination_found = 1;
@@ -253,7 +362,11 @@ comb_code_t __do_verify_css_magic_state(
         }
         return BAD_FAULT_FOUND;
       }
+#ifdef FAULT_COUNTER_CUTOFF
+      }
+#endif
       lwlog_debug("about to incf on fault number %lld",*fault_counter);
+#endif
     } while (ft_iteration_combination_incf(s, fault_location_partitions,
                                            fault_location_count, first_balls,
                                            last_balls, current_combination)

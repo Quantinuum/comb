@@ -2,8 +2,9 @@
 
 #include "comb_external.h"
 #include "lwlog.h"
-#define MAX_SIZE_COUNT 1024
-// if TIMING_MODE is set to an integer, then repeat until TIMING_MODE faults have been iterated over
+#define MAX_SIZE_COUNT 10240
+// if TIMING_MODE is set to an integer, then repeat until TIMING_MODE faults
+// have been iterated over
 #ifdef TIMING_MODE
 #define BAD_FAULT_FOUND ALL_FAULTS_GOOD
 #endif
@@ -51,6 +52,8 @@ void convert_dcp(dcp_t *dcp, comb_dcp_t *value);
 
 // dcp.c
 dcp_t *dcp_mul(dcp_t *result, dcp_t *c2, dcp_t *c1);
+void dcp_mulf_right(dcp_t* c2, dcp_t* c1); // Computes c2 * c1 and stores the result in c2, effectively multiplying c2 on the right by c1.
+void dcp_mulf_left(dcp_t* c2, dcp_t* c1); // Computes c2 * c1 and stores the result in c1, effectively multiplying c1 on the left by c2.
 void set_stabiliser_state_to_dcp(stabiliser_state_t *state, dcp_t *dcp);
 int postselect_on_measuring_plus_one_x(stabiliser_state_t *state,
                                        mzd_t *x_measurement_matrix);
@@ -65,6 +68,10 @@ void set_coset_to_stabiliser_state(pauli_z_coset_t *coset,
 // gaussian_elimination.c
 void swap_rows(stabiliser_state_t *state, int i, int j);
 void add_row(stabiliser_state_t *state, int sourcerow, int destrow);
+void add_row_to(stabiliser_state_t *source_state, int sourcerow,
+                stabiliser_state_t *dest_state, int destrow);
+void set_row_to(stabiliser_state_t *source_state, int sourcerow,
+                stabiliser_state_t *dest_state, int destrow);
 int form_identity_ge(stabiliser_state_t *state);
 int verify_coset_ge(int r, stabiliser_state_t *state);
 
@@ -99,6 +106,7 @@ void fix_dcp(dcp_t *dcp);
 BIT row_product(mzd_t *x, int i, mzd_t *z, int j);
 void expand_state(stabiliser_state_t *state);
 void contract_state(stabiliser_state_t *state);
+void clear_state(stabiliser_state_t *state);
 void set_row(mzd_t *x_parts, mzd_t *z_parts, int j, mzd_t *x_measurement_matrix,
              int i, mzd_t *epsilon_bits, mzd_t *delta_bits);
 void permute_columns(mzd_t *data, unsigned mask);
