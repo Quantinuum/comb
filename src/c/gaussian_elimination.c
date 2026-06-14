@@ -10,21 +10,43 @@ void swap_rows(stabiliser_state_t *state, int i, int j) {
 
 void add_row(stabiliser_state_t *state, int sourcerow, int destrow) {
   // Adds rows and stores them in destrow.
-  BIT delta1 = mzd_read_bit(state->delta_vector, sourcerow, 0);
-  BIT delta2 = mzd_read_bit(state->delta_vector, destrow, 0);
-  BIT a2TUa1 = row_product(state->x_parts, sourcerow, state->z_parts,
-                           destrow);  // this is symmetric under x <-> z for
-                                      // stabiliser states actually
-  mzd_row_add(state->x_parts, sourcerow, destrow);
-  mzd_row_add(state->z_parts, sourcerow, destrow);
-  mzd_row_add(state->delta_vector, sourcerow, destrow);
-  mzd_row_add(state->epsilon_vector, sourcerow, destrow);
-  // correct epsilon according to dehaene and de moor
-  BIT epsilon_bit = mzd_read_bit(state->epsilon_vector, destrow, 0);
-  mzd_write_bit(state->epsilon_vector, destrow, 0,
-                epsilon_bit ^ (delta1 & delta2) ^ a2TUa1);
+  add_row_to(state, sourcerow, state, destrow);
 }
 
+void add_row_to(stabiliser_state_t *source_state, int sourcerow,
+                stabiliser_state_t *dest_state, int destrow) {
+  // Adds sourcerow from source_state to destrow of dest_state.
+  BIT delta1 = mzd_read_bit(source_state->delta_vector, sourcerow, 0);
+  BIT delta2 = mzd_read_bit(dest_state->delta_vector, destrow, 0);
+  BIT a2TUa1 =
+      row_product(source_state->x_parts, sourcerow, dest_state->z_parts,
+                  destrow);  // this is symmetric under x <-> z for
+                             // operators that commute. TODO make sure its the
+                             // right way round..
+  mzd_combine(dest_state->x_parts, destrow, 0, dest_state->x_parts, destrow, 0,
+              source_state->x_parts, sourcerow, 0);
+  mzd_combine(dest_state->z_parts, destrow, 0, dest_state->z_parts, destrow, 0,
+              source_state->z_parts, sourcerow, 0);
+  mzd_combine(dest_state->epsilon_vector, destrow, 0,
+              dest_state->epsilon_vector, destrow, 0,
+              source_state->epsilon_vector, sourcerow, 0);
+  mzd_combine(dest_state->delta_vector, destrow, 0, dest_state->delta_vector,
+              destrow, 0, source_state->delta_vector, sourcerow, 0);
+  // correct epsilon according to dehaene and de moor
+  BIT epsilon_bit = mzd_read_bit(dest_state->epsilon_vector, destrow, 0);
+  mzd_write_bit(dest_state->epsilon_vector, destrow, 0,
+                epsilon_bit ^ (delta1 & delta2) ^ a2TUa1);
+}
+void set_row_to(stabiliser_state_t *source_state, int sourcerow,
+                stabiliser_state_t *dest_state, int destrow) {
+  // Adds sourcerow from source_state to destrow of dest_state.
+  mzd_copy_row(dest_state->x_parts, destrow, source_state->x_parts, sourcerow);
+  mzd_copy_row(dest_state->z_parts, destrow, source_state->z_parts, sourcerow);
+  mzd_copy_row(dest_state->delta_vector, destrow, source_state->delta_vector,
+               sourcerow);
+  mzd_copy_row(dest_state->epsilon_vector, destrow,
+               source_state->epsilon_vector, sourcerow);
+}
 /* Attempts to form either I or -I from the rows of the extended stabiliser
  * tableau via Gaussian elimination. If LOG_LEVEL is greater than or equal to
  * DEBUG, additional verifications are made to check that this is done and exits
