@@ -33,6 +33,7 @@ typedef struct {
   uint32_t *rref_x;
   uint32_t *rref_z;
   unsigned x_permutation;
+  atomic_bool* bad_fault_found_p;
   unsigned z_permutation;
   // parameters that will be thread dependent:
   unsigned long long total_number_of_faults; // set by caller
@@ -318,6 +319,7 @@ void* __do_verify_css_magic_state(void* arg) {
     //return ALL_FAULTS_GOOD; // here bad
     unsigned long long current_index = 0;
     do {
+      if(atomic_load(config->bad_fault_found_p))return BAD_FAULT_FOUND;
       if(current_index >= config->starting_fault){
 
 
@@ -380,6 +382,8 @@ void* __do_verify_css_magic_state(void* arg) {
       if (!good_combination_found) {
         lwlog_debug("no good combination was found: fault combination was bad");
         // set the indices and indicate a bad fault was found
+        atomic_store(config->bad_fault_found_p,1);
+        // TODO protect writing to bad_fault_array with a lock
         for (int i = 0; i < config->s; i++) {
           config->bad_fault_array[i] = current_combination[i];
         }
@@ -392,10 +396,7 @@ void* __do_verify_css_magic_state(void* arg) {
 
     } while ((config->fault_counter <= config->total_number_of_faults) && ft_iteration_combination_incf(config->s, config->fault_location_partitions,
                                                                                                         config->fault_location_count, first_balls,
-                                           last_balls, current_combination)
-
-
-    );
+                                                                                                        last_balls, current_combination));
 
   return ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
 }
@@ -542,6 +543,8 @@ comb_code_t comb_verify_css_magic_state(
 
   // set up a thread
   pthread_attr_t      attr;
+  atomic_bool bad_fault_found_p;
+  atomic_init(&bad_fault_found_p,0);
 
   int status = pthread_attr_init(&attr);
   if(status != 0)return OTHER_ERROR;
@@ -558,6 +561,7 @@ comb_code_t comb_verify_css_magic_state(
   config[i].n_all=n_all;
   config[i].n=n;
   config[i].n_x=n_x;
+  config[i].bad_fault_found_p=&bad_fault_found_p;
   config[i].n_z=n_z;
   config[i].k=k;
   config[i].x_stabilisers=x_stabilisers;

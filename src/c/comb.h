@@ -3,6 +3,7 @@
 #include "comb_external.h"
 #include "lwlog.h"
 #include <pthread.h>
+#include <stdatomic.h>
 #define MAX_SIZE_COUNT 10240
 // if TIMING_MODE is set to an integer, then repeat until TIMING_MODE faults
 // have been iterated over
