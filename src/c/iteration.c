@@ -26,7 +26,7 @@ int incf_bit_vector(comb_bit_array_t v, int n) {
 // possible it returns 1.
 int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
                                   int *first_balls, int *last_balls,
-                                  int *current_combination) {
+                                  int *current_combination, comb_bit_word_t* v) {
   // k number of balls to take - size of current_combination
   // n number of sizes/baskets
   for (int i = 0; i < k; i++) {
@@ -61,7 +61,7 @@ int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
         // this means that seeing if the y-th basket is occupied is equivalent
         // to checking if last_ball[y] is in current_combination.
 
-        comb_bit_word_t v[MAX_SIZE_COUNT];  // v the bit string which has the y-th entry
+          // v the bit string which has the y-th entry
                    // as 1 if the y-th basket is occupied.
         for (int i = 0; i < n; i++) ClearBit(v, i);
         for (int i = 0; i < n; i++) {

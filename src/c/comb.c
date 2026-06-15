@@ -228,6 +228,7 @@ int stabilisers_rref_p(comb_vector_t *operators, uint32_t n, uint32_t m,
 void* __do_verify_css_magic_state(void* arg) {
   thread_config_t* config = (thread_config_t*)arg;
 
+  comb_bit_word_t* v = comb_alloc_bit_array(config->fault_location_count);
   lwlog_debug("setting up the iteration");
   int current_combination[MAX_SIZE_COUNT] = {0};
   int first_balls[MAX_SIZE_COUNT];
@@ -390,9 +391,9 @@ void* __do_verify_css_magic_state(void* arg) {
       }
       current_index++;
 
-    } while ((config->fault_counter <= config->total_number_of_faults) && ft_iteration_combination_incf(config->s, config->fault_location_partitions,
+    } while ((config->fault_counter < config->total_number_of_faults) && ft_iteration_combination_incf(config->s, config->fault_location_partitions,
                                                                                                         config->fault_location_count, first_balls,
-                                                                                                        last_balls, current_combination));
+                                                                                                       last_balls, current_combination, v));
 
     incf_counter(config->total_fault_counter, config->fault_counter);
 
@@ -402,9 +403,10 @@ void* __do_verify_css_magic_state(void* arg) {
   unsigned long long count_faults(int s, uint32_t fault_location_count, uint32_t* fault_location_partitions){
   unsigned long long counter = 0;
 
-  int current_combination[MAX_SIZE_COUNT] = {0};
-  int first_balls[MAX_SIZE_COUNT];
-  int last_balls[MAX_SIZE_COUNT];
+  int* current_combination = calloc(s,sizeof(int));
+  int* first_balls = calloc(s,sizeof(int));
+  int* last_balls = calloc(s,sizeof(int));
+  comb_bit_word_t* v = comb_alloc_bit_array(fault_location_count);
   for (int i = 0; i < s; i++) {
     current_combination[i] = 0;
     for (int j = 0; j < i; j++) {
@@ -428,7 +430,11 @@ void* __do_verify_css_magic_state(void* arg) {
     counter ++;
   }while(ft_iteration_combination_incf(s, fault_location_partitions,
                                        fault_location_count, first_balls,
-                                       last_balls, current_combination));
+                                       last_balls, current_combination, v));
+  free(current_combination);
+  free(first_balls);
+  free(last_balls);
+  comb_free_bit_array(v);
   printf("%llu faults to check\n",counter); return counter;
 
 }
@@ -622,3 +628,4 @@ printf("joined thread %d\n",i);
   mzd_free(z_stabilisers);
   return return_code;
 }
+//911-892 = 19?

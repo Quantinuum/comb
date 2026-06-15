@@ -93,7 +93,7 @@ void set_dcp_to(dcp_t *a, dcp_t *b);
 int incf_bit_vector(comb_bit_array_t v, int n);
 int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
                                   int *first_balls, int *last_balls,
-                                  int *current_combination);
+                                  int *current_combination, comb_bit_word_t* v);
 
 // print.c
 int do_print_pauli(mzd_t *x_parts, mzd_t *z_parts, mzd_t *delta_vector,
