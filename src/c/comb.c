@@ -3,6 +3,9 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
+
+static pthread_mutex_t bad_faults_mutex = PTHREAD_MUTEX_INITIALIZER;
+
 typedef struct {
   uint32_t n_all;  ///< number of qubits in code + all ancillas
   uint32_t n;      // number of qubits in code
@@ -14,6 +17,7 @@ typedef struct {
   comb_bit_array_t x_lookup_table;  // x lookup table. of size 2^(n-n_x)
   mzd_t *z_stabilisers;
   comb_bit_array_t z_lookup_table;
+  atomic_ullong *total_fault_counter;
   dcp_t *dcp_stabilisers;         // k of these
   uint32_t fault_location_count;  // number of fault locations
     uint32_t
@@ -324,6 +328,16 @@ void* __do_verify_css_magic_state(void* arg) {
 
 
       ++config->fault_counter;
+      if(config->fault_counter >= FAULT_UPDATE_DELTA){
+        // use the mutex for now TODO replace with a proper atomic incf
+        pthread_mutex_lock(&bad_faults_mutex);
+
+        config->fault_counter -= FAULT_UPDATE_DELTA;
+
+        atomic_store(config->total_fault_counter, atomic_load(config->total_fault_counter) + FAULT_UPDATE_DELTA);
+
+        pthread_mutex_unlock(&bad_faults_mutex);
+      }
 #ifdef FAULT_COUNTER_PRINT
       if(config->fault_counter % FAULT_COUNTER_PRINT == 0){
         time_t currentTime;
@@ -383,10 +397,14 @@ void* __do_verify_css_magic_state(void* arg) {
         lwlog_debug("no good combination was found: fault combination was bad");
         // set the indices and indicate a bad fault was found
         atomic_store(config->bad_fault_found_p,1);
-        // TODO protect writing to bad_fault_array with a lock
+        pthread_mutex_lock(&bad_faults_mutex);
         for (int i = 0; i < config->s; i++) {
           config->bad_fault_array[i] = current_combination[i];
         }
+        // update the counter with the remaining faults
+        atomic_store(config->total_fault_counter, atomic_load(config->total_fault_counter) + config->fault_counter);
+
+        pthread_mutex_unlock(&bad_faults_mutex);
         return BAD_FAULT_FOUND;
       }
 
@@ -397,6 +415,10 @@ void* __do_verify_css_magic_state(void* arg) {
     } while ((config->fault_counter <= config->total_number_of_faults) && ft_iteration_combination_incf(config->s, config->fault_location_partitions,
                                                                                                         config->fault_location_count, first_balls,
                                                                                                         last_balls, current_combination));
+
+    pthread_mutex_lock(&bad_faults_mutex);
+    atomic_store(config->total_fault_counter, atomic_load(config->total_fault_counter) + config->fault_counter);
+    pthread_mutex_unlock(&bad_faults_mutex);
 
   return ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
 }
@@ -545,6 +567,8 @@ comb_code_t comb_verify_css_magic_state(
   pthread_attr_t      attr;
   atomic_bool bad_fault_found_p;
   atomic_init(&bad_fault_found_p,0);
+  atomic_ullong total_fault_counter;
+  atomic_init(&total_fault_counter, 0);
 
   int status = pthread_attr_init(&attr);
   if(status != 0)return OTHER_ERROR;
@@ -564,6 +588,7 @@ comb_code_t comb_verify_css_magic_state(
   config[i].bad_fault_found_p=&bad_fault_found_p;
   config[i].n_z=n_z;
   config[i].k=k;
+  config[i].total_fault_counter=&total_fault_counter;
   config[i].x_stabilisers=x_stabilisers;
   config[i].x_lookup_table=x_lookup_table;
   config[i].z_stabilisers=z_stabilisers;
@@ -595,7 +620,6 @@ comb_code_t comb_verify_css_magic_state(
   }
   // wait for it to finish
 
-  unsigned long long total_faults_checked=0;
   comb_code_t return_code = ALL_FAULTS_GOOD;
   for(int i = 0 ; i < thread_count; i++){
     pthread_join(thread_ids[i], &(return_code_pointers[i]));
@@ -606,15 +630,13 @@ printf("joined thread %d\n",i);
     case BAD_FAULT_FOUND: return_code = BAD_FAULT_FOUND; break;
     default: return_code = thread_return_code; // some other error
     }
-    total_faults_checked+=config[i].fault_counter;
   }
 
   // Stop timing
   clock_gettime(CLOCK_MONOTONIC, &finish);
   double seconds = (finish.tv_sec - start.tv_sec) +
                    1.0e-9 * (finish.tv_nsec - start.tv_nsec);
-  printf("Took %f seconds, %lld fault combinations checked.\n", seconds,
-         total_faults_checked);
+  printf("Took %f seconds, %lld fault combinations checked.\n", seconds, atomic_load(&total_fault_counter));
   lwlog_debug("freeing memory");
   free_dcp_array(k, dcp_stabilisers);
   free_dcp_array(output_error_count, output_errors);
