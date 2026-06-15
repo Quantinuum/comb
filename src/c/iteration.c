@@ -26,7 +26,7 @@ int incf_bit_vector(comb_bit_array_t v, int n) {
 // possible it returns 1.
 int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
                                   int *first_balls, int *last_balls,
-                                  int *current_combination, comb_bit_word_t* v) {
+                                  int *current_combination, comb_bit_array_t v) {
   // k number of balls to take - size of current_combination
   // n number of sizes/baskets
   for (int i = 0; i < k; i++) {

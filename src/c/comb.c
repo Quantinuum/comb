@@ -404,9 +404,9 @@ void* __do_verify_css_magic_state(void* arg) {
   unsigned long long counter = 0;
 
   int* current_combination = calloc(s,sizeof(int));
-  int* first_balls = calloc(s,sizeof(int));
-  int* last_balls = calloc(s,sizeof(int));
-  comb_bit_word_t* v = comb_alloc_bit_array(fault_location_count);
+  int* first_balls = calloc(fault_location_count,sizeof(int));
+  int* last_balls = calloc(fault_location_count,sizeof(int));
+  comb_bit_array_t v = comb_alloc_bit_array(fault_location_count);
   for (int i = 0; i < s; i++) {
     current_combination[i] = 0;
     for (int j = 0; j < i; j++) {
