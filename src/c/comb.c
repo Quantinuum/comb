@@ -231,7 +231,6 @@ void* __do_verify_css_magic_state(void* arg) {
   stabiliser_state_t *state = init_state(config->n_all);
   pauli_z_coset_t *coset = init_pauli_z_coset(config->n_all, config->n_all);
   mzd_t *C_z = mzd_init(config->z_measurement_count + config->n_z, config->n_all);
-  
   mzd_t *C_x = mzd_init(config->z_measurement_count + config->n_z, config->n_all);
   mzd_t *P_x = mzd_init(config->x_measurement_count, config->n_all);
   mzd_t *D =
@@ -254,16 +253,11 @@ void* __do_verify_css_magic_state(void* arg) {
   for (int i = 0; i < config->z_measurement_count; i++) {
     mzd_copy_row(z_measurements_for_x, i, config->z_measurement_paulis, i);
   }
-  //return ALL_FAULTS_GOOD; // here is fine
   // Calculate A
   mzd_t *tmp = mzd_copy(0, C_z);
-  //return ALL_FAULTS_GOOD; // here is fine
   mzd_t *A_transpose =
       mzd_kernel_left_pluq(tmp, 0);  // C_z A^T = 0 by definition
-  //return ALL_FAULTS_GOOD; here bad
-  
   mzd_t *A = mzd_transpose(0, A_transpose);
-  //return ALL_FAULTS_GOOD; here bad
   
   // free to do row ops on A as row ops preserve A C_Z^T = 0.
   mzd_echelonize_naive(A, 1);  // 1 for full rref (Gauss-Jordan elimination)
@@ -272,7 +266,6 @@ void* __do_verify_css_magic_state(void* arg) {
   mzp_t *P = mzp_init(config->n_all - (config->n_z + config->z_measurement_count));
   mzd_pluq(A, P, Q, 0);  // now the columns of A have been reordered in order to
                          // later on do the row ops in place.
- // return ALL_FAULTS_GOOD; // here bad 
   mzd_free(A_transpose);
   mzd_free(tmp);
   int row_ops_count = 0;
@@ -283,7 +276,6 @@ void* __do_verify_css_magic_state(void* arg) {
       }
     }
   }
-  //return ALL_FAULTS_GOOD; // here bad
   int *row_ops_a = malloc(row_ops_count * sizeof(int));
   int *row_ops_b = malloc(row_ops_count * sizeof(int));
   int count = 0;
@@ -298,9 +290,6 @@ void* __do_verify_css_magic_state(void* arg) {
   }
   mzd_t *C_z_transpose = mzd_transpose(0, C_z);
   mzd_t *C_x_transpose = mzd_transpose(0, C_x);
-#ifdef TIMING_MODE
-  while (*fault_counter < TIMING_MODE) {
-#endif
     for (int i = 0; i < config->s; i++) {
       current_combination[i] = 0;
       for (int j = 0; j < i; j++) {
@@ -320,7 +309,6 @@ void* __do_verify_css_magic_state(void* arg) {
       }
       last_balls[i]--;
     }
-    //return ALL_FAULTS_GOOD; // here bad
     unsigned long long current_index = 0;
     do {
       if(atomic_load(config->bad_fault_found_p))return BAD_FAULT_FOUND;
@@ -338,20 +326,12 @@ void* __do_verify_css_magic_state(void* arg) {
 
         pthread_mutex_unlock(&bad_faults_mutex);
       }
-#ifdef FAULT_COUNTER_PRINT
-      if(config->fault_counter % FAULT_COUNTER_PRINT == 0){
-        time_t currentTime;
-        time(&currentTime); // Get the current time
 
-        fprintf(stderr, "%s: checking fault number %lld\n",ctime(&currentTime), *fault_counter);
-      }
-      #endif
-
-      // Multiply DCP errors together. TODO verify that order is correct
+      // Multiply DCP errors together. Order is opposite to what would be expected in the paper - see back-to-front.org
       set_dcp_to(current_dcp_output_combination,
                  &(config->output_errors[current_combination[0]]));
-      for (int i = 1; i < config->s; i++) { // later faults occur earlier (to the left) in the product.
-        #if 1
+      for (int i = 1; i < config->s; i++) { // here we verify check the ordering of faults
+        #if 0
         if(current_combination[i] <= current_combination[i-1]){
           printf("invalid combination: %d <= %d, fault counter %lld\n", current_combination[i],
                  current_combination[i-1], config->fault_counter);
@@ -361,7 +341,6 @@ void* __do_verify_css_magic_state(void* arg) {
           exit(1);
         }
         #endif
-        //dcp_mulf_left(&(output_errors[current_combination[i]]), current_dcp_output_combination);
         dcp_mulf_right(current_dcp_output_combination, &(config->output_errors[current_combination[i]]));
       }
       // output errors multiplied. now, multiply by all combinations of logical
@@ -375,9 +354,8 @@ void* __do_verify_css_magic_state(void* arg) {
         //
         for (int i = 0; i < config->k && !good_combination_found; i++) {
           if (dcp_index & (1 << i)) {
-            // multiply the output error on the right by dcp stabilisers
+            // multiply the output error on the left by dcp stabilisers
             lwlog_info("multiplying error by logical stabiliser");
-            //dcp_mulf_right(error_with_stabilisers, &(dcp_stabilisers[i]));
             dcp_mulf_left(&(config->dcp_stabilisers[i]), error_with_stabilisers);
 	  }
         }
