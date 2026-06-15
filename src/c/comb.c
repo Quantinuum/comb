@@ -45,6 +45,12 @@ typedef struct {
   unsigned long long starting_fault; // set by caller: fault id to start at
 } thread_config_t;
 
+void incf_counter(atomic_ullong* counter, int delta){ // TODO do it properly, atomically
+  pthread_mutex_lock(&bad_faults_mutex);
+  atomic_store(counter,
+               atomic_load(counter) + delta);
+  pthread_mutex_unlock(&bad_faults_mutex);
+}
 int dcp_fault_bad_p_css(dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
     mzd_t *z_measurements_for_x,
     unsigned x_permutation,  // permutation mask for x canonicalisation
@@ -317,14 +323,8 @@ void* __do_verify_css_magic_state(void* arg) {
 
       ++config->fault_counter;
       if(config->fault_counter >= FAULT_UPDATE_DELTA){
-        // use the mutex for now TODO replace with a proper atomic incf
-        pthread_mutex_lock(&bad_faults_mutex);
-
         config->fault_counter -= FAULT_UPDATE_DELTA;
-
-        atomic_store(config->total_fault_counter, atomic_load(config->total_fault_counter) + FAULT_UPDATE_DELTA);
-
-        pthread_mutex_unlock(&bad_faults_mutex);
+        incf_counter(config->total_fault_counter, FAULT_UPDATE_DELTA);
       }
 
       // Multiply DCP errors together. Order is opposite to what would be expected in the paper - see back-to-front.org
@@ -394,9 +394,7 @@ void* __do_verify_css_magic_state(void* arg) {
                                                                                                         config->fault_location_count, first_balls,
                                                                                                         last_balls, current_combination));
 
-    pthread_mutex_lock(&bad_faults_mutex);
-    atomic_store(config->total_fault_counter, atomic_load(config->total_fault_counter) + config->fault_counter);
-    pthread_mutex_unlock(&bad_faults_mutex);
+    incf_counter(config->total_fault_counter, config->fault_counter);
 
     return (void*)ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
 }
@@ -434,6 +432,7 @@ void* __do_verify_css_magic_state(void* arg) {
   printf("%llu faults to check\n",counter); return counter;
 
 }
+
 
 comb_code_t comb_verify_css_magic_state(
     uint32_t n_all,  ///< number of qubits in code + all ancillas
