@@ -585,10 +585,10 @@ comb_code_t comb_verify_css_magic_state(
   config[i].x_permutation=x_permutation;
   config[i].z_permutation=z_permutation;
   config[i].fault_counter=0;
-  config[i].total_number_of_faults=fault_count_per_thread + thread_count;
   config[i].starting_fault = (i * fault_count_per_thread);
-
-
+  if(i < (thread_count - 1))
+    config[i].total_number_of_faults=fault_count_per_thread;
+  else config[i].total_number_of_faults = ULONG_MAX; // make sure that last thread gets all of them
 
   pthread_create(&(thread_ids[i]), &attr, &__do_verify_css_magic_state, &(config[i]));
  

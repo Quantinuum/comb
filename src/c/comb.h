@@ -4,6 +4,7 @@
 #include "lwlog.h"
 #include <pthread.h>
 #include <stdatomic.h>
+#include <limits.h>
 #define MAX_SIZE_COUNT 10240
 #define FAULT_UPDATE_DELTA 1000000
 // if TIMING_MODE is set to an integer, then repeat until TIMING_MODE faults
