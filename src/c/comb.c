@@ -311,7 +311,7 @@ void* __do_verify_css_magic_state(void* arg) {
     }
     unsigned long long current_index = 0;
     do {
-      if(atomic_load(config->bad_fault_found_p))return BAD_FAULT_FOUND;
+      if(atomic_load(config->bad_fault_found_p))return (void*)BAD_FAULT_FOUND;
       if(current_index >= config->starting_fault){
 
 
@@ -383,7 +383,7 @@ void* __do_verify_css_magic_state(void* arg) {
         atomic_store(config->total_fault_counter, atomic_load(config->total_fault_counter) + config->fault_counter);
 
         pthread_mutex_unlock(&bad_faults_mutex);
-        return BAD_FAULT_FOUND;
+        return (void*)BAD_FAULT_FOUND;
       }
 
       lwlog_debug("about to incf on fault number %lld",*fault_counter);
@@ -398,7 +398,7 @@ void* __do_verify_css_magic_state(void* arg) {
     atomic_store(config->total_fault_counter, atomic_load(config->total_fault_counter) + config->fault_counter);
     pthread_mutex_unlock(&bad_faults_mutex);
 
-  return ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
+    return (void*)ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
 }
 
   unsigned long long count_faults(int s, uint32_t fault_location_count, uint32_t* fault_location_partitions){
@@ -491,7 +491,6 @@ comb_code_t comb_verify_css_magic_state(
   mzd_t *z_measurement_paulis = mzd_init(z_measurement_count, n_all);
   mzd_t *x_stabilisers = mzd_init(n_x, n);
   mzd_t *z_stabilisers = mzd_init(n_z, n);
-  unsigned long long fault_counter = 0;
   lwlog_info("converting objects");
   for (int i = 0; i < n_x; i++) {
     lwlog_debug("converting x stabiliser %d", i);
