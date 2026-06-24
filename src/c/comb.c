@@ -205,11 +205,24 @@ comb_code_t __do_verify_css_magic_state(
     uint32_t z_measurement_count,  // number of z measurement paulis
     mzd_t *z_measurement_paulis, uint32_t *rref_x, uint32_t *rref_z,
     unsigned x_permutation, unsigned z_permutation,
-    unsigned long long *fault_counter) {
+    chunk_t* chunk) {
   lwlog_debug("setting up the iteration");
-  int current_combination[MAX_SIZE_COUNT] = {0};
+
   int first_balls[MAX_SIZE_COUNT];
   int last_balls[MAX_SIZE_COUNT];
+  for (int i = 0; i < fault_location_count; i++) {
+    first_balls[i] = 0;
+    for (int j = 0; j < i; j++) {
+      first_balls[i] += fault_location_partitions[j];
+    }
+  }
+  for (int i = 0; i < fault_location_count; i++) {
+    last_balls[i] = 0;
+    for (int j = 0; j < i + 1; j++) {
+      last_balls[i] += fault_location_partitions[j];
+    }
+    last_balls[i]--;
+  }
   dcp_t *current_dcp_output_combination = init_dcp(n_all);
   dcp_t *error_with_stabilisers = init_dcp(n_all);
   stabiliser_state_t *state = init_state(n_all);
@@ -272,58 +285,27 @@ comb_code_t __do_verify_css_magic_state(
   }
   mzd_t *C_z_transpose = mzd_transpose(0, C_z);
   mzd_t *C_x_transpose = mzd_transpose(0, C_x);
-#ifdef TIMING_MODE
-  while (*fault_counter < TIMING_MODE) {
-#endif
-    for (int i = 0; i < s; i++) {
-      current_combination[i] = 0;
-      for (int j = 0; j < i; j++) {
-        current_combination[i] += fault_location_partitions[j];
-      }
-    }
-    for (int i = 0; i < fault_location_count; i++) {
-      first_balls[i] = 0;
-      for (int j = 0; j < i; j++) {
-        first_balls[i] += fault_location_partitions[j];
-      }
-    }
-    for (int i = 0; i < fault_location_count; i++) {
-      last_balls[i] = 0;
-      for (int j = 0; j < i + 1; j++) {
-        last_balls[i] += fault_location_partitions[j];
-      }
-      last_balls[i]--;
-    }
-    do {
-      ++*fault_counter;
-#ifndef DRY_RUN
-#ifdef FAULT_COUNTER_PRINT
-      if(*fault_counter % FAULT_COUNTER_PRINT == 0){
-        time_t currentTime;
-        time(&currentTime); // Get the current time
 
-        fprintf(stderr, "%s: checking fault number %lld\n",ctime(&currentTime), *fault_counter);
-      }
-      #endif
-#ifdef FAULT_COUNTER_CUTOFF
-      if(*fault_counter >= FAULT_COUNTER_CUTOFF){
-#endif
+    do {
+      chunk->faults_to_check_count--;
+      chunk->faults_already_checked++;
+#ifndef DRY_RUN
       // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(current_dcp_output_combination,
-                 &(output_errors[current_combination[0]]));
+                 &(output_errors[chunk->current_combination[0]]));
       for (int i = 1; i < s; i++) { // later faults occur earlier (to the left) in the product.
-        #if 1
-        if(current_combination[i] <= current_combination[i-1]){
-          printf("invalid combination: %d <= %d, fault counter %lld\n", current_combination[i],
-                 current_combination[i-1], *fault_counter);
+        #if 0
+        if(current_combination[i] <= chunk->current_combination[i-1]){
+          printf("invalid combination: %d <= %d, fault counter %lld\n", chunk->current_combination[i],
+                 chunk->current_combination[i-1], *fault_counter);
           for(int j = 0 ; j <s; j++){
-            printf("comb[%d]=%d, ",j,current_combination[j]);
+            printf("comb[%d]=%d, ",j,chunk->current_combination[j]);
           }
           exit(1);
         }
         #endif
         //dcp_mulf_left(&(output_errors[current_combination[i]]), current_dcp_output_combination);
-	dcp_mulf_right(current_dcp_output_combination, &(output_errors[current_combination[i]]));
+	dcp_mulf_right(current_dcp_output_combination, &(output_errors[chunk->current_combination[i]]));
       }
       // output errors multiplied. now, multiply by all combinations of logical
       // operators and test them:
@@ -358,26 +340,17 @@ comb_code_t __do_verify_css_magic_state(
         lwlog_debug("no good combination was found: fault combination was bad");
         // set the indices and indicate a bad fault was found
         for (int i = 0; i < s; i++) {
-          bad_fault_array[i] = current_combination[i];
+          bad_fault_array[i] = chunk->current_combination[i];
         }
         return BAD_FAULT_FOUND;
       }
-#ifdef FAULT_COUNTER_CUTOFF
-      }
+      //lwlog_debug("about to incf on fault number %lld",*fault_counter);
 #endif
-      lwlog_debug("about to incf on fault number %lld",*fault_counter);
-#endif
-    } while (ft_iteration_combination_incf(s, fault_location_partitions,
+    } while (chunk->faults_to_check_count > 0 && ft_iteration_combination_incf(s, fault_location_partitions,
                                            fault_location_count, first_balls,
-                                           last_balls, current_combination)
-#ifdef TIMING_MODE
-             && *fault_counter < TIMING_MODE
-#endif
+                                           last_balls, chunk->current_combination)
 
     );
-#ifdef TIMING_MODE
-  }
-#endif
   return ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
 }
 comb_code_t comb_verify_css_magic_state(
@@ -478,13 +451,22 @@ comb_code_t comb_verify_css_magic_state(
                 fault_location_partitions[i]);
   }
   lwlog_debug("all objects converted");
-  comb_code_t return_code = __do_verify_css_magic_state(
+  size_t chunk_count=0;
+
+  chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,1000000,&chunk_count);
+  describe_chunks(chunks,chunk_count);
+  comb_code_t return_code = ALL_FAULTS_GOOD;
+  for(int i = 0; i < chunk_count && (return_code== ALL_FAULTS_GOOD); i++){
+  return_code = __do_verify_css_magic_state(
       n_all, n, n_x, n_z, k, x_stabilisers, x_lookup_table, z_stabilisers,
       z_lookup_table, dcp_stabilisers, fault_location_count,
       fault_location_partitions, s, bad_fault_array, output_error_count,
       output_errors, x_measurement_count, x_measurement_paulis,
       z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
-      z_permutation, &fault_counter);
+      z_permutation, chunks+i);
+  fault_counter+=chunks[i].faults_already_checked;
+  }
+  describe_chunks(chunks,chunk_count);
   // Stop timing
   clock_gettime(CLOCK_MONOTONIC, &finish);
   double seconds = (finish.tv_sec - start.tv_sec) +

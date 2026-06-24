@@ -45,6 +45,16 @@ typedef struct {
 #define COSET_K(t) ((((t)->set_generators->nrows)))
 #define COSET_N(t) ((((t)->set_generators->ncols)))
 
+typedef struct {
+  unsigned long long faults_to_check_count; // number of faults to check in this chunk.
+  unsigned long long faults_already_checked; // faults already checked.
+  int* current_combination; // current fault combination.
+  uint32_t s;// number of faults in the combination.
+} chunk_t; // A chunk of a fault tolerance computation
+// chunk.c
+void init_chunk(chunk_t* chunk, unsigned long long faults_to_check_count, int* starting_combination, int s);
+chunk_t* partition_into_chunks(uint32_t fault_location_count, uint32_t *fault_location_partitions, uint32_t s, size_t minimum_chunk_size, size_t* chunk_count);
+void describe_chunks(chunk_t* chunks, size_t chunk_count);
 // convert.c
 void convert_permutation(mzd_t *permutation, uint32_t n_z, uint32_t n,
                          uint32_t *rrefs);
