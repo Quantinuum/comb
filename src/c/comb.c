@@ -3,7 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
-
+#include <omp.h>
 int dcp_fault_bad_p_css(
                         dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
     mzd_t *z_measurements_for_x,
@@ -452,19 +452,22 @@ comb_code_t comb_verify_css_magic_state(
   }
   lwlog_debug("all objects converted");
   size_t chunk_count=0;
-
-  chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,1000000,&chunk_count);
+  #define DELTA 100
+  chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,DELTA,&chunk_count);
   describe_chunks(chunks,chunk_count);
   comb_code_t return_code = ALL_FAULTS_GOOD;
-  for(int i = 0; i < chunk_count && (return_code== ALL_FAULTS_GOOD); i++){
-  return_code = __do_verify_css_magic_state(
+  #pragma omp parallel for
+  for(int i = 0; i < chunk_count; i++){
+  comb_code_t chunk_return_code = __do_verify_css_magic_state(
       n_all, n, n_x, n_z, k, x_stabilisers, x_lookup_table, z_stabilisers,
       z_lookup_table, dcp_stabilisers, fault_location_count,
       fault_location_partitions, s, bad_fault_array, output_error_count,
       output_errors, x_measurement_count, x_measurement_paulis,
       z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
       z_permutation, chunks+i);
+  if(chunk_return_code!=ALL_FAULTS_GOOD)return_code=chunk_return_code;
   fault_counter+=chunks[i].faults_already_checked;
+
   }
   describe_chunks(chunks,chunk_count);
   // Stop timing
