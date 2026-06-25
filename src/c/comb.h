@@ -96,6 +96,10 @@ void free_pauli_z_coset(pauli_z_coset_t *coset);
 void set_dcp_to(dcp_t *a, dcp_t *b);
 
 // iteration.c
+
+unsigned long long combi(int n,int k);
+void unrank(int s, int* combination, unsigned long long n);
+unsigned long long rank(int s, int* combination);
 int incf_bit_vector(comb_bit_array_t v, int n);
 int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
                                   int *first_balls, int *last_balls,
