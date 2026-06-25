@@ -452,12 +452,12 @@ comb_code_t comb_verify_css_magic_state(
   }
   lwlog_debug("all objects converted");
   size_t chunk_count=0;
-  #define DELTA 100
+  #define DELTA 100000
   chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,DELTA,&chunk_count);
-  describe_chunks(chunks,chunk_count);
   comb_code_t return_code = ALL_FAULTS_GOOD;
   #pragma omp parallel for
   for(int i = 0; i < chunk_count; i++){
+    printf("Verifying chunk [%d/%ld]\n",i,chunk_count);
   comb_code_t chunk_return_code = __do_verify_css_magic_state(
       n_all, n, n_x, n_z, k, x_stabilisers, x_lookup_table, z_stabilisers,
       z_lookup_table, dcp_stabilisers, fault_location_count,
@@ -465,11 +465,11 @@ comb_code_t comb_verify_css_magic_state(
       output_errors, x_measurement_count, x_measurement_paulis,
       z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
       z_permutation, chunks+i);
+  printf("Verified chunk [%d/%ld], %lld faults checked.\n",i,chunk_count,chunks[i].faults_already_checked);
   if(chunk_return_code!=ALL_FAULTS_GOOD)return_code=chunk_return_code;
   fault_counter+=chunks[i].faults_already_checked;
 
   }
-  describe_chunks(chunks,chunk_count);
   // Stop timing
   clock_gettime(CLOCK_MONOTONIC, &finish);
   double seconds = (finish.tv_sec - start.tv_sec) +
