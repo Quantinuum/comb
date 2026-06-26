@@ -452,8 +452,8 @@ comb_code_t comb_verify_css_magic_state(
   }
   lwlog_debug("all objects converted");
   size_t chunk_count=0;
-  #define DELTA 1000
-  chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,DELTA,&chunk_count);
+  int delta = 10000 / (15^s);
+  chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,delta,&chunk_count);
   describe_chunks(chunks,chunk_count);
   comb_code_t return_code = ALL_FAULTS_GOOD;
   #pragma omp parallel for
