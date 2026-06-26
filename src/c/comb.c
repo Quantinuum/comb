@@ -287,7 +287,7 @@ comb_code_t __do_verify_css_magic_state(
   mzd_t *C_x_transpose = mzd_transpose(0, C_x);
 
     do {
-      chunk->faults_to_check_count--;
+      // chunk->faults_to_check_count--;
       chunk->faults_already_checked++;
 #ifndef DRY_RUN
       // Multiply DCP errors together. TODO verify that order is correct
@@ -346,7 +346,7 @@ comb_code_t __do_verify_css_magic_state(
       }
       //lwlog_debug("about to incf on fault number %lld",*fault_counter);
 #endif
-    } while (chunk->faults_to_check_count > 0 && ft_iteration_combination_incf(s, fault_location_partitions,
+    } while (!chunk_finished_p(chunk) && ft_iteration_combination_incf(s, fault_location_partitions,
                                            fault_location_count, first_balls,
                                            last_balls, chunk->current_combination)
 
@@ -452,8 +452,9 @@ comb_code_t comb_verify_css_magic_state(
   }
   lwlog_debug("all objects converted");
   size_t chunk_count=0;
-  #define DELTA 100000
+  #define DELTA 1000
   chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,DELTA,&chunk_count);
+  describe_chunks(chunks,chunk_count);
   comb_code_t return_code = ALL_FAULTS_GOOD;
   #pragma omp parallel for
   for(int i = 0; i < chunk_count; i++){
@@ -466,7 +467,7 @@ comb_code_t comb_verify_css_magic_state(
       z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
       z_permutation, chunks+i);
   printf("Verified chunk [%d/%ld], %lld faults checked.\n",i,chunk_count,chunks[i].faults_already_checked);
-  if(chunk_return_code!=ALL_FAULTS_GOOD)return_code=chunk_return_code;
+  if(chunk_return_code!=ALL_FAULTS_GOOD)return_code=chunk_return_code; // TODO cleanup and break here
   fault_counter+=chunks[i].faults_already_checked;
 
   }

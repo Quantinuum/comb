@@ -1,7 +1,6 @@
 #include "comb.h"
 
 void init_chunk(chunk_t* chunk, unsigned long long faults_to_check_count, int* starting_combination, int s){
-  chunk->faults_to_check_count = faults_to_check_count;
   chunk->faults_already_checked=0;
   for(int i = 0; i < s; i++){
     chunk->current_combination[i]=starting_combination[i];
@@ -13,11 +12,14 @@ void describe_chunks(chunk_t* chunks, size_t chunk_count){
   printf("%ld chunks\n",chunk_count);
   fflush(stdout);
   for(size_t i = 0; i < chunk_count; i++){
-    printf("chunks[%ld].faults_to_check_count=%lld\n",i,chunks[i].faults_to_check_count);
     printf("chunks[%ld].faults_already_checked=%lld\n",i,chunks[i].faults_already_checked);
     for(int j = 0 ; j < chunks[i].s ; j++)
     printf("chunks[%ld].combination[%d]=%d\n",i,j,chunks[i].current_combination[j]);
+
+    for(int j = 0 ; j < chunks[i].s ; j++)
+      printf("chunks[%ld].final_combination_to_check[%d]=%d\n",i,j,chunks[i].final_combination_to_check[j]);
   }
+  
 }
 
 // Partitions a fault tolerance problem into a set of chunks that can be iterated over independently.
@@ -25,71 +27,57 @@ void describe_chunks(chunk_t* chunks, size_t chunk_count){
 // Each chunk has size at least minimum_chunk_size, except when it is the last one.
 // Chunks may have more than minimum_chunk_size faults in them.
 chunk_t* partition_into_chunks(uint32_t fault_location_count, uint32_t *fault_location_partitions, uint32_t s, size_t minimum_chunk_size, size_t* chunk_count){
-  // naive implementation to start off with
-  int current_combination[MAX_SIZE_COUNT] = {0};
-  int first_balls[MAX_SIZE_COUNT];
-  int last_balls[MAX_SIZE_COUNT];
-
-  for (int i = 0; i < s; i++) {
-    current_combination[i] = 0;
-    for (int j = 0; j < i; j++) {
-      current_combination[i] += fault_location_partitions[j];
-    }
-  }
-  for (int i = 0; i < fault_location_count; i++) {
-    first_balls[i] = 0;
-    for (int j = 0; j < i; j++) {
-      first_balls[i] += fault_location_partitions[j];
-    }
-  }
-  for (int i = 0; i < fault_location_count; i++) {
-    last_balls[i] = 0;
-    for (int j = 0; j < i + 1; j++) {
-      last_balls[i] += fault_location_partitions[j];
-    }
-    last_balls[i]--;
-  }
-  lwlog_debug("in partition chunks");
-  size_t chunk_delta = 1;
-  *chunk_count=chunk_delta;
-  chunk_t* return_chunks = (chunk_t*)calloc(*chunk_count,sizeof(chunk_t));
-  size_t current_chunk_index=0;
-  lwlog_debug("allocated return_chunks");
-  // initialise the first chunk to the beginning.
-  return_chunks[current_chunk_index].current_combination=calloc(s,sizeof(int));
-  for(int i = 0; i < s; i++){
-    return_chunks[current_chunk_index].current_combination[i]=current_combination[i];
-  }
-  return_chunks[current_chunk_index].s=s;
-  do{
-    // check to see if current chunk has enough space for another fault combination
-    if(return_chunks[current_chunk_index].faults_to_check_count < minimum_chunk_size){
-      // it does; so simply incf and continue
-      return_chunks[current_chunk_index].faults_to_check_count++;
-    }
-    else{
-      // it doesn't, so make the current combination the first one of a new chunk.
-      // first ensure that there are enough chunks in the array
-      current_chunk_index++;
-      if(current_chunk_index >= *chunk_count){
-        chunk_t* new_chunks = realloc(return_chunks,(*chunk_count + chunk_delta)
-                                      * (sizeof(chunk_t)));
-        if(!new_chunks)return 0; // no space
-        return_chunks=new_chunks;
-        *chunk_count += chunk_delta;
+  
+    int* current_fault_location_combination = (int*)calloc(s,sizeof(int));
+    int* first_balls = (int*)calloc(fault_location_count,sizeof(int));
+    int* last_balls = (int*)calloc(fault_location_count,sizeof(int));
+    init_first_and_last_balls(first_balls, last_balls, fault_location_count, fault_location_partitions);
+    unsigned long long N = combi(fault_location_count,s);
+    if(!minimum_chunk_size)minimum_chunk_size=1;
+    *chunk_count=1+(size_t)(N/minimum_chunk_size);
+    chunk_t* return_chunks=(chunk_t*)calloc(*chunk_count,sizeof(chunk_t));
+    for(size_t i = 0; i < *chunk_count; i++){
+      unsigned long long starting_fault_locations_rank = i * minimum_chunk_size;
+      unsigned long long ending_fault_locations_rank = min(((i + 1) * minimum_chunk_size) - 1,N-1);
+      // store the fault location combination
+      unrank(s,current_fault_location_combination,starting_fault_locations_rank);
+      return_chunks[i].current_combination=(int*)calloc(s,sizeof(int));
+      for(int j = 0; j < s; j++){
+        return_chunks[i].current_combination[j]=first_balls[current_fault_location_combination[j]];
       }
-      // initialise the new chunk
-      return_chunks[current_chunk_index].faults_to_check_count = 0;
-      return_chunks[current_chunk_index].faults_already_checked = 0;
-      return_chunks[current_chunk_index].current_combination=calloc(s,sizeof(int));
-      for(int i = 0; i < s; i++){
-        return_chunks[current_chunk_index].current_combination[i]=current_combination[i];
+      // now do the ending combination
+      return_chunks[i].final_combination_to_check=(int*)calloc(s,sizeof(int));
+      unrank(s,current_fault_location_combination,ending_fault_locations_rank);
+      for(int j = 0; j < s; j++){
+        return_chunks[i].final_combination_to_check[j]=last_balls[current_fault_location_combination[j]];
       }
-      return_chunks[current_chunk_index].s=s;
-      // now continue
+      return_chunks[i].s=s;
     }
-  } while(ft_iteration_combination_incf(s, fault_location_partitions,
-                                       fault_location_count, first_balls,
-                                        last_balls, current_combination));
-  return return_chunks;
+    free(first_balls);
+    free(last_balls);
+    free(current_fault_location_combination);
+    return return_chunks;
+  }
+  void init_first_and_last_balls(int* first_balls, int* last_balls, uint32_t fault_location_count, uint32_t *fault_location_partitions){
+    for (int i = 0; i < fault_location_count; i++) {
+      first_balls[i] = 0;
+      for (int j = 0; j < i; j++) {
+        first_balls[i] += fault_location_partitions[j];
+      }
+    }
+    for (int i = 0; i < fault_location_count; i++) {
+      last_balls[i] = 0;
+      for (int j = 0; j < i + 1; j++) {
+        last_balls[i] += fault_location_partitions[j];
+      }
+      last_balls[i]--;
+    }
+  }
+int chunk_finished_p(chunk_t* chunk){
+  for(int i = 0; i < chunk->s; i++){
+    if(chunk->current_combination[i]!=chunk->final_combination_to_check[i])
+      return 0; // can't have finished
+  }
+  // must have finished
+  return 1;
 }
