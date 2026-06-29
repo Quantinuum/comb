@@ -467,11 +467,14 @@ comb_code_t comb_verify_css_magic_state(
       z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
       z_permutation, chunks+i);
   printf("Verified chunk [%d/%ld], %lld faults checked.\n",i,chunk_count,chunks[i].faults_already_checked);
-  if(chunk_return_code!=ALL_FAULTS_GOOD)return_code=chunk_return_code; // TODO cleanup and break here
+  if(chunk_return_code!=ALL_FAULTS_GOOD){
+    return_code= chunk_return_code; // TODO cleanup and break here
+  }
   fault_counter+=chunks[i].faults_already_checked;
 
   }
   // Stop timing
+ cleanup:
   clock_gettime(CLOCK_MONOTONIC, &finish);
   double seconds = (finish.tv_sec - start.tv_sec) +
                    1.0e-9 * (finish.tv_nsec - start.tv_nsec);

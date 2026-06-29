@@ -9,23 +9,78 @@ void fix_dcp(dcp_t *dcp) {
   mzd_transpose(dcp->h_x_transpose, dcp->h_x);
 }
 
+word _popcnt(word x){
+  word r = 0;
+  lwlog_debug("testing %d",x);
+  for(int i = 0 ; i < sizeof(x)*8; i++){
+    if(x & 1){
+      lwlog_debug("incf r, now %d",r);
+      r ++;
+    }
+    x>>=1;
+    lwlog_debug("x is now %d",x);
+  }
+  return r;
+}
+inline word popcnt(word x){
+  uint8_t* arr = (uint8_t*)&x;
+  word r = 0;
+  for(int i = 0; i <8; i++){
+    r+=__builtin_popcount(arr[i]);
+  }
+  return r;
+}
+
 BIT row_product(mzd_t *x, int i, mzd_t *z, int j) {
   // Forms the inner product of row i of x and row j of z (viewing both rows as
   // vectors over F2).
-  int w = x->ncols;
-  //word *row1 = mzd_row(x, i);
-  //word *row2 = mzd_row(z, j);
   word acc = 0;
+#ifdef FAST_TRACK
+  lwlog_debug("in dot product");
+  word *row1 = mzd_row(x, i);
+  word *row2 = mzd_row(z, j);
+  word mask_end = x->high_bitmask | z->high_bitmask;
+  wi_t width = x->width - 1;
+    for (int k = 0; k < width; k++) {
+      word x_part = mzd_read_bits(x,i,k*m4ri_radix,m4ri_radix);
+      word z_part = mzd_read_bits(z,j,k*m4ri_radix,m4ri_radix);
+      lwlog_debug("x part = %d, z part = %d",x_part,z_part);
+      word part_of_product = x_part & z_part;
+     if(popcnt(part_of_product) % 2 == 1){
+       acc = 1-acc;
+     }
+    }
+    word x_part = mzd_read_bits(x,i,width*m4ri_radix,(x->ncols - m4ri_radix * width));
+    word z_part =  mzd_read_bits(z,j,width*m4ri_radix,(x->ncols - m4ri_radix * width));
+    word part_of_product = x_part & z_part;
+    lwlog_debug("x part = %d, z part = %d, part of product = %d, popcount = %d ",x_part,z_part,part_of_product, popcnt(part_of_product));
+    if(popcnt(part_of_product) % 2 == 1)
+      acc = 1 - acc;
+#if LOG_LEVEL >= DEBUG
+    word acc2 = 0;
+    int w = x->ncols;
+    // slow impl:
+    for (int k = 0; k < w; k++) {
+      if(mzd_read_bit(x,i,k) && mzd_read_bit(z,j,k))acc2=1-acc2;
+    }
+    if(acc2 != acc){
+      printf("x:\n");
+      mzd_print(x);
+      printf("z:\n");
+      mzd_print(z);
+      lwlog_err("dot products not equal: acc = %d should be %d, i = %d, j = %d",acc,acc2,i,j);
+      exit(1);
+    }
+    #endif
+    return acc;
+  #else
+  int w = x->ncols;
 	// slow impl:
   for (int k = 0; k < w; k++) {
     if(mzd_read_bit(x,i,k) && mzd_read_bit(z,j,k))acc=1-acc;
  }
   return acc;
- //  for (int i = 0; i < x->width; i++) {
- //   word part_of_product = row1[i] & row2[i];
- //   acc += __builtin_popcount(part_of_product);
- //  }
- //  return acc & 1;
+  #endif
 }
 
 void expand_state(stabiliser_state_t *state) {
