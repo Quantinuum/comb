@@ -101,7 +101,7 @@ comb_code_t openmp_check_chunks(size_t chunk_count, chunk_t* chunks,  uint32_t n
       else{
         time_t currentTime;
         time(&currentTime);
-        printf("thread %d: started scanning %d [%ld / %ld (%.2f%%) chunks checked so far] %s\n",omp_get_thread_num(),id_to_scan, chunks_checked_so_far , chunk_count,
+        printf("thread %d: started scanning %d [%ld / %ld (%.2f%%) chunks checked so far] %s",omp_get_thread_num(),id_to_scan, chunks_checked_so_far , chunk_count,
                ((100.0 *(chunks_checked_so_far ))/ chunk_count),ctime(&currentTime));
 
         comb_code_t chunk_return_code = __do_verify_css_magic_state(
