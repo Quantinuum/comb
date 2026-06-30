@@ -452,7 +452,7 @@ comb_code_t comb_verify_css_magic_state(
   }
   lwlog_debug("all objects converted");
   size_t chunk_count=0;
-  int delta = 10000 / (15^s);
+  int delta = 100000 / (15^s);
   chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,delta,&chunk_count);
 
   comb_code_t return_code = check_chunks(chunk_count, chunks,

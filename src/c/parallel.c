@@ -77,6 +77,7 @@ comb_code_t openmp_check_chunks(size_t chunk_count, chunk_t* chunks,  uint32_t n
                                 unsigned x_permutation, unsigned z_permutation){
   comb_bit_array_t array = comb_alloc_bit_array(chunk_count);
   size_t chunks_checked_so_far = 0;
+  unsigned long long faults_checked_so_far = 0;
   int bad_fault_foundp = 0;
   comb_code_t return_code;
   #pragma omp parallel
@@ -113,7 +114,9 @@ comb_code_t openmp_check_chunks(size_t chunk_count, chunk_t* chunks,  uint32_t n
                                                                     z_permutation, chunks+ id_to_scan);
         #pragma omp atomic
         chunks_checked_so_far++;
-        printf("thread: %d: checked chunk %d\n",omp_get_thread_num(),id_to_scan);
+        #pragma omp atomic
+        faults_checked_so_far+=chunks[id_to_scan].faults_already_checked;
+        printf("thread: %d: checked chunk %d, %llu faults checked so far across all threads\n",omp_get_thread_num(),id_to_scan,faults_checked_so_far);
         if(chunk_return_code != ALL_FAULTS_GOOD){
           bad_fault_foundp=1;
           return_code = chunk_return_code;
