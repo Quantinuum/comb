@@ -41,7 +41,7 @@ comb_code_t serial_check_chunks(size_t chunk_count, chunk_t* chunks,
                                                                 fault_location_partitions, s, bad_fault_array, output_error_count,
                                                                 output_errors, x_measurement_count, x_measurement_paulis,
                                                                 z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
-                                                                z_permutation, chunks+i);
+                                                                z_permutation, chunks+i, 0);
     if(chunk_return_code != ALL_FAULTS_GOOD)return chunk_return_code;
 
   }
@@ -80,6 +80,8 @@ comb_code_t openmp_check_chunks(size_t chunk_count, chunk_t* chunks,  uint32_t n
   unsigned long long faults_checked_so_far = 0;
   int bad_fault_foundp = 0;
   comb_code_t return_code;
+
+
   #pragma omp parallel
   {
     int continue_with_loop = 1;
@@ -111,7 +113,7 @@ comb_code_t openmp_check_chunks(size_t chunk_count, chunk_t* chunks,  uint32_t n
                                                                     fault_location_partitions, s, bad_fault_array, output_error_count,
                                                                     output_errors, x_measurement_count, x_measurement_paulis,
                                                                     z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
-                                                                    z_permutation, chunks+ id_to_scan);
+                                                                    z_permutation, chunks+ id_to_scan, 0);
         #pragma omp atomic
         chunks_checked_so_far++;
         #pragma omp atomic

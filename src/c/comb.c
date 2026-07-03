@@ -205,9 +205,15 @@ comb_code_t __do_verify_css_magic_state(
     uint32_t z_measurement_count,  // number of z measurement paulis
     mzd_t *z_measurement_paulis, uint32_t *rref_x, uint32_t *rref_z,
     unsigned x_permutation, unsigned z_permutation,
-    chunk_t* chunk) {
+    chunk_t* chunk, void* mpi_info) {
   lwlog_debug("setting up the iteration");
 
+  #ifdef USE_MPI
+  int world_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+  MPI_Request* requests;
+  mpi_info_t* info = (mpi_info_t*)mpi_info;
+  #endif
   int first_balls[MAX_SIZE_COUNT];
   int last_balls[MAX_SIZE_COUNT];
   for (int i = 0; i < fault_location_count; i++) {
@@ -289,6 +295,13 @@ comb_code_t __do_verify_css_magic_state(
     do {
       // chunk->faults_to_check_count--;
       chunk->faults_already_checked++;
+      #ifdef USE_MPI
+#define CHECK_INTERVAL 131072
+      if((world_rank == 0) && ((chunk->faults_already_checked % CHECK_INTERVAL) == 0)){
+        // do some checking
+        mpi_do_master_work(info->array, info->chunk_count, &requests);
+      }
+      #endif
 #ifndef DRY_RUN
       // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(current_dcp_output_combination,

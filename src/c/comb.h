@@ -41,6 +41,11 @@ typedef struct {
                             // clear its a row vector)
   mzd_t *set_generators;    // k x n matrix (each row a generator)
 } pauli_z_coset_t;
+
+typedef struct {
+  comb_bit_array_t array;
+  size_t chunk_count;
+} mpi_info_t;
 // Useful macros
 
 #define DCP_N(t) ((t)->F->nrows)
@@ -141,7 +146,15 @@ void add_and_column_vector(mzd_t *result, mzd_t *F1, mzd_t *F2);
 
 // parallel_mpi.c
 #ifdef USE_MPI
-
+#define MASTER_BLOCK_INTERVAL 131072
+// Gets the ID of a free chunk blocking until it gets one.
+int mpi_blocking_get_free_chunk(comb_bit_array_t array, size_t chunk_count);
+// Broadcasts that a bad fault has been found.
+void mpi_broadcast_bad_fault_found(int *bad_fault_array, int s);
+// Broadcasts that another error code has been encountered
+void mpi_broadcast_other_error_code(comb_code_t code);
+// Does the work necessary on the master process of dealing with messages.
+void mpi_do_master_work();
 #endif
 
 // inline functions
@@ -270,4 +283,4 @@ comb_code_t __do_verify_css_magic_state(
     uint32_t z_measurement_count,  // number of z measurement paulis
     mzd_t *z_measurement_paulis, uint32_t *rref_x, uint32_t *rref_z,
     unsigned x_permutation, unsigned z_permutation,
-    chunk_t* chunk);
+    chunk_t* chunk, void* mpi_info);
