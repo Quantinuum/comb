@@ -6,6 +6,13 @@
 #include <time.h>
 #include <omp.h>
 
+typedef enum {
+  REQUEST_NEW_CHUNK = 0, // sent by a slave to master to request a new chunk
+  DELIVERING_NEW_CHUNK = 1000, // sent by master to slave to give a new chunk
+  NOT_ALL_FAULTS_GOOD = 2000, // sent by a slave to report a bad fault found / or another error code
+  QUIT_PROCESS = 3000 // broadcast by master to all slaves to quit (currently unused in lieu of MPI_Abort)
+} message_tag_t;
+
 // Routines to help with parallelism and MPI
 comb_code_t mpi_check_chunks(size_t chunk_count, chunk_t* chunks,
                                uint32_t n_all,  ///< number of qubits in code + all ancillas
@@ -34,18 +41,6 @@ comb_code_t mpi_check_chunks(size_t chunk_count, chunk_t* chunks,
     uint32_t z_measurement_count,  // number of z measurement paulis
     mzd_t *z_measurement_paulis, uint32_t *rref_x, uint32_t *rref_z,
                              unsigned x_permutation, unsigned z_permutation){
-
-  // A single threaded MPI implementation.
-  // Initialize the MPI environment
-  MPI_Init(NULL, NULL);
-
-  // Get the number of processes
-  int world_size;
-  MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-
-  // Get the rank of the process
-  int world_rank;
-  MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
 
   // Get the name of the processor
   char processor_name[MPI_MAX_PROCESSOR_NAME];
@@ -83,7 +78,7 @@ comb_code_t mpi_check_chunks(size_t chunk_count, chunk_t* chunks,
 
 
   // clean up mpi
-  MPI_Finalize();
+  // MPI_Finalize();
 
 }
 
@@ -97,6 +92,7 @@ int mpi_blocking_get_free_chunk(comb_bit_array_t array, size_t chunk_count){
     for(int i = 0 ; i < chunk_count; i++){
       if(!TestBit(array,i)){
         SetBit(array,i);
+        printf("returning chunk %d to process 0\n",i);
         return i;
       }
     }
@@ -109,7 +105,7 @@ int mpi_blocking_get_free_chunk(comb_bit_array_t array, size_t chunk_count){
   MPI_Send(NULL, 0, MPI_INT, 0, REQUEST_CHUNK_TAG, MPI_COMM_WORLD);
   // now block until receiving the ID from the master process.
   MPI_Recv(&elt, 1, MPI_INT, 0, REQUEST_CHUNK_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-  printf("receiving a chunk number %d\n", elt);
+  printf("process %d receiving a chunk number %d\n", world_rank, elt);
   return elt; // elt now the ID of the new block
 }
 void mpi_do_master_work(comb_bit_array_t array, size_t chunk_count, MPI_Request **requests){
@@ -117,21 +113,16 @@ void mpi_do_master_work(comb_bit_array_t array, size_t chunk_count, MPI_Request 
   int world_size;
   MPI_Comm_size(MPI_COMM_WORLD, &world_size);
 
-  if(*requests == NULL){ // need to initialise the requests
-    *requests = (MPI_Request*)calloc(world_size, sizeof(MPI_Request));
-    for(int i = 1; i < world_size ; i++){
-      MPI_Irecv(NULL, 0, MPI_INT, i, REQUEST_CHUNK_TAG, MPI_COMM_WORLD, *requests + i);
-    }
-  }
 
   for(int i = 1; i < world_size; i++){
     // check for message
     int flag;
-    MPI_Test(*requests + i, &flag, MPI_STATUS_IGNORE);
+    MPI_Iprobe(i, REQUEST_CHUNK_TAG, MPI_COMM_WORLD, &flag,MPI_STATUS_IGNORE);
     if(flag){
+      MPI_Recv(NULL, 0, MPI_INT, i, REQUEST_CHUNK_TAG, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
       printf("received a chunk request from process %d\n",i);
       // one of the non blocking requests completed; set up another one
-      MPI_Irecv(NULL, 0, MPI_INT, i, REQUEST_CHUNK_TAG, MPI_COMM_WORLD, *requests + i);
+      //MPI_Irecv(NULL, 0, MPI_INT, i, REQUEST_CHUNK_TAG, MPI_COMM_WORLD, *requests + i);
       // and now find a free chunk
       int free_chunk = -1;
 
@@ -159,4 +150,41 @@ void mpi_broadcast_other_error_code(comb_code_t code){
   printf("other error code: %d\n",code);
   exit(1);
 }
+int main(int argc, char** argv){
+  MPI_Init(&argc, &argv);
+  // Input specification file
+  if(argv != 2){
+    printf("usage: %s input-file output-file",argv[0]);
+    exit(1);
+  }
+  mpi_info_t info;
+
+  info.input_file = argv[1];
+  // File to write output to; return code and or bad faults
+  info.output_file = argv[2];
+
+  // Get the number of processes
+  MPI_Comm_size(MPI_COMM_WORLD, &(info.world_size));
+
+  // Get the rank of the process
+  MPI_Comm_rank(MPI_COMM_WORLD, &(info.world_rank));
+
+  // Read the file to get the parameters
+  parameters_t parameters;
+  read_parameters_from_file(&parameters,input_file);
+
+  // Synchronise to a barrier first before doing the work
+  MPI_Barrier(MPI_COMM_WORLD);
+  // Do the work
+  mpi_check_chunks(&parameters,&info);
+  // No bad faults were found, so write the output if the master process
+  if(world_rank==0){
+    FILE* ptr = fopen(output_file,"w");
+    fputs("NO_FAULTS_FOUND",ptr);
+    fclose(ptr);
+  }
+  MPI_Finalize();
+}
+
+
 #endif

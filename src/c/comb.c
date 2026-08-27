@@ -211,7 +211,7 @@ comb_code_t __do_verify_css_magic_state(
   #ifdef USE_MPI
   int world_rank;
   MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
-  MPI_Request* requests;
+  MPI_Request* requests = -1;
   mpi_info_t* info = (mpi_info_t*)mpi_info;
   #endif
   int first_balls[MAX_SIZE_COUNT];
@@ -296,7 +296,7 @@ comb_code_t __do_verify_css_magic_state(
       // chunk->faults_to_check_count--;
       chunk->faults_already_checked++;
       #ifdef USE_MPI
-#define CHECK_INTERVAL 131072
+#define CHECK_INTERVAL 10
       if((world_rank == 0) && ((chunk->faults_already_checked % CHECK_INTERVAL) == 0)){
         // do some checking
         mpi_do_master_work(info->array, info->chunk_count, &requests);
@@ -364,6 +364,12 @@ comb_code_t __do_verify_css_magic_state(
                                            last_balls, chunk->current_combination)
 
     );
+#ifdef USE_MPI
+    if((world_rank == 0)){
+      // do some checking
+      mpi_do_master_work(info->array, info->chunk_count, &requests);
+    }
+#endif
   return ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
 }
 comb_code_t comb_verify_css_magic_state(
