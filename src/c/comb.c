@@ -308,7 +308,7 @@ comb_code_t __do_verify_css_magic_state(
 #ifdef FAULT_COUNTER_CUTOFF
       if(*fault_counter >= FAULT_COUNTER_CUTOFF){
 #endif
-      // Multiply DCP errors together. TODO verify that order is correct
+      // Multiply DCP errors in circuit order: E = E_s ... E_2 E_1.
       set_dcp_to(current_dcp_output_combination,
                  &(output_errors[current_combination[0]]));
       for (int i = 1; i < s; i++) { // later faults occur earlier (to the left) in the product.
@@ -322,8 +322,8 @@ comb_code_t __do_verify_css_magic_state(
           exit(1);
         }
         #endif
-        //dcp_mulf_left(&(output_errors[current_combination[i]]), current_dcp_output_combination);
-	dcp_mulf_right(current_dcp_output_combination, &(output_errors[current_combination[i]]));
+        dcp_mulf_left(&(output_errors[current_combination[i]]),
+                      current_dcp_output_combination);
       }
       // output errors multiplied. now, multiply by all combinations of logical
       // operators and test them:

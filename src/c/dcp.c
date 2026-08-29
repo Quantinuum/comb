@@ -16,7 +16,8 @@ dcp_t *dcp_mul(dcp_t *result, dcp_t *c2,
 }  // doesnt transpose. need add_and to work on column matrices though. keep
    // track of h_x and h_x transpose? should be able to avoid all transposing
    // when multiplying dcp operators.
-void dcp_mulf_left(dcp_t* c2, dcp_t* c1){ // Computes c2 * c1 and stores the result in c2, effectively multiplying c2 on the right by c1.
+// Compute c2 * c1 in c1: left-multiply c1 by c2.
+void dcp_mulf_left(dcp_t* c2, dcp_t* c1){
   _mzd_add(c1->h_z,c1->h_z,c2->h_z); // h_1z <- h_1z + h_2z
   _mzd_mul_naive(c1->h_z,c1->F,c2->h_x_transpose,0); // h_1z <- h_2z + h_2z + F_1 h_{2x}
   add_and_column_vector(c1->h_z,c1->F_diagonal,c2->F_diagonal); // h_2z <- h_1z + h_2z + F_1 h_{2x} + diag F1 . diag F2
@@ -27,7 +28,8 @@ void dcp_mulf_left(dcp_t* c2, dcp_t* c1){ // Computes c2 * c1 and stores the res
   _mzd_add(c1->h_x,c1->h_x,c2->h_x);
   _mzd_add(c1->h_x_transpose,c1->h_x_transpose,c2->h_x_transpose);
 }
-void dcp_mulf_right(dcp_t* c2, dcp_t* c1){ // Computes c2 * c1 and stores the result in c1, effectively multiplying c1 on the left by c2.
+// Compute c2 * c1 in c2: right-multiply c2 by c1.
+void dcp_mulf_right(dcp_t* c2, dcp_t* c1){
   // use _mzd_add as faster
   _mzd_add(c2->h_z,c2->h_z,c1->h_z); // h_2z <- h_1z + h_2z
   _mzd_mul_naive(c2->h_z,c1->F,c2->h_x_transpose,0); // h_2z <- h_1z + h_2z + F_1 h_{2x}
