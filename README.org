@@ -3,15 +3,27 @@
 A library to aid in the verification of the fault tolerant properties of state preparation circuits that use the CNOT + T gate set.
 
 * Build
-Comb depends on [[https://github.com/malb/m4ri][m4ri]]. This is automatically built and installed into a subdirectory as part of the build process.
-
-Ensure that autoconf, automake, Git, and Make are installed on your system.
-
-In order to build Comb, issue the following
+Comb depends on [[https://github.com/malb/m4ri][m4ri]]. The compatibility Makefile can build and install it into the =m4ri/= subdirectory. Ensure that autoconf, automake, Git, and Make are installed, then use the primary CMake and CTest build:
 #+BEGIN_SRC shell
-    make -j8
+  make m4ri
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+  cmake --build build --parallel
+  ctest --test-dir build --output-on-failure
 #+END_SRC
-from the project root.
+
+The dependency-free rank, flat-layout, CUDA-stub, dense-tableau, sequential-reference, and single-rank MPI mock contract tests can be built without M4RI by adding =-DCOMB_BUILD_CPU=OFF=. The MPI mock is included when an MPI C compiler is available; it does not replace target-system multi-rank testing.
+
+CUDA and MPI are opt-in. On the target Linux/A100 system use:
+#+BEGIN_SRC shell
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DCOMB_ENABLE_CUDA=ON -DCOMB_ENABLE_MPI=ON
+  cmake --build build --parallel
+  ctest --test-dir build --output-on-failure
+#+END_SRC
+
+The CUDA target contains native =sm_80= code, =compute_80= PTX, and line information. The MPI layer is an embedding library because this repository does not define a production problem-file format; see =src/mpi/README.md=. The original =make -j8= build remains available as a compatibility path.
+
+Current activation status: the checked rank contract, flat representation, sequential CPU oracle, CUDA context/device primitives, and MPI scheduler are implemented. The complete scientific candidate pipeline is not yet enabled on the device: a nonempty =comb_cuda_verify_range= returns =COMB_CUDA_STATUS_NOT_IMPLEMENTED= rather than guessing a verification result. See =docs/cuda-port-status.md= for the remaining correctness and target-system gates.
 
 Some features of Comb can be set as build time, such as the logging level and a special timing mode that iterates over a given number of fault combinations in order to infer the performance.
 
@@ -25,6 +37,8 @@ In order to set these, one can specify the pertinent macro definitions via the a
   make docs
 #+END_SRC
 from the project root.
+
+Generated Doxygen output is written to =build/docs=. Tracked design and validation documentation lives in =docs/= and is never removed by =make clean=.
 * Future work
 There are a variety of improvements to be made which I haven't gotten around to yet. If you are feeling ambitious then try to make a PR!
 
@@ -35,22 +49,10 @@ It is unlikely that changes will be merged unless they can demonstrate a benefit
 In order to avoid disappointment, remember to follow standard practices such as benchmarking performance using a profiler, identifying bottlenecks and so forth.
 
 The ideas presented below are not guaranteed to improve performance, they are just what I think is worth looking at.
-** Reduce the amount of Gaussian elimination
-At present, a round of Gaussian elimination is done for each measurement.
+** Reduce the remaining Gaussian-elimination cost
+The legacy CPU verifier already combines its Z measurements with a precomputed batched transform. The dependency-free reference path retains the earlier sequential measurement sequence so that the two forms can be compared explicitly.
 
-Some of these rounds can be combined.
-
-For example, all of the $Z$ measurements anticommute with at least one stabiliser generator of the DCP state.
-
-This means that all the $Z$ measurements stabilise the state after measurement, and can be added as stabiliser generators.
-
-Furthermore, exactly the same sequence of row operations can be applied to the prior stabiliser generators to generate a new set of linearly independent generators that commute with all the measurement operators.
-
-Consequently, all the $Z$ measurements can be done by combining the stabiliser generators in a way that can be calculated in advance and is the same for all states.
-
-This should be much more performant than simply measuring each $Z$ stabiliser in turn.
-
-It remains to implement this and see if something similar is possible for the subsequent $X$ measurements.
+The CUDA plan keeps candidate-independent elimination work in context creation and parallelises each candidate's remaining phase-aware row operations cooperatively. Further elimination changes should be driven by the differential tests and A100 profiles rather than changing the scientific ordering.
 ** Use Gaussian elimination over finite fields
 m4ri has subcubic implementations of Gaussian elimination over $\mathbb{F}_2$ via matrix decomposition.
 
@@ -64,6 +66,6 @@ Gaussian elimination can be reduced to matrix multiplication (arXiv:1112.5717v2)
 
 It's also possible to iterate over $Z$ errors in the coset using Gray codes with SIMD.
 ** Multithreading
-This implementation is serial at present. But the algorithm is amenable to parallelisation by simply assigning different sets of fault combinations to different cores.
+The legacy CPU entry point remains serial. The new MPI layer partitions globally ranked fault combinations across ranks and GPUs, but nonempty device verification remains pre-activation as described above.
 
-The algorithm ought to involve only writes to thread-local temporary storage of fixed size for the most part.
+Each completed CUDA candidate will use team-local reusable scratch; immutable problem data is replicated per GPU.

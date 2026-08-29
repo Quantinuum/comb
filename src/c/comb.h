@@ -1,3 +1,6 @@
+#ifndef COMB_H
+#define COMB_H
+
 #include <m4ri/m4ri.h>
 
 #include "comb_external.h"
@@ -124,3 +127,5 @@ inline uint32_t gray_bit_to_switch(uint32_t n) {
   uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
   return n ? 31 - __builtin_clz(diff) : 0;
 }
+
+#endif  // COMB_H

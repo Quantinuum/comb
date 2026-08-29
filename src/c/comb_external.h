@@ -1,3 +1,6 @@
+#ifndef COMB_EXTERNAL_H
+#define COMB_EXTERNAL_H
+
 /**
  * \file comb_external.h
  *
@@ -12,6 +15,10 @@
 
 #include <stdint.h>
 #include <stdlib.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * The possible outcomes from checking a circuit for fault tolerance.
@@ -227,3 +234,9 @@ comb_code_t comb_verify_css_magic_state(  // 1. Describing the magic state
         thread_count  ///< Number of threads to use. At present this parameter
                       ///< is unused but there for future compatibility.
 );
+
+#ifdef __cplusplus
+}  // extern "C"
+#endif
+
+#endif  // COMB_EXTERNAL_H
