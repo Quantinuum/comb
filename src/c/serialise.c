@@ -15,20 +15,15 @@ uint32_t read_uint32_t(int fd){
 
 
 void store_bit_array(int fd, comb_bit_array_t table, uint32_t n){
-  //int byte_count = 1+(n / 8);
-  //ssize_t count = write(fd, table, byte_count);
-  //if(count != byte_count)exit(INTERNAL_ERROR);
-  for(int i = 0; i < n; i++){
-    store_uint32_t(fd,TestBit(table,i)?1:0);
+  uint32_t* as_int = (uint32_t*)table;
+  for(int i = 0; i < (1+ (n/4));i++){
+    store_uint32_t(fd,as_int[i]);
   }
 }
 void read_bit_array(int fd, comb_bit_array_t table, uint32_t n){
-  //int byte_count = 1+(n / 8);
-  //ssize_t count = read(fd, table, byte_count);
-  //if(count!=byte_count)exit(INTERNAL_ERROR);
-  for(int i = 0; i < n; i++){
-    if(read_uint32_t(fd)) SetBit(table,i);
-    else ClearBit(table,i);
+  uint32_t* as_int = (uint32_t*)table;
+  for(int i = 0; i < (1+ (n/4));i++){
+    as_int[i]=read_uint32_t(fd);
   }
 }
 
