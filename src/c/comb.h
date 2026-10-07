@@ -140,7 +140,6 @@ int serialise_run_to_file(int fd,    uint32_t n_all,  ///< number of qubits in c
         *fault_location_partitions,  // at least fault_location_count of these.
                                      // number of faults at each location
     uint32_t s,  // number of faults to which circuit should be resilient to
-    uint32_t *bad_fault_array,     // where to store indices of bad_faults
     uint32_t output_error_count,   // number of output errors that result from
                                    // propagating all the faults. should be at
                                    // least sum(fault_location_partitions)
@@ -153,7 +152,7 @@ int serialise_run_to_file(int fd,    uint32_t n_all,  ///< number of qubits in c
     comb_pauli_z_t *_z_measurement_paulis);
 
 // Opens a previously serialised run from a file and checks it using comb_verify_css_magic_state
-int deserialise_run_from_file(char *input_file);
+int deserialise_run_from_file(char *input_file, int thread_count);
 
 // utils.c
 void fix_dcp(dcp_t *dcp);
