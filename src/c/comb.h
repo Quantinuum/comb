@@ -44,7 +44,24 @@ typedef struct {
 #define STATE_N(t) ((((t)->x_parts->nrows)))
 #define COSET_K(t) ((((t)->set_generators->nrows)))
 #define COSET_N(t) ((((t)->set_generators->ncols)))
+#define min(a,b)                                \
+  ({ __typeof__ (a) _a = (a);                   \
+    __typeof__ (b) _b = (b);                    \
+    _a < _b ? _a : _b; })
 
+typedef struct {
+  unsigned long long faults_already_checked; // faults already checked.
+  int* current_combination; // current fault combination.
+  int* final_combination_to_check; // final fault combination to check. shouldn't go beyond this
+  uint32_t s;// number of faults in the combination.
+} chunk_t; // A chunk of a fault tolerance computation
+// chunk.c
+void init_chunk(chunk_t* chunk, unsigned long long faults_to_check_count, int* starting_combination, int s);
+int chunk_finished_p(chunk_t* chunk);
+chunk_t* partition_into_chunks(uint32_t fault_location_count, uint32_t *fault_location_partitions, uint32_t s, size_t minimum_chunk_size, size_t* chunk_count);
+void describe_chunks(chunk_t* chunks, size_t chunk_count);
+
+void init_first_and_last_balls(int* first_balls, int* last_balls, uint32_t fault_location_count, uint32_t *fault_location_partitions);
 // convert.c
 void convert_permutation(mzd_t *permutation, uint32_t n_z, uint32_t n,
                          uint32_t *rrefs);
@@ -86,6 +103,10 @@ void free_pauli_z_coset(pauli_z_coset_t *coset);
 void set_dcp_to(dcp_t *a, dcp_t *b);
 
 // iteration.c
+
+unsigned long long combi(int n,int k);
+void unrank(int s, int* combination, unsigned long long n);
+unsigned long long rank(int s, int* combination);
 int incf_bit_vector(comb_bit_array_t v, int n);
 int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
                                   int *first_balls, int *last_balls,
