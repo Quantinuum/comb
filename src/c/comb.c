@@ -380,6 +380,16 @@ comb_code_t comb_verify_css_magic_state(
                                    // least x_measurement_count of these
     uint32_t z_measurement_count,  // number of z measurement paulis
     comb_pauli_z_t *_z_measurement_paulis, uint32_t thread_count) {
+  // serialise run
+  char name[] = "comb-runXXXXXX.run";
+  int fd = mkstemps(name,4);
+  int serialise_success = serialise_run_to_file(fd,n_all,n,n_x,n_z,k,_x_stabilisers,x_lookup_table,
+                                                _z_stabilisers,z_lookup_table,_dcp_stabilisers,fault_location_count,
+                                                fault_location_partitions,s,bad_fault_array,output_error_count,
+                                                _output_errors,x_measurement_count,_x_measurement_paulis,
+                                                z_measurement_count,_z_measurement_paulis);
+  if(serialise_success!=0) return SERIALIZATION_ERROR;
+  else printf("saved run to: %s\n",name);
   lwlog_info("start timing \n");
 
   struct timespec start, finish;
@@ -489,3 +499,4 @@ comb_code_t comb_verify_css_magic_state(
   mzd_free(z_stabilisers);
   return return_code;
 }
+

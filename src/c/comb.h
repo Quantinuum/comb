@@ -125,7 +125,7 @@ char *print_pauli_z_coset(pauli_z_coset_t *coset, char print_newline_p);
 // serialise.c
 
 // Serialise the run to output_file so it can be subsequently run later by e.g. a MPI implementation.
-int serialise_run_to_file(FILE* output_file,    uint32_t n_all,  ///< number of qubits in code + all ancillas
+int serialise_run_to_file(int fd,    uint32_t n_all,  ///< number of qubits in code + all ancillas
     uint32_t n,      // number of qubits in code
     uint32_t n_x,    // number of independent x stabiliser generators in code
     uint32_t n_z,    // number of independent z stabiliser generators in code
@@ -153,7 +153,7 @@ int serialise_run_to_file(FILE* output_file,    uint32_t n_all,  ///< number of 
     comb_pauli_z_t *_z_measurement_paulis);
 
 // Opens a previously serialised run from a file and checks it using comb_verify_css_magic_state
-int deserialise_run_from_file(FILE *input_file);
+int deserialise_run_from_file(char *input_file);
 
 // utils.c
 void fix_dcp(dcp_t *dcp);

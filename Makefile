@@ -15,6 +15,11 @@ test_files :=$(wildcard test/*.c)
 obj_files := $(patsubst src/c/%.c,build/%.o,$(wildcard src/c/*.c))
 test_executables := $(patsubst test/%.c,test_%,$(wildcard test/*.c))
 
+comb: libcomb.so
+	$(CC) -o build/comb $(CFLAGS) -lm -rdynamic $(obj_files) m4ri/lib/libm4ri.so
+	rm -f comb
+	ln -s build/comb comb
+
 libcomb.so: $(obj_files)
 	$(CC) -shared -o build/libcomb.so $(CFLAGS) -lm -rdynamic $(obj_files) $(M4RI)
 	rm -f libcomb.so
