@@ -1,4 +1,5 @@
 #!/bin/bash
+make comb
 false_positives=""
 	true_negatives=""
 	for f in ./examples/fault-tolerant/*.run.gz
