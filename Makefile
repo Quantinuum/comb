@@ -57,3 +57,6 @@ test_%: test/%.c libcomb.so
 
 format:
 	clang-format --style=Google --verbose -i $(c_files) $(header_files)
+
+examples: comb
+	./examples.sh

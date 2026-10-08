@@ -4,5 +4,5 @@ test-bin/
 m4ri/
 docs/
 build/
-*.run
+comb-*.run
 comb
