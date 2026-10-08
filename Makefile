@@ -43,6 +43,7 @@ clean:
 	rm -rf docs
 	rm -rf test-bin
 	rm -f test_*
+	rm -rf *.run
 
 docs:
 	doxygen Doxyfile

@@ -171,8 +171,8 @@ int deserialise_run_from_file(char *input_file, int thread_count){
                                                  _output_errors,x_measurement_count,_x_measurement_paulis,
                                                  z_measurement_count,_z_measurement_paulis,thread_count);
   printf("code = %d\n",code);
-  for(int i = 0; i < s; i++){
+  if(code == BAD_FAULT_FOUND)for(int i = 0; i < s; i++){
     printf("bad_fault_array[%d]=%d\n",i,bad_fault_array[i]);
   }
-  return 0; // success
+  return code; // success
 }
