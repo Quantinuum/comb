@@ -22,7 +22,8 @@ typedef enum {
   INVALID_INPUT = 2,
   PROBLEM_TOO_LARGE = 3,
   INTERNAL_ERROR = 4,
-  OTHER_ERROR = 5
+  SERIALIZATION_ERROR = 5,
+  OTHER_ERROR = 6
 } comb_code_t;
 
 /// A word; assumed to always be 64 bits wide.
