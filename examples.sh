@@ -1,9 +1,10 @@
 #!/bin/bash
 false_positives=""
 	true_negatives=""
-	for f in ./examples/fault-tolerant/*.run
+	for f in ./examples/fault-tolerant/*.run.gz
 	do
-	LD_LIBRARY_PATH=./m4ri/lib ./comb $f 1
+  gunzip -k $f -c > /tmp/test-run
+	LD_LIBRARY_PATH=./m4ri/lib ./comb /tmp/test-run 1
 	if [ $? -eq 0 ] 
 	then
 	echo "Success"
@@ -11,9 +12,10 @@ false_positives=""
 	true_negatives="$true_negatives $f"
 	fi
 	done
-	for f in ./examples/non-fault-tolerant/*.run
+	for f in ./examples/non-fault-tolerant/*.run.gz
 	do
-	LD_LIBRARY_PATH=./m4ri/lib ./comb $f 1
+  gunzip -k $f -c > /tmp/test-run
+	LD_LIBRARY_PATH=./m4ri/lib ./comb /tmp/test-run 1
 	if [ $? -eq 1 ] 
 	then
 	echo "Success"
