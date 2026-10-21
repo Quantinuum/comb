@@ -2,4 +2,7 @@
 *.so
 test-bin/
 m4ri/
+docs/
 build/
+comb-*.run
+comb
