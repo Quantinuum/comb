@@ -19,6 +19,43 @@ In order to set these, one can specify the pertinent macro definitions via the a
 #+BEGIN_SRC shell
   make -j8 CFLAGS='-DTIMING_MODE=1000000 -DLOG_LEVEL=8'
 #+END_SRC
+
+** OpenMP regression checks
+The CPU verifier uses OpenMP to process independent chunks. M4RI must be
+configured with =--enable-thread-safe=, as in the default Makefile build.
+Set =OMP_NUM_THREADS= to control the team size; the API's =thread_count=
+argument is currently unused.
+
+After the workers finish, results are combined in chunk order. The returned
+bad fault tuple comes from the last bad chunk, matching a one-thread run.
+
+The tests check decisions, counts, bad fault tuples, and concurrent printing
+at 1/2/4/8 threads. Each verification problem spans eleven chunks. Run them
+against the installed M4RI with:
+#+BEGIN_SRC shell
+  make test-openmp
+  CC=clang ARCHER_LIBRARY=/path/to/libarcher.so \
+    make test-openmp OPENMP_TEST_OPTIONS=--tsan
+#+END_SRC
+
+On Apple Silicon with Homebrew M4RI and libomp:
+#+BEGIN_SRC shell
+  M4RI_PREFIX="$(brew --prefix m4ri)" \
+  OPENMP_PREFIX="$(brew --prefix libomp)" \
+  ARCHER_LIBRARY=/path/to/libarcher.dylib \
+    make test-openmp OPENMP_TEST_OPTIONS=--tsan
+#+END_SRC
+
+ThreadSanitizer requires [[https://openmp.llvm.org/doxygen/dir_d25e7fcf0ab543d5b35a958546f34a9d.html][LLVM Archer]] to understand OpenMP barriers. Homebrew's
+=libomp= omits it; build =openmp/tools/archer/ompt-tsan.cpp= from the matching
+LLVM release or use a toolchain that provides it. The script verifies that
+Archer loads and uses =ignore_noninstrumented_modules=1= for external libraries.
+Comb and the tests are instrumented.
+
+Logs and build files are kept in the printed temporary directory. The defaults
+are five repetitions per case; =COMB_TEST_THREADS= and =COMB_TEST_REPEATS= can
+be used to change this.
+
 * Documentation
 [[https://www.doxygen.nl/][Doxygen]] is needed to build the documentation. In order to build it, issue the following
 #+BEGIN_SRC shell
@@ -64,6 +101,6 @@ Gaussian elimination can be reduced to matrix multiplication (arXiv:1112.5717v2)
 
 It's also possible to iterate over $Z$ errors in the coset using Gray codes with SIMD.
 ** Multithreading
-This implementation is serial at present. But the algorithm is amenable to parallelisation by simply assigning different sets of fault combinations to different cores.
-
-The algorithm ought to involve only writes to thread-local temporary storage of fixed size for the most part.
+The CPU implementation already assigns independent fault-combination chunks to
+OpenMP workers, using private candidate scratch and result buffers. Further
+scaling work can investigate chunk size and load balance.

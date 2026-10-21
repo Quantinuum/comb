@@ -60,3 +60,8 @@ format:
 
 examples: comb
 	./examples.sh
+
+test-openmp:
+	CC="$(CC)" bash test/run_cpu_openmp.sh $(OPENMP_TEST_OPTIONS)
+
+.PHONY: test-openmp

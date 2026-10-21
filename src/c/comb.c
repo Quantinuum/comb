@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 #include <omp.h>
 int dcp_fault_bad_p_css(
                         dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
@@ -194,7 +195,6 @@ comb_code_t __do_verify_css_magic_state(
         *fault_location_partitions,  // at least fault_location_count of these.
                                      // number of faults at each location
     uint32_t s,  // number of faults to which circuit should be resilient to
-    uint32_t *bad_fault_array,     // where to store indices of bad_faults
     uint32_t output_error_count,   // number of output errors that result from
                                    // propagating all the faults. should be at
                                    // least sum(fault_location_partitions)
@@ -338,10 +338,7 @@ comb_code_t __do_verify_css_magic_state(
       }
       if (!good_combination_found) {
         lwlog_debug("no good combination was found: fault combination was bad");
-        // set the indices and indicate a bad fault was found
-        for (int i = 0; i < s; i++) {
-          bad_fault_array[i] = chunk->current_combination[i];
-        }
+        // The chunk retains the bad combination for the caller.
         return BAD_FAULT_FOUND;
       }
       //lwlog_debug("about to incf on fault number %lld",*fault_counter);
@@ -466,25 +463,49 @@ comb_code_t comb_verify_css_magic_state(
   chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,delta,&chunk_count);
   describe_chunks(chunks,chunk_count);
   comb_code_t return_code = ALL_FAULTS_GOOD;
+  comb_code_t* chunk_return_codes = NULL;
+  if (chunk_count > SIZE_MAX / sizeof(comb_code_t)) {
+    return_code = PROBLEM_TOO_LARGE;
+    goto cleanup;
+  }
+  chunk_return_codes = malloc(chunk_count * sizeof(comb_code_t));
+  if (!chunk_return_codes) {
+    return_code = INTERNAL_ERROR;
+    goto cleanup;
+  }
+  // Each worker writes only to its own chunk and return code.
   #pragma omp parallel for
-  for(int i = 0; i < chunk_count; i++){
-    printf("Verifying chunk [%d/%ld]\n",i,chunk_count);
-  comb_code_t chunk_return_code = __do_verify_css_magic_state(
-      n_all, n, n_x, n_z, k, x_stabilisers, x_lookup_table, z_stabilisers,
-      z_lookup_table, dcp_stabilisers, fault_location_count,
-      fault_location_partitions, s, bad_fault_array, output_error_count,
-      output_errors, x_measurement_count, x_measurement_paulis,
-      z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
-      z_permutation, chunks+i);
-  printf("Verified chunk [%d/%ld], %lld faults checked.\n",i,chunk_count,chunks[i].faults_already_checked);
-  if(chunk_return_code!=ALL_FAULTS_GOOD){
-    return_code= chunk_return_code; // TODO cleanup and break here
+  for(size_t i = 0; i < chunk_count; i++){
+    printf("Verifying chunk [%zu/%zu]\n",i,chunk_count);
+    chunk_return_codes[i] = __do_verify_css_magic_state(
+        n_all, n, n_x, n_z, k, x_stabilisers, x_lookup_table, z_stabilisers,
+        z_lookup_table, dcp_stabilisers, fault_location_count,
+        fault_location_partitions, s, output_error_count,
+        output_errors, x_measurement_count, x_measurement_paulis,
+        z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
+        z_permutation, chunks+i);
+    printf("Verified chunk [%zu/%zu], %llu faults checked.\n",i,chunk_count,chunks[i].faults_already_checked);
   }
-  fault_counter+=chunks[i].faults_already_checked;
-
+  // Combine results in chunk order, as in a serial run.
+  for(size_t i = 0; i < chunk_count; i++){
+    fault_counter+=chunks[i].faults_already_checked;
+    if(chunk_return_codes[i]!=ALL_FAULTS_GOOD){
+      return_code=chunk_return_codes[i];
+      if(chunk_return_codes[i]==BAD_FAULT_FOUND){
+        for(int j = 0; j < s; j++){
+          bad_fault_array[j]=chunks[i].current_combination[j];
+        }
+      }
+    }
   }
-  // Stop timing
  cleanup:
+  free(chunk_return_codes);
+  for(size_t i = 0; i < chunk_count; i++){
+    free(chunks[i].current_combination);
+    free(chunks[i].final_combination_to_check);
+  }
+  free(chunks);
+  // Stop timing
   clock_gettime(CLOCK_MONOTONIC, &finish);
   double seconds = (finish.tv_sec - start.tv_sec) +
                    1.0e-9 * (finish.tv_nsec - start.tv_nsec);

@@ -1,7 +1,8 @@
 #include "comb.h"
 
 #define PRINT_SIZE 1000000
-char print_buffer[PRINT_SIZE];
+// Each worker needs its own buffer when logging is enabled.
+static _Thread_local char print_buffer[PRINT_SIZE];
 
 int do_print_pauli(mzd_t *x_parts, mzd_t *z_parts, mzd_t *delta_vector,
                    mzd_t *epsilon_vector, int row_number, char print_newline_p,
