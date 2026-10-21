@@ -88,3 +88,38 @@ int ft_iteration_combination_incf(int k, uint32_t *sizes, int n,
   return 0;  // we had the last element so return 0 to indicate there is no
              // successor
 }
+
+// https://stackoverflow.com/questions/24294192/computing-the-binomial-coefficient-in-c
+unsigned long long combi(int n,int k)
+{
+    if(n==0 || n < k)return 0;
+  unsigned long long ans=1;
+  k=k>n-k?n-k:k;
+  int j=1;
+  for(;j<=k;j++,n--)
+      ans = ans/j*n + ans%j*n/j;
+  return ans;
+}
+void unrank(int s, int* combination, unsigned long long m){
+  // sets the combination in combination to the m-th combination ranked lexicographically.
+  lwlog_debug("Unranking %llu m:\n",m);
+  for(int k = s-1; k >=0; k--){
+    unsigned long long c_k = 0;
+    while(combi(c_k+1,k+1) <= m){
+      c_k++;
+    }
+    combination[k]=c_k;
+    lwlog_debug("combination[%d] = %d\n",k,c_k);
+    m-=combi(c_k,k+1);
+  //printf("m is %llu:\n",m);
+  }
+}
+unsigned long long rank(int s, int* combination){
+  unsigned long long n = 0;
+  for(int i = 0; i < s; i++){
+    lwlog_debug("combination[%d] = %d m:\n",i,combination[i]);
+    n+=combi(combination[i],i+1);
+  }
+  lwlog_debug("Ranked to %llu:\n",n);
+  return n;
+}
