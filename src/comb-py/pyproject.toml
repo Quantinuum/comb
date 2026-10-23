@@ -8,7 +8,7 @@ authors = [
 ]
 requires-python = ">=3.11"
 dependencies = [
-    "cffi>=2.0.0",
+    "cffi>=2.1.1",
     "pauli_hugr",
     "tket~=0.13"
 ]
