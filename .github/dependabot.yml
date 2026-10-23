@@ -5,7 +5,7 @@
 
 version: 2
 updates:
-  - package-ecosystem: "" # See documentation for possible values
-    directory: "/" # Location of package manifests
+  - package-ecosystem: "uv" # See documentation for possible values
+    directory: "/src/comb-py/" # Location of package manifests
     schedule:
       interval: "weekly"
