@@ -15,7 +15,7 @@ dependencies = [
 
 
 [tool.uv.sources]
-pauli_hugr = { git = "ssh://git@github.com/quantinuum-dev/pauli-hugr.git", rev = "f1421bc87531bf287032fd142685e3db7ab395b6" }
+pauli_hugr = { git = "ssh://git@github.com/quantinuum-dev/pauli-hugr.git", rev = "8d33cf4f3d9b7d5facded82d1229b65941970aff" }
 
 
 [build-system]
