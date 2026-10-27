@@ -342,6 +342,8 @@ comb_code_t __do_verify_css_magic_state(
         for (int i = 0; i < s; i++) {
           bad_fault_array[i] = chunk->current_combination[i];
         }
+        free(row_ops_a);
+        free(row_ops_b);
         return BAD_FAULT_FOUND;
       }
       //lwlog_debug("about to incf on fault number %lld",*fault_counter);
@@ -351,6 +353,8 @@ comb_code_t __do_verify_css_magic_state(
                                            last_balls, chunk->current_combination)
 
     );
+        free(row_ops_a);
+        free(row_ops_b);
   return ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
 }
 comb_code_t comb_verify_css_magic_state(
