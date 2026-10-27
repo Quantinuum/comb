@@ -10,6 +10,8 @@ requires-python = ">=3.12, <3.14"
 dependencies = [
     "cffi>=2.1.1",
     "pauli_hugr",
+    "setuptools>=83.0.0",
+    "urllib3>=2.8.0",
 ]
 
 
