@@ -1,0 +1,1 @@
+By submitting a contribution to this project, you certify that you have the right to submit it and agree that your contribution is licensed under the GPL, under the same terms as the rest of the project.
