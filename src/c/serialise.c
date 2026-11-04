@@ -117,7 +117,7 @@ int serialise_run_to_file(int fd,    uint32_t n_all,  ///< number of qubits in c
   return close(fd); // success
 }
 
-int deserialise_run_from_file(char *input_file, int thread_count){
+int deserialise_run_from_file(char *input_file){
   int fd = open(input_file, O_RDONLY);
   uint32_t n_all = read_uint32_t(fd);
   uint32_t n = read_uint32_t(fd);
@@ -169,10 +169,10 @@ int deserialise_run_from_file(char *input_file, int thread_count){
                                                  z_lookup_table,_dcp_stabilisers,fault_location_count,
                                                  fault_location_partitions,s,bad_fault_array,output_error_count,
                                                  _output_errors,x_measurement_count,_x_measurement_paulis,
-                                                 z_measurement_count,_z_measurement_paulis,thread_count);
-  printf("code = %d\n",code);
+                                                 z_measurement_count,_z_measurement_paulis,0);
+  fprintf(stderr,"code = %d\n",code);
   if(code == BAD_FAULT_FOUND)for(int i = 0; i < s; i++){
-    printf("bad_fault_array[%d]=%d\n",i,bad_fault_array[i]);
+      fprintf(stderr,"bad_fault_array[%d]=%d\n",i,bad_fault_array[i]);
   }
   return code; // success
 }

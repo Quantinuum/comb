@@ -1,183 +1,5 @@
 #include "comb.h"
 
-#include <math.h>
-#include <stdio.h>
-#include <time.h>
-#include <omp.h>
-int dcp_fault_bad_p_css(
-                        dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
-    mzd_t *z_measurements_for_x,
-    unsigned x_permutation,  // permutation mask for x canonicalisation
-    unsigned z_permutation,  // permutation mask for z canonicalisation
-    comb_bit_array_t x_lookup_table, comb_bit_array_t z_lookup_table,
-    mzd_t *x_stabilisers, uint32_t *rref_x, int n_all, int n, int n_x, int n_z,
-    stabiliser_state_t *state, pauli_z_coset_t *coset, mzd_t *D, mzp_t *Q,
-    int row_ops_count, int *row_ops_a, int *row_ops_b) {
-  lwlog_debug("Testing %s", print_dcp(error, 0));
-  mzd_t *x_error =
-      error->h_x_transpose;  // dont need to transpose to get x error
-  lwlog_debug("X error is %s", print_row_vector_as_pauli(x_error, 0, "X"));
-  for (int i = 0; i < z_measurements_for_x->nrows; i++) {
-    if (row_product(x_error, 0, z_measurements_for_x, i)) {
-      lwlog_debug(
-          "X error anticommutes with Z measurement %d %s, so whole "
-          "error is good",
-          i, print_row_vector_as_pauli(z_measurements_for_x, i, "Z"));
-      return 0;
-    } else {
-      lwlog_debug("X error commutes with Z measurement %d %s, continuing...", i,
-                  print_row_vector_as_pauli(z_measurements_for_x, i, "Z"));
-    }
-  }
-  // need to canonicalise the x error.
-  for (int i = 0; i < x_stabilisers->nrows; i++) {
-    if (mzd_read_bit(x_error, 0,
-                     rref_x[i])) {  // eliminate by multiplying by a stabiliser
-      lwlog_debug("Multiplying by %s to canonicalise...",
-                  print_row_vector_as_pauli(x_stabilisers, i, "X"));
-      mzd_combine(x_error, 0, 0, x_error, 0, 0, x_stabilisers, i, 0);
-      lwlog_debug("New X error is %s",
-                  print_row_vector_as_pauli(x_error, 0, "X"));
-    }
-  }
-  // apply the permutation to x.
-  lwlog_debug(
-      "Error before permutation and eliminating ancillas is %s (mask %x)",
-      print_row_vector_as_pauli(x_error, 0, "X"), x_permutation);
-  x_error->data[0] &= ((1UL << (n)) - 1);
-  lwlog_debug("Error after eliminating ancilla terms is %s",
-              print_row_vector_as_pauli(x_error, 0, "X"));
-  permute_columns(x_error, x_permutation);
-  lwlog_debug("Error after permutation is %s",
-              print_row_vector_as_pauli(x_error, 0, "X"));
-  int reduced_x_error = mzd_data(x_error);
-  lwlog_debug("Reduced x error is %x", reduced_x_error);
-  if (!TestBit(x_lookup_table, reduced_x_error)) {
-    lwlog_debug("x error undetected and high weight, so whole error is bad");
-    return 1;
-  }
-  // Now, test the z part. Start by turning it into a state
-  set_stabiliser_state_to_dcp(state, error);
-  // Instead of doing all the Z and then X measurements separately, we combine
-  // them (batched gaussian elimination):
-  // 1. Row ops on S_i using A to get S'_i
-  int k = C_z_transpose->ncols;
-  lwlog_debug("before row ops on S_i, state is %s",
-              print_stabiliser_state(state, 0));
-  // In order to do the row ops in place, we first apply a permutation
-  // calculated beforehand via the PLUQ decomposition of A:
-  mzd_apply_p_left(state->x_parts, Q);
-  mzd_apply_p_left(state->z_parts, Q);
-  mzd_apply_p_left(state->delta_vector, Q);
-  mzd_apply_p_left(state->epsilon_vector, Q);
-  // We can now do the row ops in place, specified by the parameters row_ops*
-  for (int i = 0; i < row_ops_count; i++) {
-    add_row_to(state, row_ops_b[i], state, row_ops_a[i]);
-  }
-  lwlog_debug("after row ops on S_i, state is %s",
-              print_stabiliser_state(state, 0));
-  // 2. Calculate D using matrix multiplication
-  // D is whether the j-th x measurement anticommutes with the i-th S_i
-  // shrink state->z_parts for the multiplication; want to consider only the
-  // first n_all - k stabs.
-  state->z_parts->nrows = (n_all - k);
-  // D <- Z_parts . C_x_transpose
-  _mzd_mul_m4rm(D,state->z_parts, C_x_transpose, 0, 1);
-  //_mzd_mul_naive(D, state->z_parts, C_x,  1);  // C_x k x n, state->Z_parts is n - k x n
-  // mzd_t* D_transpose = mzd_transpose(0,D); // calculate D^T as well, maybe it
-  // will be needed instead.
-  //  3. Calculate S''_i via matrix multiplication D C_Z
-  //  i.e. multiply the S''_i = S'_i D_ij C_z
-
-  // Z_parts <- Z_parts + D C_z
-  _mzd_mul_m4rm(state->z_parts,D,C_z,0,0);
-
-  //_mzd_mul_naive(state->z_parts, D, C_z_transpose, 0);  // z parts is n-k x n, D is n-k x k, C_z is k x n
-  state->z_parts->nrows = (n_all);
-  // 4. Add the X measurements as stabilisers by filling the lower k elts of
-  // dest_state with C_x
-  for (int i = (n_all - k); i < n_all; i++) {
-    mzd_row_clear_offset(state->x_parts, i, 0);
-    mzd_combine(state->x_parts, i, 0, state->x_parts, i, 0, C_x,
-                i - (n_all - k), 0);
-    mzd_row_clear_offset(state->z_parts, i, 0);
-    mzd_row_clear_offset(state->epsilon_vector, i, 0);
-    mzd_row_clear_offset(state->delta_vector, i, 0);
-  }
-  lwlog_debug("after batch ge, state is %s", print_stabiliser_state(state, 0));
-
-  if (postselect_on_measuring_plus_one_x(state, P_x)) {
-    lwlog_debug("error detected in x postselections, so error is good");
-    return 0;
-  }
-  // error is now canonicalised. turn it into a coset and apply the z
-  // permutation to it:
-  set_coset_to_stabiliser_state(coset, state);
-  lwlog_debug("coset before permuting is %s", print_pauli_z_coset(coset, 0));
-  permute_columns(coset->factor_transpose, z_permutation);
-  permute_columns(coset->set_generators, z_permutation);
-  lwlog_debug("coset after permuting is %s", print_pauli_z_coset(coset, 0));
-  // iterate over all elements in the coset and verify that each one is good. if
-  // not, return bad
-  for (int i = 0; i < (1 << COSET_K(coset)); i++) {
-    lwlog_debug("Testing Z error %d in coset %s", i,
-                print_row_vector_as_pauli(coset->factor_transpose, 0, "Z"));
-    int reduced_z_error = mzd_data(coset->factor_transpose);
-    lwlog_debug("number is %d", reduced_z_error);
-#if 0
-    // This was intended to be a test that the reduced z error is not too large.
-    // However, this can result from a missing measurement, so it does not indicate a bug with the code per se.
-    // In the future, this case should be dealt with by sanitising the inputs better. TODO important
-    // Until this is fixed, the behaviour of Comb is undefined if measurements are missing.
-    if(reduced_z_error >= (1 << (n - n_z))){
-      lwlog_err("reduced error too large for lookup table, should not have happened, exiting");
-      exit(1);
-    }
-#endif
-    if (!TestBit(z_lookup_table, reduced_z_error)) {
-      lwlog_debug("z error in coset is high weight, so error is bad");
-      return 1;
-    }
-    if ((i + 1) !=
-        (1 << COSET_K(coset)))  // multiply the coset factor by a generator of
-                                // the vector space according to a gray code
-      coset->factor_transpose->data[0] ^=
-          mzd_row(coset->set_generators, gray_bit_to_switch(i))[0];
-  }
-  lwlog_debug("all errors in coset were low weight, so error is good");
-  return 0;
-}
-
-int stabilisers_rref_p(comb_vector_t *operators, uint32_t n, uint32_t m,
-                       uint32_t *coefficients, unsigned *permutation_mask) {
-  // ensures the operators are in rref. n operators on m qubits.
-  int current_leading_index = -1;
-  for (int row = 0; row < n; row++) {
-    comb_vector_t *current_operator = &(operators[row]);
-    int new_leading_index = m;  // new_leading_index = n means that the row
-                                // contains no entries at all.
-    for (int column = 0; column < m && (new_leading_index == m); column++) {
-      if (TestBit(current_operator->data, column)) new_leading_index = column;
-    }
-    if (new_leading_index < current_leading_index &&
-        !((new_leading_index = m) && (current_leading_index == m)))
-      return 0;  // new leading index must be to the right of the old one
-    // verify if new leading index has no entries in other rows
-    for (int row_2 = 0; row_2 < n; row_2++) {
-      if (row_2 != row) {
-        if (TestBit(operators[row_2].data, new_leading_index))
-          return 0;  // leading index shares entries in other rows
-      }
-    }
-    current_leading_index = new_leading_index;
-    coefficients[row] = current_leading_index;
-    *permutation_mask |= (1 << current_leading_index);
-    lwlog_info("rref: coefficients[%d]=%d", row, current_leading_index);
-  }
-  *permutation_mask = ~*permutation_mask;
-  return 1;
-}
-
 comb_code_t __do_verify_css_magic_state(
     uint32_t n_all,  ///< number of qubits in code + all ancillas
     uint32_t n,      // number of qubits in code
@@ -287,10 +109,8 @@ comb_code_t __do_verify_css_magic_state(
   mzd_t *C_x_transpose = mzd_transpose(0, C_x);
 
     do {
-      // chunk->faults_to_check_count--;
       chunk->faults_already_checked++;
-#ifndef DRY_RUN
-      // Multiply DCP errors together. TODO verify that order is correct
+            // Multiply DCP errors together. TODO verify that order is correct
       set_dcp_to(current_dcp_output_combination,
                  &(output_errors[chunk->current_combination[0]]));
       for (int i = 1; i < s; i++) { // later faults occur earlier (to the left) in the product.
@@ -304,7 +124,6 @@ comb_code_t __do_verify_css_magic_state(
           exit(1);
         }
         #endif
-        //dcp_mulf_left(&(output_errors[current_combination[i]]), current_dcp_output_combination);
 	dcp_mulf_right(current_dcp_output_combination, &(output_errors[chunk->current_combination[i]]));
       }
       // output errors multiplied. now, multiply by all combinations of logical
@@ -342,19 +161,15 @@ comb_code_t __do_verify_css_magic_state(
         for (int i = 0; i < s; i++) {
           bad_fault_array[i] = chunk->current_combination[i];
         }
-        free(row_ops_a);
-        free(row_ops_b);
         return BAD_FAULT_FOUND;
       }
       //lwlog_debug("about to incf on fault number %lld",*fault_counter);
-#endif
+      //#endif
     } while (!chunk_finished_p(chunk) && ft_iteration_combination_incf(s, fault_location_partitions,
                                            fault_location_count, first_balls,
                                            last_balls, chunk->current_combination)
 
     );
-        free(row_ops_a);
-        free(row_ops_b);
   return ALL_FAULTS_GOOD;  // got to end of loop, so all faults are good
 }
 comb_code_t comb_verify_css_magic_state(
@@ -383,8 +198,9 @@ comb_code_t comb_verify_css_magic_state(
         *_x_measurement_paulis,    // postselections made in x basis. at
                                    // least x_measurement_count of these
     uint32_t z_measurement_count,  // number of z measurement paulis
-    comb_pauli_z_t *_z_measurement_paulis, uint32_t thread_count) {
+    comb_pauli_z_t *_z_measurement_paulis, uint32_t should_serialise_p) {
   // serialise run
+  if(should_serialise_p){
   char name[] = "comb-runXXXXXX.run";
   int fd = mkstemps(name,4);
   int serialise_success = serialise_run_to_file(fd,n_all,n,n_x,n_z,k,_x_stabilisers,x_lookup_table,
@@ -394,6 +210,7 @@ comb_code_t comb_verify_css_magic_state(
                                                 z_measurement_count,_z_measurement_paulis);
   if(serialise_success!=0) return SERIALIZATION_ERROR;
   else printf("saved run to: %s\n",name);
+  }
   lwlog_info("start timing \n");
 
   struct timespec start, finish;
@@ -423,6 +240,7 @@ comb_code_t comb_verify_css_magic_state(
   mzd_t *z_measurement_paulis = mzd_init(z_measurement_count, n_all);
   mzd_t *x_stabilisers = mzd_init(n_x, n);
   mzd_t *z_stabilisers = mzd_init(n_z, n);
+  int chunks_checked=0;
   unsigned long long fault_counter = 0;
   lwlog_info("converting objects");
   for (int i = 0; i < n_x; i++) {
@@ -470,6 +288,8 @@ comb_code_t comb_verify_css_magic_state(
   chunk_t* chunks = partition_into_chunks(fault_location_count, fault_location_partitions,s,delta,&chunk_count);
   describe_chunks(chunks,chunk_count);
   comb_code_t return_code = ALL_FAULTS_GOOD;
+
+  #ifndef COMB_MPI
   #pragma omp parallel for
   for(int i = 0; i < chunk_count; i++){
     printf("Verifying chunk [%d/%ld]\n",i,chunk_count);
@@ -487,13 +307,46 @@ comb_code_t comb_verify_css_magic_state(
   fault_counter+=chunks[i].faults_already_checked;
 
   }
+  #else
+  // MPI
+    // Get the number of processes
+    int world_size;
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
+    // Get the rank of the process
+    int world_rank;
+    MPI_Comm_rank(MPI_COMM_WORLD, &world_rank);
+
+#pragma omp parallel shared(chunks_checked,fault_counter)
+  {
+    if(world_size==1 && omp_get_num_threads() == 1){ // exit if serial; need at least two parallel workers
+      printf("only one process and thread: use serial build instead\n");
+      fflush(stdout);
+      MPI_Abort(MPI_COMM_WORLD, INTERNAL_ERROR);
+    }
+    if(omp_get_thread_num() == 0 && world_rank == 0)mpi_primary(chunk_count);
+    else mpi_secondary(&chunks_checked, &fault_counter, n_all, n, n_x, n_z, k, x_stabilisers,
+                       x_lookup_table, z_stabilisers,
+      z_lookup_table, dcp_stabilisers, fault_location_count,
+      fault_location_partitions, s, bad_fault_array, output_error_count,
+      output_errors, x_measurement_count, x_measurement_paulis,
+      z_measurement_count, z_measurement_paulis, rref_x, rref_z, x_permutation,
+      z_permutation,chunks);
+  }
+
+  #endif
   // Stop timing
  cleanup:
   clock_gettime(CLOCK_MONOTONIC, &finish);
   double seconds = (finish.tv_sec - start.tv_sec) +
                    1.0e-9 * (finish.tv_nsec - start.tv_nsec);
+  #ifdef COMB_MPI
+    printf("Process %d: %d chunks checked, Took %f seconds, %lld fault combinations checked.\n", world_rank, chunks_checked, seconds,
+         fault_counter);
+  #else
   printf("Took %f seconds, %lld fault combinations checked.\n", seconds,
          fault_counter);
+  #endif
   lwlog_debug("freeing memory");
   free_dcp_array(k, dcp_stabilisers);
   free_dcp_array(output_error_count, output_errors);
@@ -503,4 +356,3 @@ comb_code_t comb_verify_css_magic_state(
   mzd_free(z_stabilisers);
   return return_code;
 }
-

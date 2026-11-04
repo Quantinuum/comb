@@ -2,6 +2,15 @@
 
 #include "comb_external.h"
 #include "lwlog.h"
+
+#include <math.h>
+#include <stdio.h>
+#include <time.h>
+#include <omp.h>
+#ifdef COMB_MPI
+#include <mpi.h>
+#endif
+
 #define MAX_SIZE_COUNT 10240
 // if TIMING_MODE is set to an integer, then repeat until TIMING_MODE faults
 // have been iterated over
@@ -82,6 +91,16 @@ int _postselect_on_x(stabiliser_state_t *state, mzd_t *x_parts, mzd_t *z_parts,
 void set_coset_to_stabiliser_state(pauli_z_coset_t *coset,
                                    stabiliser_state_t *state);
 
+// fault_checking.c
+int dcp_fault_bad_p_css(dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
+    mzd_t *z_measurements_for_x,
+    unsigned x_permutation,  // permutation mask for x canonicalisation
+    unsigned z_permutation,  // permutation mask for z canonicalisation
+    comb_bit_array_t x_lookup_table, comb_bit_array_t z_lookup_table,
+    mzd_t *x_stabilisers, uint32_t *rref_x, int n_all, int n, int n_x, int n_z,
+    stabiliser_state_t *state, pauli_z_coset_t *coset, mzd_t *D, mzp_t *Q,
+                        int row_ops_count, int *row_ops_a, int *row_ops_b);
+
 // gaussian_elimination.c
 void swap_rows(stabiliser_state_t *state, int i, int j);
 void add_row(stabiliser_state_t *state, int sourcerow, int destrow);
@@ -152,7 +171,7 @@ int serialise_run_to_file(int fd,    uint32_t n_all,  ///< number of qubits in c
     comb_pauli_z_t *_z_measurement_paulis);
 
 // Opens a previously serialised run from a file and checks it using comb_verify_css_magic_state
-int deserialise_run_from_file(char *input_file, int thread_count);
+int deserialise_run_from_file(char *input_file);
 
 // utils.c
 void fix_dcp(dcp_t *dcp);
@@ -165,7 +184,8 @@ void set_row(mzd_t *x_parts, mzd_t *z_parts, int j, mzd_t *x_measurement_matrix,
 void permute_columns(mzd_t *data, unsigned mask);
 void convert_row(mzd_t *M, int row, comb_vector_t *vector);
 void add_and_column_vector(mzd_t *result, mzd_t *F1, mzd_t *F2);
-
+int stabilisers_rref_p(comb_vector_t *operators, uint32_t n, uint32_t m,
+                       uint32_t *coefficients, unsigned *permutation_mask);
 // inline functions
 
 inline word mzd_data(const mzd_t *mzd) {  // assumes mzd is a row vector
@@ -177,3 +197,69 @@ inline uint32_t gray_bit_to_switch(uint32_t n) {
   uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
   return n ? 31 - __builtin_clz(diff) : 0;
 }
+#ifdef COMB_MPI
+
+#define REQUEST_CHUNK_TAG 1
+#define RECEIVE_CHUNK_TAG 2
+#define NOTIFY_CHUNK_GOOD 3
+
+int mpi_get_chunk_to_process(int world_rank);
+void mpi_notify_primary_chunk_good(int chunk_num);
+size_t mpi_get_free_chunk(comb_bit_array_t free_chunks_index_array, int chunk_count);
+void mpi_primary(int chunk_count);
+void mpi_secondary(int* chunks_checked, unsigned long long* fault_counter, uint32_t n_all,  ///< number of qubits in code + all ancillas
+    uint32_t n,      // number of qubits in code
+    uint32_t n_x,    // number of independent x stabiliser generators in code
+    uint32_t n_z,    // number of independent z stabiliser generators in code
+    uint32_t k,  // number of logical qubits in code. equivalently, number of
+                 // logical dcp operators that stabilise the code
+    mzd_t *x_stabilisers,             // n-x of these
+    comb_bit_array_t x_lookup_table,  // x lookup table. of size 2^(n-n_x)
+    mzd_t *z_stabilisers, comb_bit_array_t z_lookup_table,
+    dcp_t *dcp_stabilisers,         // k of these
+    uint32_t fault_location_count,  // number of fault locations
+    uint32_t
+        *fault_location_partitions,  // at least fault_location_count of these.
+                                     // number of faults at each location
+    uint32_t s,  // number of faults to which circuit should be resilient to
+    uint32_t *bad_fault_array,     // where to store indices of bad_faults
+    uint32_t output_error_count,   // number of output errors that result from
+                                   // propagating all the faults. should be at
+                                   // least sum(fault_location_partitions)
+    dcp_t *output_errors,          // at least output_error_count of these
+    uint32_t x_measurement_count,  // number of x measurement paulis
+    mzd_t *x_measurement_paulis,   // postselections made in x basis. at least
+                                   // x_measurement_count of these
+    uint32_t z_measurement_count,  // number of z measurement paulis
+    mzd_t *z_measurement_paulis, uint32_t *rref_x, uint32_t *rref_z,
+                   unsigned x_permutation, unsigned z_permutation, chunk_t* chunks);
+#endif
+
+comb_code_t __do_verify_css_magic_state(
+    uint32_t n_all,  ///< number of qubits in code + all ancillas
+    uint32_t n,      // number of qubits in code
+    uint32_t n_x,    // number of independent x stabiliser generators in code
+    uint32_t n_z,    // number of independent z stabiliser generators in code
+    uint32_t k,  // number of logical qubits in code. equivalently, number of
+                 // logical dcp operators that stabilise the code
+    mzd_t *x_stabilisers,             // n-x of these
+    comb_bit_array_t x_lookup_table,  // x lookup table. of size 2^(n-n_x)
+    mzd_t *z_stabilisers, comb_bit_array_t z_lookup_table,
+    dcp_t *dcp_stabilisers,         // k of these
+    uint32_t fault_location_count,  // number of fault locations
+    uint32_t
+        *fault_location_partitions,  // at least fault_location_count of these.
+                                     // number of faults at each location
+    uint32_t s,  // number of faults to which circuit should be resilient to
+    uint32_t *bad_fault_array,     // where to store indices of bad_faults
+    uint32_t output_error_count,   // number of output errors that result from
+                                   // propagating all the faults. should be at
+                                   // least sum(fault_location_partitions)
+    dcp_t *output_errors,          // at least output_error_count of these
+    uint32_t x_measurement_count,  // number of x measurement paulis
+    mzd_t *x_measurement_paulis,   // postselections made in x basis. at least
+                                   // x_measurement_count of these
+    uint32_t z_measurement_count,  // number of z measurement paulis
+    mzd_t *z_measurement_paulis, uint32_t *rref_x, uint32_t *rref_z,
+    unsigned x_permutation, unsigned z_permutation,
+    chunk_t* chunk);

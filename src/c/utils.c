@@ -146,3 +146,34 @@ void add_and_column_vector(mzd_t *result, mzd_t *F1, mzd_t *F2) {
                    (mzd_read_bit(F1, i, 0) & mzd_read_bit(F2, i, 0))));
   }
 }
+
+
+int stabilisers_rref_p(comb_vector_t *operators, uint32_t n, uint32_t m,
+                       uint32_t *coefficients, unsigned *permutation_mask) {
+  // ensures the operators are in rref. n operators on m qubits.
+  int current_leading_index = -1;
+  for (int row = 0; row < n; row++) {
+    comb_vector_t *current_operator = &(operators[row]);
+    int new_leading_index = m;  // new_leading_index = n means that the row
+                                // contains no entries at all.
+    for (int column = 0; column < m && (new_leading_index == m); column++) {
+      if (TestBit(current_operator->data, column)) new_leading_index = column;
+    }
+    if (new_leading_index < current_leading_index &&
+        !((new_leading_index = m) && (current_leading_index == m)))
+      return 0;  // new leading index must be to the right of the old one
+    // verify if new leading index has no entries in other rows
+    for (int row_2 = 0; row_2 < n; row_2++) {
+      if (row_2 != row) {
+        if (TestBit(operators[row_2].data, new_leading_index))
+          return 0;  // leading index shares entries in other rows
+      }
+    }
+    current_leading_index = new_leading_index;
+    coefficients[row] = current_leading_index;
+    *permutation_mask |= (1 << current_leading_index);
+    lwlog_info("rref: coefficients[%d]=%d", row, current_leading_index);
+  }
+  *permutation_mask = ~*permutation_mask;
+  return 1;
+}
