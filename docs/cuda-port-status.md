@@ -1,84 +1,101 @@
-# CUDA port implementation status
+# CUDA and MPI implementation status
 
-This file distinguishes implemented infrastructure from scientific behavior
-that has passed the plan's acceptance gates.  It is not a substitute for the
-design in `cuda-port-plan.md` or the acceptance procedure in
-`cuda-validation.md`.
+Updated 2026-11-06. The MPI source studied for this port is
+[`mpi` at 8dd5ce73f80994b84b28b759b17459924c77d630](https://github.com/Quantinuum/comb/tree/8dd5ce73f80994b84b28b759b17459924c77d630).
+This records implementation and observed validation separately.
 
 ## Implemented
 
-- The legacy `comb_verify_css_magic_state` signature and `thread_count`
-  behavior are unchanged.
-- The additive, versioned CUDA context/range/result/witness API is defined.
-- Structural and scientific input validation plus a pointer-free, tail-masked
-  `uint64_t` flat problem blob are implemented.  The contract checks CSS
-  dimensions and commutation, stabiliser RREF, symmetric DCP matrices, the
-  supported batched-Z dual relation, checked weighted-colex counts, and
-  rank/unrank tables before upload.
-- Dependency-free dense GF(2), phase-aware tableau, DCP, postselection, and
-  coset primitives have executable deterministic and randomized tests.
-- A complete sequential reference verifier executes the pre-batched
-  measurement contract and returns the lowest bad global rank.  A separate
-  M4RI-gated test compares it with the legacy batched verifier.
-- The legacy fault loop now composes later faults on the left, locking the
-  paper's `E_s ... E_1` order.  A dependency-free two-location fixture uses
-  noncommuting DCPs whose lookup decision changes if that order is reversed.
-  Residual coset support outside the code lookup domain is rejected instead of
-  reproducing the legacy missing-measurement undefined behavior.
-- CUDA context creation uploads the immutable blob.  Device code contains
-  weighted unranking, packed XOR/parity/phase primitives, atomic-min witness
-  support, a race-free persistent scheduling scaffold, and distinct one-word
-  and multiword dispatch points.
-- The MPI layer broadcasts one validated flat blob, maps one rank to one
-  physical GPU, schedules fine cyclic chunks inside invariant epochs, reduces
-  deterministic or fast witnesses, and supports hash-checked checkpoint and
-  resume.  The core CUDA library remains MPI-independent.
-- A single-rank mock CTest drives the production MPI scheduler through
-  deterministic and fast witnesses, cyclic chunking, checkpoint/resume,
-  caller-witness reuse, and the physical-device identity hook.  It does not
-  stand in for multi-rank validation.
-- CMake/CTest is the primary optional CPU/CUDA/MPI build.  The Makefile remains
-  a compatibility wrapper, generated Doxygen output is under `build/docs`, and
-  `make clean` preserves this tracked `docs` directory.
+- The existing CPU ABI remains available. CUDA and MPI are optional CMake
+  targets, and CUDA/MPI can be built without M4RI (`COMB_BUILD_CPU=OFF`).
+- `comb-cuda-mpi` reads the MPI branch's existing native-endian `.run` files.
+  Rank zero loads once; the checked pointer-free problem is broadcast to all
+  ranks and uploaded once per GPU. The decoder rejects malformed dimensions,
+  truncated input and trailing bytes.
+- The complete scientific candidate pipeline executes inside the CUDA kernel:
+  weighted-colex fault unranking, ordered DCP composition, logical variants,
+  X-syndrome rejection, CSS X lookup, phase-aware Z/X postselection, tableau
+  elimination and universal membership of the resulting Z coset.
+- Faults compose as `E1 E2 ... Es`; selected logical DCPs left-multiply in
+  ascending index order. Both match the MPI branch's scientific loop.
+- Stabiliser pivots, free columns and measurement sequences are prepared on
+  the host and uploaded as immutable data. The GPU uses the sequential
+  postselection formulation, with the validated dual-measurement relation;
+  it does not copy the CPU's optimized batched-Z/PLUQ transform.
+- GPU threads evaluate independent candidates, with deterministic pivot
+  selection inside each candidate. Workspaces are allocated once per context,
+  disjoint between threads and reused. The default scratch budget is the
+  smaller of 256 MiB and one quarter of free GPU memory; callers can set it.
+  No device allocation or CPU fallback occurs in the candidate loop.
+- A persistent kernel claims ranks using a saturating atomic counter.
+  Deterministic range calls complete their entire interval and return its
+  smallest bad rank. Fast-any calls may stop after any valid bad candidate.
+  Runtime errors remain distinct from scientific decisions.
+- MPI assigns fine cyclic chunks inside common bounded epochs. Status,
+  counts, minimum rank and the selected tuple are reduced. One rank owns one
+  physical GPU; duplicate PCI identities within a node are rejected.
+  Checkpoint/resume retains input-hash and epoch-boundary validation.
+- GPU functions are shared with host differential tests. This checks their
+  mathematics independently of CUDA scheduling. Real-device tests use the
+  public CUDA API and are built only when CUDA is enabled.
 
-## Deliberately not activated
+## Validation on this development host
 
-For every nonempty interval, `comb_cuda_verify_range` currently returns
-`COMB_CUDA_STATUS_NOT_IMPLEMENTED`.  It does not launch the scheduler scaffold
-and cannot return a scientific decision.  Empty intervals return the valid
-vacuous `ALL_FAULTS_GOOD` result.
+This macOS/Arm64 host provides Clang, M4RI and Open MPI, but has no NVIDIA
+GPU, driver or CUDA toolkit.
 
-Activation requires all of the following, in order:
+- CPU-enabled CMake/CTest passes 18/18 tests, including the added CLI
+  scientific test. The earlier dependency-free suite passed 16/16; the final
+  native build also passes all 17 common host tests. These include rank, dense, flat, stub and reference tests and the
+  expanded CPU/reference differential.
+- The host candidate differential checks every rank in 116 fixtures, including
+  heterogeneous partitions, `s=1,2,3`, noncommuting DCPs, CSS stabilisers,
+  logical variants, measured ancillas and 65-qubit multiword inputs.
+- Shared GPU math primitives pass deterministic/randomized comparisons with
+  the independent dense implementation at widths 1, 63, 64, 65 and 129.
+- The expanded M4RI CPU/reference differential includes measured-ancilla
+  fixtures, checking the sequential formulation against CPU batched-Z logic.
+- Production MPI orchestration passes one-, two- and three-process tests with
+  test backends, including the actual candidate functions executing on the
+  host against the independent scientific reference. These exercise real MPI
+  collectives, but do not execute CUDA.
+- Strict host compiler checks and AddressSanitizer/UndefinedBehaviorSanitizer
+  runs pass for GPU mathematics, the complete host candidate pipeline and
+  run-file parsing. Clang's CUDA frontend checks host/device source and emits
+  sm_80 PTX with temporary runtime declarations. That fixture does not provide
+  real CUDA runtime headers or linking, and is not an NVIDIA toolkit build.
 
-1. Execute the M4RI legacy/sequential differential CTest and investigate every
-   mismatch, especially DCP multiplication order and batched-Z equivalence.
-2. Import at least one user-supplied production known-good and one known-bad
-   problem with expected outcomes.
-3. Extend the flat preprocessing contract with the validated pivot,
-   permutation, batched measurement-transform, and row-operation data required
-   by the device pipeline.
-4. Implement the complete per-candidate CUDA path and obtain exact CPU/GPU
-   decision and lowest-witness agreement before enabling nonempty ranges.
-5. Pass the A100 Compute Sanitizer, multi-GPU/world-size, and multi-node gates
-   in `cuda-validation.md`.
+## Native validation on duvel3
 
-## Validation completed on this host
+CUDA 11.8.89 and GCC 8.4 compile and link the real CUDA/MPI targets on `duvel3`.
+The host has three NVIDIA A30 GPUs (24 GiB each, `sm_80`) and driver
+550.163.01. CMake 3.31.10 and MPICH 5.0.2 are installed only in an isolated
+validation environment, using uv; no system packages were changed.
 
-- Release CMake/CTest with the M4RI-dependent legacy target disabled.
-- Strict C11 warnings-as-errors builds for rank, dense primitives, flat
-  packing, the CUDA-unavailable stub, the sequential verifier, and the MPI
-  orchestration translation unit.
-- AddressSanitizer and UndefinedBehaviorSanitizer runs for all six executable
-  host-side contract suites available when MPI C is installed.
-- Host-side CUDA syntax parsing with a mock runtime header.
+- The final CMake/CTest suite passes 24/24 tests, with no skips. It includes
+  the 116-fixture device differential and scheduling checks, native scientific
+  MPI tests at 1/2/3 ranks, and the actual `.run` CLI at those GPU counts.
+- CLI tests check good/bad decisions, minimum witnesses, exact checked counts,
+  checkpoint/resume and fast-any behavior against fixed synthetic fixtures.
+- `cuobjdump` confirms native `sm_80` and embedded PTX. A separate device run
+  with `CUDA_FORCE_PTX_JIT=1` passes the full device differential.
+- Compute Sanitizer memcheck, initcheck, racecheck and synccheck pass on
+  the final build. Three-rank MPI memcheck reports zero errors and zero leaks
+  on every rank. Raw logs are in
+  [the native validation record](validation/duvel3-2026-11-06/README.md).
+- The GCC build exposed an always-false allocation comparison; the MPI layer
+  now checks wire-width counts before narrowing. Removing unnecessary CUDA
+  device linking preserves the configured PTX image in the shared library.
 
-## Open environment and input gates
+## Remaining validation and optimization
 
-- No production corpus or expected production outcomes were available.
-- This macOS/Arm64 host has no CUDA compiler, NVIDIA driver, or A100, so no
-  `nvcc`, device, profiler, or Compute Sanitizer run is claimed.
-- The pinned M4RI bootstrap could not run because `autoreconf` is absent, so
-  the M4RI-gated legacy/sequential differential test has not executed here.
-- The installed Open MPI and PMIx components on this host cannot launch a
-  reliable multi-rank job.  The MPI source was compiled strictly, but runtime
-  collectives still require validation on the target Slurm system.
+No production input corpus or performance baseline was supplied. Native
+correctness evidence currently covers synthetic fixtures on one node with
+three A30s; it does not establish production outcomes, multi-node behavior,
+other GPU architectures or a speedup. Use `cuda-validation.md` for the
+remaining acceptance matrix.
+
+This is an initial candidate-parallel implementation. Warp-cooperative
+elimination, a batched-Z GPU transform and performance tuning remain future
+work, to be justified by actual GPU profiles. The benchmark record stays
+empty until measurements are available.

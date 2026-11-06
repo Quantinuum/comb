@@ -7,7 +7,7 @@
 
 #include "comb_cuda_internal.h"
 
-static comb_bit_word_t *legacy_alloc(uint64_t bit_count) {
+static comb_bit_word_t *external_alloc(uint64_t bit_count) {
   uint64_t word_count = (bit_count + sizeof(comb_bit_word_t) - 1) /
                         sizeof(comb_bit_word_t);
   if (word_count == 0) word_count = 1;
@@ -17,7 +17,7 @@ static comb_bit_word_t *legacy_alloc(uint64_t bit_count) {
   return data;
 }
 
-static void legacy_set(comb_bit_word_t *data, uint64_t bit_index) {
+static void external_set(comb_bit_word_t *data, uint64_t bit_index) {
   data[bit_index / sizeof(comb_bit_word_t)] |=
       UINT64_C(1) << (bit_index % sizeof(comb_bit_word_t));
 }
@@ -28,7 +28,7 @@ static comb_vector_t *vectors_create(uint32_t count, uint32_t width) {
   assert(vectors != NULL);
   for (uint32_t index = 0; index < count; ++index) {
     vectors[index].n = width;
-    vectors[index].data = legacy_alloc(width);
+    vectors[index].data = external_alloc(width);
   }
   return vectors;
 }
@@ -45,11 +45,11 @@ static comb_dcp_t *dcps_create(uint32_t count, uint32_t width) {
   for (uint32_t index = 0; index < count; ++index) {
     dcps[index].F.m = width;
     dcps[index].F.n = width;
-    dcps[index].F.data = legacy_alloc((uint64_t)width * width);
+    dcps[index].F.data = external_alloc((uint64_t)width * width);
     dcps[index].h_x.n = width;
-    dcps[index].h_x.data = legacy_alloc(width);
+    dcps[index].h_x.data = external_alloc(width);
     dcps[index].h_z.n = width;
-    dcps[index].h_z.data = legacy_alloc(width);
+    dcps[index].h_z.data = external_alloc(width);
   }
   return dcps;
 }
@@ -87,22 +87,22 @@ int main(void) {
   comb_vector_t *z_measurements = vectors_create(1, N_ALL);
   comb_dcp_t *logical = dcps_create(K, N_ALL);
   comb_dcp_t *output = dcps_create(OUTPUT_COUNT, N_ALL);
-  comb_bit_word_t *x_lookup = legacy_alloc(4);
-  comb_bit_word_t *z_lookup = legacy_alloc(2);
+  comb_bit_word_t *x_lookup = external_alloc(4);
+  comb_bit_word_t *z_lookup = external_alloc(2);
 
-  legacy_set(x_stabilisers[0].data, 32);
-  legacy_set(z_stabilisers[0].data, 0);
-  legacy_set(x_measurements[0].data, 64);
-  legacy_set(z_measurements[0].data, 64);
-  legacy_set(x_lookup, 0);
-  legacy_set(x_lookup, 3);
-  legacy_set(z_lookup, 0);
-  legacy_set(z_lookup, 1);
+  external_set(x_stabilisers[0].data, 32);
+  external_set(z_stabilisers[0].data, 0);
+  external_set(x_measurements[0].data, 64);
+  external_set(z_measurements[0].data, 64);
+  external_set(x_lookup, 0);
+  external_set(x_lookup, 3);
+  external_set(z_lookup, 0);
+  external_set(z_lookup, 1);
 
-  /* Row 1 begins at legacy bit 65, so this exercises a non-byte-aligned row. */
-  legacy_set(output[0].F.data, (uint64_t)N_ALL + 64);
-  legacy_set(output[0].h_x.data, 64);
-  legacy_set(logical[0].F.data, (uint64_t)2 * N_ALL + 32);
+  /* Row 1 begins at external bit 65, exercising a non-byte-aligned row. */
+  external_set(output[0].F.data, (uint64_t)N_ALL + 64);
+  external_set(output[0].h_x.data, 64);
+  external_set(logical[0].F.data, (uint64_t)2 * N_ALL + 32);
 
   comb_problem_t problem = COMB_PROBLEM_INITIALIZER;
   problem.n_all = N_ALL;
@@ -216,8 +216,8 @@ int main(void) {
     comb_vector_t *scientific_x_stabilisers = vectors_create(1, 2);
     comb_dcp_t *scientific_logical = dcps_create(1, 2);
     comb_dcp_t *scientific_output = dcps_create(1, 2);
-    comb_bit_word_t *scientific_x_lookup = legacy_alloc(2);
-    comb_bit_word_t *scientific_z_lookup = legacy_alloc(4);
+    comb_bit_word_t *scientific_x_lookup = external_alloc(2);
+    comb_bit_word_t *scientific_z_lookup = external_alloc(4);
     comb_problem_t scientific_problem = COMB_PROBLEM_INITIALIZER;
     void *scientific_blob = NULL;
     uint64_t scientific_blob_size = 0;
@@ -225,7 +225,7 @@ int main(void) {
     uint64_t *scientific_output_f;
     uint64_t *scientific_x_rows;
 
-    legacy_set(scientific_x_stabilisers[0].data, 0);
+    external_set(scientific_x_stabilisers[0].data, 0);
     scientific_problem.n_all = 2;
     scientific_problem.n = 2;
     scientific_problem.n_x = 1;

@@ -5,7 +5,7 @@
  * Dependency-free dense GF(2) correctness primitives for Comb.
  *
  * This module is deliberately independent of M4RI and CUDA.  It is intended
- * to be a small, inspectable CPU oracle for differential tests of the packed
+ * to be a small, inspectable CPU reference for differential tests of the packed
  * GPU implementation.  It covers packed matrices, phase-aware stabiliser row
  * operations, deterministic tableau elimination, sequential pure-X/pure-Z
  * postselection, and DCP multiplication.  Fault enumeration, lookup-table
@@ -144,7 +144,7 @@ typedef enum {
 
 /*
  * Sequentially postselect pure-X or pure-Z measurements onto +1.  This is the
- * direct, measurement-by-measurement oracle corresponding to dcp.c, not the
+ * direct, measurement-by-measurement reference corresponding to dcp.c, not the
  * optimized batched-Z transform.  tableau must have qubits active rows and at
  * least qubits + 1 rows of capacity.  rejected is set when -1 is forced.
  */
@@ -176,6 +176,8 @@ void comb_dense_dcp_destroy(comb_dense_dcp_t *dcp);
 /*
  * Compute c2 * c1.  The operation is alias-safe.  The phase vector is
  * h_z2 + h_z1 + F1 h_x2 + diag(F1) diag(F2), over GF(2), matching dcp.c.
+ * To mirror comb.c's dcp_mulf_right(accumulator, next_error), call
+ * comb_dense_dcp_multiply(accumulator, accumulator, next_error).
  */
 comb_dense_status_t comb_dense_dcp_multiply(comb_dense_dcp_t *result,
                                             const comb_dense_dcp_t *c2,

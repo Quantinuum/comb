@@ -1,0 +1,66 @@
+Internal ctest changing into directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+Test project /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+      Start  1: comb.rank
+ 1/24 Test  #1: comb.rank ..........................   Passed    0.01 sec
+      Start  2: comb.dense
+ 2/24 Test  #2: comb.dense .........................   Passed    0.25 sec
+      Start  3: comb.cuda_flat
+ 3/24 Test  #3: comb.cuda_flat .....................   Passed    0.00 sec
+      Start  4: comb.cuda_stub
+ 4/24 Test  #4: comb.cuda_stub .....................   Passed    0.00 sec
+      Start  5: comb.reference
+ 5/24 Test  #5: comb.reference .....................   Passed    0.01 sec
+      Start  6: comb.run_file
+ 6/24 Test  #6: comb.run_file ......................   Passed    0.01 sec
+      Start  7: comb.cuda_pipeline_host
+ 7/24 Test  #7: comb.cuda_pipeline_host ............   Passed    0.16 sec
+      Start  8: comb.cuda_math_host
+ 8/24 Test  #8: comb.cuda_math_host ................   Passed    0.79 sec
+      Start  9: comb.cuda_mpi_single_rank
+ 9/24 Test  #9: comb.cuda_mpi_single_rank ..........   Passed    0.12 sec
+      Start 10: comb.cuda_mpi_2_ranks
+10/24 Test #10: comb.cuda_mpi_2_ranks ..............   Passed    0.13 sec
+      Start 11: comb.cuda_mpi_3_ranks
+11/24 Test #11: comb.cuda_mpi_3_ranks ..............   Passed    0.13 sec
+      Start 12: comb.cuda_mpi_pipeline_1_ranks
+12/24 Test #12: comb.cuda_mpi_pipeline_1_ranks .....   Passed    0.11 sec
+      Start 13: comb.cuda_mpi_pipeline_2_ranks
+13/24 Test #13: comb.cuda_mpi_pipeline_2_ranks .....   Passed    0.12 sec
+      Start 14: comb.cuda_mpi_pipeline_3_ranks
+14/24 Test #14: comb.cuda_mpi_pipeline_3_ranks .....   Passed    0.13 sec
+      Start 15: comb.cuda_mpi_cli_help
+15/24 Test #15: comb.cuda_mpi_cli_help .............   Passed    0.09 sec
+      Start 16: comb.cuda_mpi_cli_missing_file
+16/24 Test #16: comb.cuda_mpi_cli_missing_file .....   Passed    0.13 sec
+      Start 17: comb.cuda_mpi_cli_science_host
+17/24 Test #17: comb.cuda_mpi_cli_science_host .....   Passed    0.63 sec
+      Start 18: comb.cuda_device
+18/24 Test #18: comb.cuda_device ...................   Passed    3.66 sec
+      Start 19: comb.cuda_mpi_device_1_ranks
+19/24 Test #19: comb.cuda_mpi_device_1_ranks .......   Passed    0.42 sec
+      Start 20: comb.cuda_mpi_cli_device_1_ranks
+20/24 Test #20: comb.cuda_mpi_cli_device_1_ranks ...   Passed    2.20 sec
+      Start 21: comb.cuda_mpi_device_2_ranks
+21/24 Test #21: comb.cuda_mpi_device_2_ranks .......   Passed    0.76 sec
+      Start 22: comb.cuda_mpi_cli_device_2_ranks
+22/24 Test #22: comb.cuda_mpi_cli_device_2_ranks ...   Passed    3.83 sec
+      Start 23: comb.cuda_mpi_device_3_ranks
+23/24 Test #23: comb.cuda_mpi_device_3_ranks .......   Passed    1.14 sec
+      Start 24: comb.cuda_mpi_cli_device_3_ranks
+24/24 Test #24: comb.cuda_mpi_cli_device_3_ranks ...   Passed    5.72 sec
+
+100% tests passed, 0 tests failed out of 24
+
+Label Time Summary:
+cli             =  28.55 sec*proc (5 tests)
+cuda            =  36.05 sec*proc (7 tests)
+differential    =  10.71 sec*proc (9 tests)
+gpu             =  36.05 sec*proc (7 tests)
+host            =   2.95 sec*proc (6 tests)
+mock            =   0.76 sec*proc (3 tests)
+mpi             =  35.42 sec*proc (14 tests)
+multi-rank      =   0.64 sec*proc (2 tests)
+scientific      =  39.01 sec*proc (13 tests)
+single-rank     =   0.12 sec*proc (1 test)
+
+Total Test time (real) =  20.60 sec

@@ -25,14 +25,18 @@ int main(int argv, char** args){
   set_coset_to_stabiliser_state(coset,state);
   for(int i = 0; i < 1 << COSET_K(coset); i++){
     fprintf(stderr,"%s",print_pauli_z_coset(coset,1));
-    incf_coset(coset,i);
+    if ((i + 1) != (1 << COSET_K(coset)))
+      coset->factor_transpose->data[0] ^=
+          mzd_row(coset->set_generators, gray_bit_to_switch(i))[0];
   }
   unsigned mask = 0b101;
   permute_columns(coset->factor_transpose,mask);
   permute_columns(coset->set_generators,mask);
   for(int i = 0; i < 1 << COSET_K(coset); i++){
     fprintf(stderr,"%s",print_pauli_z_coset(coset,1));
-    incf_coset(coset,i);
+    if ((i + 1) != (1 << COSET_K(coset)))
+      coset->factor_transpose->data[0] ^=
+          mzd_row(coset->set_generators, gray_bit_to_switch(i))[0];
   }
   mzd_print(coset->factor_transpose);
   printf("\n");

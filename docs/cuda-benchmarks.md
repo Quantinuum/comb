@@ -21,7 +21,7 @@ the promotion gates before optimizing the implementation.
 
 ## Required workloads
 
-| Workload | CPU | 1 A100 | 2 A100 | 4 A100 | 8 A100 | 2 nodes | 4 nodes |
+| Workload | Main CPU | 1 A100 | 2 A100 | 4 A100 | 8 A100 | 2 nodes | 4 nodes |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Paper: 824 faults | pending | pending | pending | pending | pending | pending | pending |
 | Paper: 5,619,552 pairs | pending | pending | pending | pending | pending | pending | pending |

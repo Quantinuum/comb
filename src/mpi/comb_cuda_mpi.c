@@ -52,6 +52,14 @@ static int comb_mpi_u64_multiply(uint64_t a, uint64_t b,
   return 1;
 }
 
+/* Keep the count at its wire width until this check succeeds.  Comparing a
+ * narrowed uint32_t count directly with SIZE_MAX/sizeof(T) is diagnosed as
+ * always false on 64-bit GCC, and narrowing first would lose overflow on
+ * hosts whose size_t is smaller than the wire count. */
+static int comb_mpi_allocation_fits(uint64_t count, size_t element_size) {
+  return element_size != 0 && count <= (uint64_t)(SIZE_MAX / element_size);
+}
+
 static uint64_t comb_mpi_hash_bytes(const void *data, uint64_t size) {
   const unsigned char *bytes = (const unsigned char *)data;
   uint64_t hash = UINT64_C(14695981039346656037);
@@ -196,7 +204,8 @@ static comb_cuda_mpi_status_t comb_mpi_map_device(
     }
   }
 
-  if ((size_t)local_size > SIZE_MAX / COMB_MPI_PCI_ID_BYTES) {
+  if (local_size < 0 ||
+      !comb_mpi_allocation_fits((uint64_t)local_size, COMB_MPI_PCI_ID_BYTES)) {
     local_status = COMB_CUDA_MPI_STATUS_OUT_OF_MEMORY;
   } else if (local_status == COMB_CUDA_MPI_STATUS_SUCCESS) {
     identities = (char *)calloc((size_t)local_size, COMB_MPI_PCI_ID_BYTES);
@@ -729,7 +738,7 @@ comb_cuda_mpi_status_t comb_cuda_mpi_verify_comm(
 
   if (MPI_Initialized(&mpi_initialized) != MPI_SUCCESS || !mpi_initialized ||
       MPI_Finalized(&mpi_finalized) != MPI_SUCCESS || mpi_finalized) {
-    if (comb_mpi_result_is_valid(result)) {
+    if (result != NULL && comb_mpi_result_is_valid(result)) {
       comb_mpi_result_reset(result);
       result->orchestration_status =
           COMB_CUDA_MPI_STATUS_MPI_NOT_INITIALIZED;
@@ -737,7 +746,7 @@ comb_cuda_mpi_status_t comb_cuda_mpi_verify_comm(
     return COMB_CUDA_MPI_STATUS_MPI_NOT_INITIALIZED;
   }
   if (communicator == MPI_COMM_NULL) {
-    if (comb_mpi_result_is_valid(result)) {
+    if (result != NULL && comb_mpi_result_is_valid(result)) {
       comb_mpi_result_reset(result);
       result->orchestration_status = COMB_CUDA_MPI_STATUS_INVALID_ARGUMENT;
     }
@@ -746,7 +755,7 @@ comb_cuda_mpi_status_t comb_cuda_mpi_verify_comm(
 
   mpi_error = MPI_Comm_dup(communicator, &work_communicator);
   if (mpi_error != MPI_SUCCESS) {
-    if (comb_mpi_result_is_valid(result)) {
+    if (result != NULL && comb_mpi_result_is_valid(result)) {
       comb_mpi_result_reset(result);
       result->orchestration_status = COMB_CUDA_MPI_STATUS_MPI_ERROR;
       result->mpi_error_code = mpi_error;
@@ -884,7 +893,7 @@ comb_cuda_mpi_status_t comb_cuda_mpi_verify_comm(
     goto cleanup;
   }
   if (flat_blob_size < sizeof(comb_cuda_flat_problem_t) ||
-      flat_blob_size > (uint64_t)SIZE_MAX) {
+      !comb_mpi_allocation_fits(flat_blob_size, 1)) {
     local_status = COMB_CUDA_MPI_STATUS_INTERNAL_ERROR;
   } else if (world_rank != 0) {
     flat_blob = malloc((size_t)flat_blob_size);
@@ -947,7 +956,7 @@ comb_cuda_mpi_status_t comb_cuda_mpi_verify_comm(
     s = flat->s;
   }
   if (s > (uint32_t)INT_MAX ||
-      (size_t)s > SIZE_MAX / sizeof(*chunk_faults)) {
+      !comb_mpi_allocation_fits((uint64_t)s, sizeof(*chunk_faults))) {
     global_cuda_status = COMB_CUDA_STATUS_PROBLEM_TOO_LARGE;
     local_status = COMB_CUDA_MPI_STATUS_CUDA_ERROR;
     goto cleanup;

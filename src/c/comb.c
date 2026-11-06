@@ -3,6 +3,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <time.h>
+#include <unistd.h>
 #include <omp.h>
 int dcp_fault_bad_p_css(
                         dcp_t *error, mzd_t* C_z, mzd_t *C_z_transpose, mzd_t *C_x, mzd_t *C_x_transpose, mzd_t *P_x,
@@ -290,10 +291,11 @@ comb_code_t __do_verify_css_magic_state(
       // chunk->faults_to_check_count--;
       chunk->faults_already_checked++;
 #ifndef DRY_RUN
-      // Multiply DCP errors together. TODO verify that order is correct
+      // Match the main CPU contract: accumulate errors in selected-tuple order
+      // by right-multiplying each successive error, E_1 E_2 ... E_s.
       set_dcp_to(current_dcp_output_combination,
                  &(output_errors[chunk->current_combination[0]]));
-      for (int i = 1; i < s; i++) { // later faults occur earlier (to the left) in the product.
+      for (int i = 1; i < s; i++) {
         #if 0
         if(current_combination[i] <= chunk->current_combination[i-1]){
           printf("invalid combination: %d <= %d, fault counter %lld\n", chunk->current_combination[i],
@@ -304,7 +306,6 @@ comb_code_t __do_verify_css_magic_state(
           exit(1);
         }
         #endif
-        //dcp_mulf_left(&(output_errors[current_combination[i]]), current_dcp_output_combination);
 	dcp_mulf_right(current_dcp_output_combination, &(output_errors[chunk->current_combination[i]]));
       }
       // output errors multiplied. now, multiply by all combinations of logical
@@ -318,9 +319,9 @@ comb_code_t __do_verify_css_magic_state(
         //
         for (int i = 0; i < k && !good_combination_found; i++) {
           if (dcp_index & (1 << i)) {
-            // multiply the output error on the right by dcp stabilisers
+            // Match the main CPU implementation: left-multiply the output
+            // error by each selected logical stabiliser.
             lwlog_info("multiplying error by logical stabiliser");
-            //dcp_mulf_right(error_with_stabilisers, &(dcp_stabilisers[i]));
             dcp_mulf_left(&(dcp_stabilisers[i]), error_with_stabilisers);
 	  }
         }

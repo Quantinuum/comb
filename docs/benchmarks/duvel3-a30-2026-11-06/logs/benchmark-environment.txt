@@ -1,0 +1,45 @@
+Fri Nov  6 06:07:33 UTC 2026
+Linux duvel3 5.4.0-216-generic #236-Ubuntu SMP Fri Apr 11 19:53:21 UTC 2025 x86_64 x86_64 x86_64 GNU/Linux
+Architecture:                       x86_64
+CPU op-mode(s):                     32-bit, 64-bit
+Byte Order:                         Little Endian
+Address sizes:                      46 bits physical, 57 bits virtual
+CPU(s):                             64
+On-line CPU(s) list:                0-63
+Thread(s) per core:                 2
+Core(s) per socket:                 16
+Socket(s):                          2
+NUMA node(s):                       2
+Vendor ID:                          GenuineIntel
+CPU family:                         6
+Model:                              106
+Model name:                         Intel(R) Xeon(R) Gold 6326 CPU @ 2.90GHz
+Stepping:                           6
+CPU MHz:                            800.222
+BogoMIPS:                           5800.00
+Virtualization:                     VT-x
+L1d cache:                          1.5 MiB
+L1i cache:                          1 MiB
+L2 cache:                           40 MiB
+L3 cache:                           48 MiB
+nvcc: NVIDIA (R) Cuda compiler driver
+Copyright (c) 2005-2022 NVIDIA Corporation
+Built on Wed_Sep_21_10:33:58_PDT_2022
+Cuda compilation tools, release 11.8, V11.8.89
+Build cuda_11.8.r11.8/compiler.31833905_0
+gcc (Ubuntu 8.4.0-3ubuntu2) 8.4.0
+HYDRA build details:
+    Version:                                 5.0.2
+    Release Date:                            Fri Sep 25 20:45:26 UTC 2026
+    CC:                              cc
+    Configure options:                       --with-device=ch4:ucx,ofi --with-pm=hydra:gforker
+    Process Manager:                         pmi
+    Launchers available:                     ssh rsh fork slurm ll lsf sge manual persist
+index, uuid, name, memory.used [MiB], utilization.gpu [%], temperature.gpu, pstate
+0, GPU-afad1bc4-aa63-d850-276f-6a9fd77b0926, NVIDIA A30, 15725 MiB, 0 %, 31, P0
+1, GPU-20efb670-302c-0023-2871-0bfbf6a59d5d, NVIDIA A30, 17 MiB, 0 %, 30, P0
+2, GPU-f2525f18-a9e3-b31f-d7ca-8371053fbc6c, NVIDIA A30, 17 MiB, 0 %, 31, P0
+39025919cc37e59b8c657d193b972f5fcac4cf8c15196f8dacc456aebf713919  native-mpi/comb-mpi
+ac5646df02fb91c19bcec8a7cd39257ab33e001e0430692188aeb2c4a889f075  build-gpu-release/comb-cuda-mpi
+1b17cf9716fd61f4f6e0ef722e3e2eeb96b3589939ca0831f1afa5962da7fe18  build-gpu-release/libcomb_cuda.so
+c9c20ef83410583352f89ece7717cfd8b5145e80fb8d75f1b029891a7266c7b1  run_comparison.py

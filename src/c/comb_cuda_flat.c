@@ -41,19 +41,19 @@ static uint64_t tail_mask_u64(uint64_t bit_count) {
   return tail == 0 ? UINT64_MAX : (UINT64_C(1) << tail) - 1;
 }
 
-static uint32_t legacy_bit(const comb_bit_word_t *data, uint64_t bit_index) {
+static uint32_t external_bit(const comb_bit_word_t *data, uint64_t bit_index) {
   return (uint32_t)((data[bit_index / sizeof(comb_bit_word_t)] >>
                      (bit_index % sizeof(comb_bit_word_t))) &
                     UINT64_C(1));
 }
 
-static void pack_legacy_bits(const comb_bit_word_t *source,
-                             uint64_t source_bit_begin, uint64_t bit_count,
-                             uint64_t *destination) {
+static void pack_external_bits(const comb_bit_word_t *source,
+                               uint64_t source_bit_begin, uint64_t bit_count,
+                               uint64_t *destination) {
   const uint64_t word_count = (bit_count + 63) / 64;
   memset(destination, 0, (size_t)(word_count * sizeof(uint64_t)));
   for (uint64_t bit = 0; bit < bit_count; ++bit) {
-    if (legacy_bit(source, source_bit_begin + bit) != 0) {
+    if (external_bit(source, source_bit_begin + bit) != 0) {
       destination[bit / 64] |= UINT64_C(1) << (bit & UINT64_C(63));
     }
   }
@@ -209,8 +209,8 @@ static comb_cuda_status_t append_vector_rows(flat_builder_t *builder,
   if (status != COMB_CUDA_STATUS_SUCCESS || row_count == 0) return status;
   uint64_t *destination = (uint64_t *)(builder->data + *offset);
   for (uint32_t row = 0; row < row_count; ++row) {
-    pack_legacy_bits(vectors[row].data, 0, bit_count,
-                     destination + (uint64_t)row * words);
+    pack_external_bits(vectors[row].data, 0, bit_count,
+                       destination + (uint64_t)row * words);
   }
   return COMB_CUDA_STATUS_SUCCESS;
 }
@@ -225,8 +225,8 @@ static comb_cuda_status_t append_lookup(flat_builder_t *builder,
   }
   comb_cuda_status_t status = builder_append(builder, byte_count, offset);
   if (status != COMB_CUDA_STATUS_SUCCESS) return status;
-  pack_legacy_bits(lookup, 0, bit_count,
-                   (uint64_t *)(builder->data + *offset));
+  pack_external_bits(lookup, 0, bit_count,
+                     (uint64_t *)(builder->data + *offset));
   return COMB_CUDA_STATUS_SUCCESS;
 }
 
@@ -259,13 +259,13 @@ static comb_cuda_status_t append_dcp_soa(
   uint64_t *flat_hz = (uint64_t *)(builder->data + *hz_offset);
   for (uint32_t index = 0; index < count; ++index) {
     for (uint32_t row = 0; row < n_all; ++row) {
-      pack_legacy_bits(dcps[index].F.data, (uint64_t)row * n_all, n_all,
-                       flat_f + ((uint64_t)index * n_all + row) * words);
+      pack_external_bits(dcps[index].F.data, (uint64_t)row * n_all, n_all,
+                         flat_f + ((uint64_t)index * n_all + row) * words);
     }
-    pack_legacy_bits(dcps[index].h_x.data, 0, n_all,
-                     flat_hx + (uint64_t)index * words);
-    pack_legacy_bits(dcps[index].h_z.data, 0, n_all,
-                     flat_hz + (uint64_t)index * words);
+    pack_external_bits(dcps[index].h_x.data, 0, n_all,
+                       flat_hx + (uint64_t)index * words);
+    pack_external_bits(dcps[index].h_z.data, 0, n_all,
+                       flat_hz + (uint64_t)index * words);
   }
   return COMB_CUDA_STATUS_SUCCESS;
 }
@@ -754,7 +754,7 @@ comb_cuda_status_t comb_cuda_flat_problem_validate_science(
    * C_x = [M; E_pivot].  Require C_z C_x^T = I explicitly: the measurement
    * Gram matrix is identity, measurements commute with S_z, and no
    * measurement occupies an S_z pivot.  This rejects the unsupported general
-   * parity inputs called out by the legacy implementation. */
+   * parity inputs called out by the main CPU implementation. */
   z_measurements =
       (const uint64_t *)(bytes + header->z_measurements_offset);
   for (z = 0U; z < header->z_measurement_count; ++z) {

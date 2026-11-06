@@ -1,0 +1,95 @@
+[  1%] Building C object CMakeFiles/comb_run_file.dir/src/mpi/comb_run_file.c.o
+[  5%] Building C object CMakeFiles/comb_rank_test.dir/src/c/comb_rank.c.o
+[  5%] Building C object CMakeFiles/comb_dense_test.dir/src/c/comb_dense.c.o
+[  5%] Building C object CMakeFiles/comb_cuda_flat_test.dir/src/c/comb_cuda_flat.c.o
+[  6%] Building C object CMakeFiles/comb_rank_test.dir/test/test_comb_rank.c.o
+[  8%] Linking C static library libcomb_run_file.a
+[  8%] Built target comb_run_file
+[  9%] Building C object CMakeFiles/comb_cuda_stub_test.dir/src/c/comb_cuda_stub.c.o
+[ 10%] Building C object CMakeFiles/comb_cuda_stub_test.dir/src/c/comb_cuda_flat.c.o
+[ 12%] Linking C executable comb_rank_test
+[ 12%] Built target comb_rank_test
+[ 13%] Building C object CMakeFiles/comb_reference_test.dir/src/c/comb_reference.c.o
+[ 14%] Building C object CMakeFiles/comb_dense_test.dir/test/test_comb_dense.c.o
+[ 16%] Building C object CMakeFiles/comb_cuda_flat_test.dir/test/test_comb_cuda_flat.c.o
+[ 17%] Linking C executable comb_cuda_flat_test
+[ 17%] Built target comb_cuda_flat_test
+[ 18%] Building C object CMakeFiles/comb_run_file_test.dir/src/c/comb_cuda_flat.c.o
+[ 20%] Building C object CMakeFiles/comb_cuda_stub_test.dir/test/test_comb_cuda_stub.c.o
+[ 21%] Building C object CMakeFiles/comb_reference_test.dir/src/c/comb_cuda_flat.c.o
+[ 22%] Linking C executable comb_dense_test
+[ 24%] Linking C executable comb_cuda_stub_test
+[ 24%] Built target comb_dense_test
+[ 24%] Built target comb_cuda_stub_test
+[ 25%] Building C object CMakeFiles/comb_cuda_cli_fixture_writer.dir/test/write_comb_cuda_cli_fixture.c.o
+[ 26%] Building C object CMakeFiles/comb_cuda_pipeline_test.dir/src/c/comb_cuda_preprocess.c.o
+[ 28%] Linking C executable comb_cuda_cli_fixture_writer
+[ 28%] Built target comb_cuda_cli_fixture_writer
+[ 29%] Building C object CMakeFiles/comb_cuda_pipeline_test.dir/src/c/comb_cuda_flat.c.o
+[ 30%] Building C object CMakeFiles/comb_cuda_math_test.dir/src/c/comb_dense.c.o
+[ 32%] Building C object CMakeFiles/comb_run_file_test.dir/test/test_comb_run_file.c.o
+[ 33%] Building C object CMakeFiles/comb_reference_test.dir/src/c/comb_dense.c.o
+[ 34%] Linking C executable comb_run_file_test
+[ 34%] Built target comb_run_file_test
+[ 36%] Building C object CMakeFiles/comb_cuda_mpi_single_rank_test.dir/src/mpi/comb_cuda_mpi.c.o
+[ 37%] Building C object CMakeFiles/comb_cuda_math_test.dir/test/test_comb_cuda_math.c.o
+[ 38%] Building C object CMakeFiles/comb_cuda_pipeline_test.dir/src/c/comb_dense.c.o
+[ 40%] Building C object CMakeFiles/comb_reference_test.dir/src/c/comb_rank.c.o
+[ 41%] Building C object CMakeFiles/comb_reference_test.dir/test/test_comb_reference.c.o
+[ 42%] Building C object CMakeFiles/comb_cuda_mpi_single_rank_test.dir/src/c/comb_cuda_flat.c.o
+[ 44%] Building C object CMakeFiles/comb_cuda_pipeline_test.dir/src/c/comb_rank.c.o
+[ 45%] Building C object CMakeFiles/comb_cuda_pipeline_test.dir/src/c/comb_reference.c.o
+[ 46%] Linking C executable comb_reference_test
+[ 46%] Built target comb_reference_test
+[ 48%] Building C object CMakeFiles/comb_cuda_mpi_multi_rank_test.dir/src/mpi/comb_cuda_mpi.c.o
+[ 49%] Building C object CMakeFiles/comb_cuda_mpi_single_rank_test.dir/test/test_comb_cuda_mpi_single_rank.c.o
+[ 50%] Linking C executable comb_cuda_math_test
+[ 50%] Built target comb_cuda_math_test
+[ 52%] Building C object CMakeFiles/comb_cuda_host_test_backend.dir/test/comb_cuda_host_test_backend.c.o
+[ 53%] Building C object CMakeFiles/comb_cuda_pipeline_test.dir/test/test_comb_cuda_pipeline.c.o
+[ 54%] Linking C executable comb_cuda_mpi_single_rank_test
+[ 54%] Built target comb_cuda_mpi_single_rank_test
+[ 56%] Building CUDA object CMakeFiles/comb_cuda.dir/src/c/comb_cuda.cu.o
+[ 57%] Building C object CMakeFiles/comb_cuda_mpi_multi_rank_test.dir/src/c/comb_cuda_flat.c.o
+[ 58%] Building C object CMakeFiles/comb_cuda_mpi_multi_rank_test.dir/test/test_comb_cuda_mpi_multi_rank.c.o
+[ 60%] Building C object CMakeFiles/comb_cuda_host_test_backend.dir/src/c/comb_cuda_preprocess.c.o
+[ 61%] Linking C executable comb_cuda_mpi_multi_rank_test
+[ 62%] Building C object CMakeFiles/comb_cuda_host_test_backend.dir/src/c/comb_cuda_flat.c.o
+[ 62%] Built target comb_cuda_mpi_multi_rank_test
+[ 64%] Building C object CMakeFiles/comb_cuda.dir/src/c/comb_cuda_preprocess.c.o
+[ 65%] Linking C executable comb_cuda_pipeline_test
+[ 65%] Built target comb_cuda_pipeline_test
+[ 66%] Building C object CMakeFiles/comb_cuda.dir/src/c/comb_cuda_flat.c.o
+[ 68%] Linking C static library libcomb_cuda_host_test_backend.a
+[ 68%] Built target comb_cuda_host_test_backend
+[ 69%] Building C object CMakeFiles/comb_cuda_mpi_cli_test.dir/src/mpi/main.c.o
+[ 70%] Building C object CMakeFiles/comb_cuda_mpi_pipeline_test.dir/src/mpi/comb_cuda_mpi.c.o
+[ 72%] Building C object CMakeFiles/comb_cuda_mpi_pipeline_test.dir/src/c/comb_reference.c.o
+[ 73%] Building C object CMakeFiles/comb_cuda_mpi_cli_test.dir/src/mpi/comb_cuda_mpi.c.o
+[ 74%] Building C object CMakeFiles/comb_cuda_mpi_pipeline_test.dir/src/c/comb_dense.c.o
+[ 76%] Building C object CMakeFiles/comb_cuda_mpi_pipeline_test.dir/src/c/comb_rank.c.o
+[ 77%] Linking C executable comb_cuda_mpi_cli_test
+[ 78%] Building C object CMakeFiles/comb_cuda_mpi_pipeline_test.dir/test/test_comb_cuda_mpi_pipeline.c.o
+[ 78%] Built target comb_cuda_mpi_cli_test
+[ 80%] Linking C executable comb_cuda_mpi_pipeline_test
+[ 80%] Built target comb_cuda_mpi_pipeline_test
+[ 81%] Linking CUDA shared library libcomb_cuda.so
+[ 81%] Built target comb_cuda
+[ 82%] Building C object CMakeFiles/comb_cuda_device_test.dir/src/c/comb_reference.c.o
+[ 84%] Building C object CMakeFiles/comb_cuda_mpi.dir/src/mpi/comb_cuda_mpi.c.o
+[ 85%] Building C object CMakeFiles/comb_cuda_device_test.dir/src/c/comb_dense.c.o
+[ 86%] Building C object CMakeFiles/comb_cuda_device_test.dir/src/c/comb_rank.c.o
+[ 88%] Building C object CMakeFiles/comb_cuda_device_test.dir/test/test_comb_cuda_pipeline.c.o
+[ 89%] Linking C executable comb_cuda_device_test
+[ 90%] Linking C static library libcomb_cuda_mpi.a
+[ 90%] Built target comb_cuda_mpi
+[ 92%] Building C object CMakeFiles/comb-cuda-mpi.dir/src/mpi/main.c.o
+[ 93%] Building C object CMakeFiles/comb_cuda_mpi_device_test.dir/test/test_comb_cuda_mpi_pipeline.c.o
+[ 94%] Building C object CMakeFiles/comb_cuda_mpi_device_test.dir/src/c/comb_reference.c.o
+[ 94%] Built target comb_cuda_device_test
+[ 96%] Building C object CMakeFiles/comb_cuda_mpi_device_test.dir/src/c/comb_dense.c.o
+[ 97%] Linking C executable comb-cuda-mpi
+[ 98%] Building C object CMakeFiles/comb_cuda_mpi_device_test.dir/src/c/comb_rank.c.o
+[ 98%] Built target comb-cuda-mpi
+[100%] Linking C executable comb_cuda_mpi_device_test
+[100%] Built target comb_cuda_mpi_device_test

@@ -4,8 +4,8 @@
 /**
  * \file comb_cuda.h
  *
- * Additive CUDA interface for Comb.  This header does not change the legacy
- * CPU ABI in comb_external.h.  Every input pointer in comb_problem_t is
+ * Additive CUDA interface for Comb.  This header does not change the main CPU
+ * ABI in comb_external.h.  Every input pointer in comb_problem_t is
  * non-owning and only needs to remain valid until comb_cuda_context_create
  * returns; the context owns its normalized host and device copies.
  */
@@ -39,7 +39,7 @@ typedef enum {
 typedef enum {
   /** Use the policy stored in comb_cuda_options_t. */
   COMB_CUDA_WITNESS_DEFAULT = 0,
-  /** Complete an epoch and return its smallest bad global rank. */
+  /** Complete the requested range and return its smallest bad global rank. */
   COMB_CUDA_WITNESS_DETERMINISTIC = 1,
   /** Permit early termination after any independently valid bad witness. */
   COMB_CUDA_WITNESS_FAST_ANY = 2
@@ -48,7 +48,7 @@ typedef enum {
 /**
  * Versioned, non-owning description of one verification problem.
  *
- * Lookup-table lengths are explicit because the legacy CPU entry point cannot
+ * Lookup-table lengths are explicit because the main CPU entry point cannot
  * validate the allocation behind a raw pointer.  Lengths are in logical bits,
  * not bytes or comb_bit_word_t elements.
  */

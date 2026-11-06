@@ -6,10 +6,33 @@ zero packs the non-owning `comb_problem_t` once, broadcasts the versioned flat
 blob in chunks no larger than `INT_MAX`, and every rank validates that blob and
 creates its own `comb_cuda_context_t`.
 
-There is no generic problem-file parser in Comb.  Consequently this directory
-does not provide a standalone executable that pretends to load a production
-problem.  An embedding application must construct the same `comb_problem_t`
-that it would pass to the CUDA API and call:
+The `comb-cuda-mpi` executable reads the same native-endian `.run` files as
+[the MPI branch](https://github.com/Quantinuum/comb/tree/8dd5ce7).
+Rank zero reads the file and broadcasts the immutable problem; other ranks do
+not need access to the input path. The decoder checks dimensions, truncation,
+and trailing bytes before any GPU work. It preserves the historic external
+bit representation (eight logical bits per `uint64_t`) before the flat packer
+converts it to dense device words. Native-endian `.run` files must be generated
+on a host with the same byte order.
+
+```bash
+cmake -S . -B build-cuda -DCOMB_BUILD_CPU=OFF \
+  -DCOMB_ENABLE_CUDA=ON -DCOMB_ENABLE_MPI=ON \
+  -DCMAKE_CUDA_ARCHITECTURES=80
+cmake --build build-cuda -j
+mpiexec -n 3 build-cuda/comb-cuda-mpi input.run \
+  --epoch-size 1048576 --chunk-size 16384
+```
+
+Use the architecture of the target GPUs in place of `80` for other NVIDIA
+hardware. `--checkpoint PATH --resume` resumes a prior checkpoint;
+`--checkpoint PATH` starts a new run and saves completed epochs. Optional
+`--fast-any` permits earlier termination, and `--scratch-bytes N` bounds the
+per-GPU working storage. Exit codes preserve `comb_code_t`: zero means all
+faults are good, one means a bad witness was found, and other values report an
+input or runtime failure.
+
+An embedding application may also construct a `comb_problem_t` directly:
 
 ```c
 MPI_Init(&argc, &argv);
@@ -50,7 +73,8 @@ Fast-any mode processes a configurable number of chunks per rank between
 so at most one polling group of extra work is expected after a witness is
 visible globally.  A final blocking reduction selects one valid rank from the
 work actually completed.  The result need not be the globally earliest bad
-rank, and must be reproduced independently with the CPU oracle.
+rank, and must be reproduced independently with the merged `main` CPU
+implementation, which is the compatibility oracle.
 
 Both modes sum checked counts and reduce CUDA status across all ranks.  Only
 the owner of the selected rank contributes the decoded fault tuple; that tuple
@@ -111,5 +135,49 @@ and epoch boundaries remain unchanged.
   Slurm partition.
 
 See `scripts/slurm/comb-cuda-mpi.sbatch` for a one-rank-per-A100 launch
-template.  The executable referenced there is application supplied and must
-perform production problem loading before invoking this API.
+template. For example:
+
+```bash
+COMB_MPI_EXECUTABLE="$PWD/build-cuda/comb-cuda-mpi" \
+  sbatch scripts/slurm/comb-cuda-mpi.sbatch input.run --checkpoint progress.chk
+```
+
+## Relationship to the MPI branch
+
+The source studied is MPI commit `8dd5ce7` (`MPI`). It uses a rank-zero work
+coordinator and OpenMP worker threads, requiring `MPI_THREAD_MULTIPLE`.
+Workers request CPU chunks and abort the whole MPI job on the first bad
+candidate. The CUDA implementation runs disjoint candidate ranges on each
+rank's GPU, uses `MPI_THREAD_FUNNELED`, and returns a collective result and a
+decoded witness through the normal API. Complete deterministic epochs make
+the minimum witness rank independent of process scheduling.
+
+The scientific computation belongs to the CUDA backend. The MPI mock tests
+exercise scheduling, count reduction, witness ownership, device placement,
+and error propagation; they do not validate GPU arithmetic. Native GPU
+validation must compare real CUDA decisions and witnesses with the CPU
+reference and run Compute Sanitizer on the target system.
+
+## Native GPU tests
+
+On a host with three allocated GPUs, enable the additional native tests:
+
+```bash
+cmake -S . -B build-cuda -DCOMB_BUILD_CPU=OFF \
+  -DCOMB_ENABLE_CUDA=ON -DCOMB_ENABLE_MPI=ON \
+  -DCOMB_BUILD_CUDA_MPI_TESTS=ON
+cmake --build build-cuda --parallel
+CUDA_VISIBLE_DEVICES=0,1,2 ctest --test-dir build-cuda --output-on-failure
+```
+
+`COMB_CUDA_MPI_TEST_RANKS` defaults to `1;2;3`; set it to `1` for one allocated
+GPU. The native tests compare real CUDA decisions, minimum witnesses and
+counts with the reference and run the actual `.run` launcher through good,
+bad, checkpoint/resume and fast-any cases. These opt-in tests require their
+requested GPUs and fail if those devices are unavailable. Host mock tests
+remain separately labeled.
+
+The initial native validation on `duvel3` used three A30 GPUs, CUDA 11.8 and
+MPICH 5.0.2. All 24 tests passed. See
+[the validation record](../../docs/validation/duvel3-2026-11-06/README.md) for
+commands, sanitizer evidence and remaining production/performance limits.

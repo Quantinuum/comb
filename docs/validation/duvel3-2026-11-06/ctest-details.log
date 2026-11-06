@@ -1,0 +1,405 @@
+Start testing: Nov 06 05:33 UTC
+----------------------------------------------------------
+1/24 Testing: comb.rank
+1/24 Test: comb.rank
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_rank_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.rank" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+comb_rank: all tests passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"comb.rank" end time: Nov 06 05:33 UTC
+"comb.rank" time elapsed: 00:00:00
+----------------------------------------------------------
+
+2/24 Testing: comb.dense
+2/24 Test: comb.dense
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_dense_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.dense" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+comb_dense: all deterministic and randomized checks passed
+<end of output>
+Test time =   0.25 sec
+----------------------------------------------------------
+Test Passed.
+"comb.dense" end time: Nov 06 05:33 UTC
+"comb.dense" time elapsed: 00:00:00
+----------------------------------------------------------
+
+3/24 Testing: comb.cuda_flat
+3/24 Test: comb.cuda_flat
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_flat_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_flat" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_flat" end time: Nov 06 05:33 UTC
+"comb.cuda_flat" time elapsed: 00:00:00
+----------------------------------------------------------
+
+4/24 Testing: comb.cuda_stub
+4/24 Test: comb.cuda_stub
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_stub_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_stub" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+comb_cuda_stub: all tests passed
+<end of output>
+Test time =   0.00 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_stub" end time: Nov 06 05:33 UTC
+"comb.cuda_stub" time elapsed: 00:00:00
+----------------------------------------------------------
+
+5/24 Testing: comb.reference
+5/24 Test: comb.reference
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_reference_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.reference" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+comb_reference: sequential reference checks passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"comb.reference" end time: Nov 06 05:33 UTC
+"comb.reference" time elapsed: 00:00:00
+----------------------------------------------------------
+
+6/24 Testing: comb.run_file
+6/24 Test: comb.run_file
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_run_file_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.run_file" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Legacy .run parser: compatible bit layout and invalid-input checks passed
+<end of output>
+Test time =   0.01 sec
+----------------------------------------------------------
+Test Passed.
+"comb.run_file" end time: Nov 06 05:33 UTC
+"comb.run_file" time elapsed: 00:00:00
+----------------------------------------------------------
+
+7/24 Testing: comb.cuda_pipeline_host
+7/24 Test: comb.cuda_pipeline_host
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_pipeline_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_pipeline_host" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+comb CUDA scientific functions on host: 116 differential fixtures passed
+<end of output>
+Test time =   0.16 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_pipeline_host" end time: Nov 06 05:33 UTC
+"comb.cuda_pipeline_host" time elapsed: 00:00:00
+----------------------------------------------------------
+
+8/24 Testing: comb.cuda_math_host
+8/24 Test: comb.cuda_math_host
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_math_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_math_host" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+CUDA arithmetic host differentials passed (1, 63, 64, 65, 129 qubits)
+<end of output>
+Test time =   0.79 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_math_host" end time: Nov 06 05:33 UTC
+"comb.cuda_math_host" time elapsed: 00:00:00
+----------------------------------------------------------
+
+9/24 Testing: comb.cuda_mpi_single_rank
+9/24 Test: comb.cuda_mpi_single_rank
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_single_rank_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_single_rank" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+single-rank MPI orchestration mock tests passed
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_single_rank" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_single_rank" time elapsed: 00:00:00
+----------------------------------------------------------
+
+10/24 Testing: comb.cuda_mpi_2_ranks
+10/24 Test: comb.cuda_mpi_2_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-n" "2" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_multi_rank_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_2_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Multi-rank MPI scheduling, witnesses, and failures passed
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_2_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_2_ranks" time elapsed: 00:00:00
+----------------------------------------------------------
+
+11/24 Testing: comb.cuda_mpi_3_ranks
+11/24 Test: comb.cuda_mpi_3_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-n" "3" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_multi_rank_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_3_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Multi-rank MPI scheduling, witnesses, and failures passed
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_3_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_3_ranks" time elapsed: 00:00:00
+----------------------------------------------------------
+
+12/24 Testing: comb.cuda_mpi_pipeline_1_ranks
+12/24 Test: comb.cuda_mpi_pipeline_1_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-n" "1" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_pipeline_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_pipeline_1_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Distributed candidate code matches scientific reference (host execution): 2 good and 10 bad cases
+<end of output>
+Test time =   0.11 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_pipeline_1_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_pipeline_1_ranks" time elapsed: 00:00:00
+----------------------------------------------------------
+
+13/24 Testing: comb.cuda_mpi_pipeline_2_ranks
+13/24 Test: comb.cuda_mpi_pipeline_2_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-n" "2" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_pipeline_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_pipeline_2_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Distributed candidate code matches scientific reference (host execution): 2 good and 10 bad cases
+<end of output>
+Test time =   0.12 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_pipeline_2_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_pipeline_2_ranks" time elapsed: 00:00:00
+----------------------------------------------------------
+
+14/24 Testing: comb.cuda_mpi_pipeline_3_ranks
+14/24 Test: comb.cuda_mpi_pipeline_3_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-n" "3" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_pipeline_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_pipeline_3_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Distributed candidate code matches scientific reference (host execution): 2 good and 10 bad cases
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_pipeline_3_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_pipeline_3_ranks" time elapsed: 00:00:00
+----------------------------------------------------------
+
+15/24 Testing: comb.cuda_mpi_cli_help
+15/24 Test: comb.cuda_mpi_cli_help
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_cli_test" "--help"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_cli_help" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Usage: comb-cuda-mpi input.run [--fast-any] [--epoch-size N]
+       [--chunk-size N] [--scratch-bytes N] [--checkpoint PATH] [--resume]
+Run with mpiexec or srun, with one MPI rank per NVIDIA GPU.
+<end of output>
+Test time =   0.09 sec
+----------------------------------------------------------
+Test Pass Reason:
+Required regular expression found. Regex=[Usage: comb-cuda-mpi]
+"comb.cuda_mpi_cli_help" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_cli_help" time elapsed: 00:00:00
+----------------------------------------------------------
+
+16/24 Testing: comb.cuda_mpi_cli_missing_file
+16/24 Test: comb.cuda_mpi_cli_missing_file
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/lib/python3.8/site-packages/cmake/data/bin/cmake" "-DPROGRAM=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_cli_test" "-DMPIEXEC=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-DNUMPROC_FLAG=-n" "-DPREFLAGS=" "-DPOSTFLAGS=" "-P" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/test/check_comb_cuda_cli.cmake"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_cli_missing_file" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.13 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_cli_missing_file" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_cli_missing_file" time elapsed: 00:00:00
+----------------------------------------------------------
+
+17/24 Testing: comb.cuda_mpi_cli_science_host
+17/24 Test: comb.cuda_mpi_cli_science_host
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/lib/python3.8/site-packages/cmake/data/bin/cmake" "-DPROGRAM=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_cli_test" "-DFIXTURE_WRITER=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_cli_fixture_writer" "-DWORKDIR=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/testdata/cli_host" "-DMPIEXEC=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-DNUMPROC_FLAG=-n" "-DRANKS=2" "-DPREFLAGS=" "-DPOSTFLAGS=" "-P" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/test/check_comb_cuda_cli_science.cmake"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_cli_science_host" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   0.63 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_cli_science_host" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_cli_science_host" time elapsed: 00:00:00
+----------------------------------------------------------
+
+18/24 Testing: comb.cuda_device
+18/24 Test: comb.cuda_device
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_device_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_device" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+comb CUDA device: 116 exhaustive differential fixtures passed
+<end of output>
+Test time =   3.66 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_device" end time: Nov 06 05:33 UTC
+"comb.cuda_device" time elapsed: 00:00:03
+----------------------------------------------------------
+
+19/24 Testing: comb.cuda_mpi_device_1_ranks
+19/24 Test: comb.cuda_mpi_device_1_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-n" "1" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_device_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_device_1_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Native CUDA MPI matches scientific reference: 2 good and 10 bad cases
+<end of output>
+Test time =   0.42 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_device_1_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_device_1_ranks" time elapsed: 00:00:00
+----------------------------------------------------------
+
+20/24 Testing: comb.cuda_mpi_cli_device_1_ranks
+20/24 Test: comb.cuda_mpi_cli_device_1_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/lib/python3.8/site-packages/cmake/data/bin/cmake" "-DPROGRAM=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb-cuda-mpi" "-DFIXTURE_WRITER=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_cli_fixture_writer" "-DWORKDIR=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/testdata/cli_gpu_1" "-DMPIEXEC=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-DNUMPROC_FLAG=-n" "-DRANKS=1" "-DPREFLAGS=" "-DPOSTFLAGS=" "-P" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/test/check_comb_cuda_cli_science.cmake"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_cli_device_1_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   2.20 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_cli_device_1_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_cli_device_1_ranks" time elapsed: 00:00:02
+----------------------------------------------------------
+
+21/24 Testing: comb.cuda_mpi_device_2_ranks
+21/24 Test: comb.cuda_mpi_device_2_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-n" "2" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_device_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_device_2_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Native CUDA MPI matches scientific reference: 2 good and 10 bad cases
+<end of output>
+Test time =   0.76 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_device_2_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_device_2_ranks" time elapsed: 00:00:00
+----------------------------------------------------------
+
+22/24 Testing: comb.cuda_mpi_cli_device_2_ranks
+22/24 Test: comb.cuda_mpi_cli_device_2_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/lib/python3.8/site-packages/cmake/data/bin/cmake" "-DPROGRAM=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb-cuda-mpi" "-DFIXTURE_WRITER=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_cli_fixture_writer" "-DWORKDIR=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/testdata/cli_gpu_2" "-DMPIEXEC=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-DNUMPROC_FLAG=-n" "-DRANKS=2" "-DPREFLAGS=" "-DPOSTFLAGS=" "-P" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/test/check_comb_cuda_cli_science.cmake"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_cli_device_2_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   3.83 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_cli_device_2_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_cli_device_2_ranks" time elapsed: 00:00:03
+----------------------------------------------------------
+
+23/24 Testing: comb.cuda_mpi_device_3_ranks
+23/24 Test: comb.cuda_mpi_device_3_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-n" "3" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_mpi_device_test"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_device_3_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+Native CUDA MPI matches scientific reference: 2 good and 10 bad cases
+<end of output>
+Test time =   1.14 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_device_3_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_device_3_ranks" time elapsed: 00:00:01
+----------------------------------------------------------
+
+24/24 Testing: comb.cuda_mpi_cli_device_3_ranks
+24/24 Test: comb.cuda_mpi_cli_device_3_ranks
+Command: "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/lib/python3.8/site-packages/cmake/data/bin/cmake" "-DPROGRAM=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb-cuda-mpi" "-DFIXTURE_WRITER=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/comb_cuda_cli_fixture_writer" "-DWORKDIR=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu/testdata/cli_gpu_3" "-DMPIEXEC=/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec" "-DNUMPROC_FLAG=-n" "-DRANKS=3" "-DPREFLAGS=" "-DPOSTFLAGS=" "-P" "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/test/check_comb_cuda_cli_science.cmake"
+Directory: /home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/build-gpu
+"comb.cuda_mpi_cli_device_3_ranks" start time: Nov 06 05:33 UTC
+Output:
+----------------------------------------------------------
+<end of output>
+Test time =   5.72 sec
+----------------------------------------------------------
+Test Passed.
+"comb.cuda_mpi_cli_device_3_ranks" end time: Nov 06 05:33 UTC
+"comb.cuda_mpi_cli_device_3_ranks" time elapsed: 00:00:05
+----------------------------------------------------------
+
+End testing: Nov 06 05:33 UTC
+
+cli =  28.55 sec*proc
+
+cuda =  36.05 sec*proc
+
+differential =  10.71 sec*proc
+
+gpu =  36.05 sec*proc
+
+host =   2.95 sec*proc
+
+mock =   0.76 sec*proc
+
+mpi =  35.42 sec*proc
+
+multi-rank =   0.64 sec*proc
+
+scientific =  39.01 sec*proc
+
+single-rank =   0.12 sec*proc
+
