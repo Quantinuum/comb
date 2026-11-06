@@ -11,7 +11,21 @@ Comb depends on [[https://github.com/malb/m4ri][m4ri]]. The compatibility Makefi
   ctest --test-dir build --output-on-failure
 #+END_SRC
 
-The dependency-free rank, flat-layout, CUDA-stub, dense-tableau, sequential-reference, and single-rank MPI mock contract tests can be built without M4RI by adding =-DCOMB_BUILD_CPU=OFF=. The MPI mock is included when an MPI C compiler is available; it does not replace target-system multi-rank testing.
+On Apple Silicon with the dependencies installed through Homebrew, expose both
+prefixes explicitly so CMake can find M4RI and =libomp=:
+#+BEGIN_SRC shell
+  brew install m4ri libomp
+  cmake -S . -B build -DCMAKE_BUILD_TYPE=Release \
+    -DCOMB_M4RI_ROOT="$(brew --prefix m4ri)" \
+    -DCMAKE_PREFIX_PATH="$(brew --prefix m4ri);$(brew --prefix libomp)"
+  cmake --build build --parallel
+  OMP_NUM_THREADS=1 ctest --test-dir build --output-on-failure
+#+END_SRC
+
+The explicit single-thread setting is appropriate until the installed M4RI
+library has been confirmed to be configured with thread-safe tables.
+
+The rank, flat-layout, CUDA-stub, dense-tableau, sequential-reference, GPU-math, candidate-pipeline, and run-file tests can be built without M4RI by adding =-DCOMB_BUILD_CPU=OFF=. MPI scheduler tests with one, two, and three processes are included when MPI is available; their CUDA backend is mocked. A separate real-device differential test is built with =COMB_ENABLE_CUDA=ON=.
 
 CUDA and MPI are opt-in. On the target Linux/A100 system use:
 #+BEGIN_SRC shell
@@ -21,9 +35,15 @@ CUDA and MPI are opt-in. On the target Linux/A100 system use:
   ctest --test-dir build --output-on-failure
 #+END_SRC
 
-The CUDA target contains native =sm_80= code, =compute_80= PTX, and line information. The MPI layer is an embedding library because this repository does not define a production problem-file format; see =src/mpi/README.md=. The original =make -j8= build remains available as a compatibility path.
+The CUDA target defaults to native =sm_80= code, =compute_80= PTX, and line information. Override =CMAKE_CUDA_ARCHITECTURES= for another NVIDIA architecture. The =comb-cuda-mpi= executable reads existing =comb-*.run= files produced by the CPU/MPI branch. It needs CUDA and MPI; M4RI is optional (=COMB_BUILD_CPU=OFF=). For example:
+#+BEGIN_SRC shell
+  mpiexec -n 3 build/comb-cuda-mpi comb-example.run
+#+END_SRC
+Use one MPI rank per GPU. To enable the native multi-GPU tests, configure with =-DCOMB_BUILD_CUDA_MPI_TESTS=ON= and set =COMB_CUDA_MPI_TEST_RANKS= to the allocated rank counts (default =1;2;3=). See =src/mpi/README.md= for Slurm, checkpoint/resume, and options. The original =make -j8= build remains available as a compatibility path.
 
-Current activation status: the checked rank contract, flat representation, sequential CPU oracle, CUDA context/device primitives, and MPI scheduler are implemented. The complete scientific candidate pipeline is not yet enabled on the device: a nonempty =comb_cuda_verify_range= returns =COMB_CUDA_STATUS_NOT_IMPLEMENTED= rather than guessing a verification result. See =docs/cuda-port-status.md= for the remaining correctness and target-system gates.
+The complete candidate pipeline now runs in the CUDA kernel: weighted fault unranking, ordered DCP composition, logical variants, CSS X lookup, phase-aware postselection and elimination, and universal Z-coset lookup. GPU threads evaluate independent candidates using disjoint reusable workspaces. Deterministic mode completes the requested interval and returns its smallest bad rank; fast mode may stop early. Native validation on =duvel3= with CUDA 11.8 and three NVIDIA A30 GPUs passes all 24 CTests, including real CUDA/MPI execution with one, two, and three ranks. Synthetic scientific fixtures agree with the independent reference. Production-corpus and performance validation remain open; no speedup is claimed. See =docs/cuda-port-status.md= for the evidence and remaining gates.
+
+For output errors selected in iterator order =E1, E2, ..., Es=, the main CPU implementation folds =E1 * E2 * ... * Es= by right-multiplying each subsequent error into the accumulator. The dependency-free reference and CUDA implementation must preserve that exact order.
 
 Some features of Comb can be set as build time, such as the logging level and a special timing mode that iterates over a given number of fault combinations in order to infer the performance.
 
@@ -50,9 +70,9 @@ In order to avoid disappointment, remember to follow standard practices such as 
 
 The ideas presented below are not guaranteed to improve performance, they are just what I think is worth looking at.
 ** Reduce the remaining Gaussian-elimination cost
-The legacy CPU verifier already combines its Z measurements with a precomputed batched transform. The dependency-free reference path retains the earlier sequential measurement sequence so that the two forms can be compared explicitly.
+The main CPU verifier already combines its Z measurements with a precomputed batched transform. The dependency-free reference path retains the earlier sequential measurement sequence so that the two forms can be compared explicitly.
 
-The CUDA plan keeps candidate-independent elimination work in context creation and parallelises each candidate's remaining phase-aware row operations cooperatively. Further elimination changes should be driven by the differential tests and A100 profiles rather than changing the scientific ordering.
+The initial CUDA implementation precomputes stabiliser pivots and measurement sequences in context creation. Each GPU thread performs one candidate's phase-aware elimination sequentially; many candidates run concurrently. Cooperative row operations and a batched-Z GPU transform remain possible optimizations after correctness and profiling on NVIDIA hardware.
 ** Use Gaussian elimination over finite fields
 m4ri has subcubic implementations of Gaussian elimination over $\mathbb{F}_2$ via matrix decomposition.
 
@@ -66,6 +86,6 @@ Gaussian elimination can be reduced to matrix multiplication (arXiv:1112.5717v2)
 
 It's also possible to iterate over $Z$ errors in the coset using Gray codes with SIMD.
 ** Multithreading
-The legacy CPU entry point remains serial. The new MPI layer partitions globally ranked fault combinations across ranks and GPUs, but nonempty device verification remains pre-activation as described above.
+The merged main CPU entry point partitions combinations into chunks and processes them with OpenMP. The MPI layer partitions globally ranked fault combinations across ranks and GPUs, with bounded epochs for deterministic reductions and checkpointing.
 
-Each completed CUDA candidate will use team-local reusable scratch; immutable problem data is replicated per GPU.
+Each CUDA worker owns a reusable scratch slice; immutable problem data is replicated per GPU.

@@ -1,0 +1,4 @@
+index, uuid, name, memory.total [MiB], memory.used [MiB], utilization.gpu [%], temperature.gpu, pstate
+0, GPU-afad1bc4-aa63-d850-276f-6a9fd77b0926, NVIDIA A30, 24576 MiB, 15725 MiB, 0 %, 31, P0
+1, GPU-20efb670-302c-0023-2871-0bfbf6a59d5d, NVIDIA A30, 24576 MiB, 17 MiB, 0 %, 29, P0
+2, GPU-f2525f18-a9e3-b31f-d7ca-8371053fbc6c, NVIDIA A30, 24576 MiB, 17 MiB, 0 %, 31, P0

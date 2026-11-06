@@ -19,8 +19,8 @@ dcp_t *dcp_mul(dcp_t *result, dcp_t *c2,
 // Compute c2 * c1 in c1: left-multiply c1 by c2.
 void dcp_mulf_left(dcp_t* c2, dcp_t* c1){
   _mzd_add(c1->h_z,c1->h_z,c2->h_z); // h_1z <- h_1z + h_2z
-  _mzd_mul_naive(c1->h_z,c1->F,c2->h_x_transpose,0); // h_1z <- h_2z + h_2z + F_1 h_{2x}
-  add_and_column_vector(c1->h_z,c1->F_diagonal,c2->F_diagonal); // h_2z <- h_1z + h_2z + F_1 h_{2x} + diag F1 . diag F2
+  _mzd_mul_naive(c1->h_z,c1->F,c2->h_x_transpose,0); // h_1z <- h_1z + h_2z + F_1 h_{2x}
+  add_and_column_vector(c1->h_z,c1->F_diagonal,c2->F_diagonal); // h_1z <- h_1z + h_2z + F_1 h_{2x} + diag F1 . diag F2
   // add F
   _mzd_add(c1->F,c2->F,c1->F);
   _mzd_add(c1->F_diagonal,c1->F_diagonal,c2->F_diagonal);

@@ -40,9 +40,9 @@ static comb_cuda_witness_t fresh_witness(uint32_t *faults,
   return value;
 }
 
-static uint64_t legacy_witness_rank(uint32_t location_count,
-                                    const uint32_t *partitions, uint32_t s,
-                                    const uint32_t *faults) {
+static uint64_t main_cpu_witness_rank(uint32_t location_count,
+                                      const uint32_t *partitions, uint32_t s,
+                                      const uint32_t *faults) {
   comb_rank_plan_t *plan = NULL;
   uint32_t locations[3] = {0U, 0U, 0U};
   uint32_t offsets[3] = {0U, 0U, 0U};
@@ -75,6 +75,8 @@ static uint64_t legacy_witness_rank(uint32_t location_count,
 
 static comb_code_t run_differential_case(uint32_t case_index) {
   const uint32_t n = 3U + (case_index & 1U);
+  const unsigned measured = case_index >= 12U;
+  const uint32_t n_all = n + (measured != 0U ? 2U : 0U);
   const uint32_t n_x = 1U;
   const uint32_t n_z = n - 2U;
   const uint32_t k = 1U;
@@ -86,6 +88,8 @@ static comb_code_t run_differential_case(uint32_t case_index) {
   comb_pauli_z_t *z_stabilisers;
   comb_dcp_t *logical_dcps;
   comb_dcp_t *output_errors;
+  comb_pauli_x_t *x_measurements = NULL;
+  comb_pauli_z_t *z_measurements = NULL;
   comb_bit_array_t x_lookup;
   comb_bit_array_t z_lookup;
   const uint64_t x_lookup_count = UINT64_C(1) << (n - n_x);
@@ -94,11 +98,18 @@ static comb_code_t run_differential_case(uint32_t case_index) {
   comb_reference_context_t *reference = NULL;
   comb_cuda_result_t result;
   uint32_t reference_faults[3] = {UINT32_MAX, UINT32_MAX, UINT32_MAX};
-  uint32_t legacy_faults[3] = {UINT32_MAX, UINT32_MAX, UINT32_MAX};
+  uint32_t main_cpu_faults[3] = {UINT32_MAX, UINT32_MAX, UINT32_MAX};
   comb_cuda_witness_t witness = fresh_witness(reference_faults, 3U);
-  comb_code_t legacy_code;
+  comb_code_t main_cpu_code;
   uint32_t index;
   uint32_t bit;
+
+  /*
+   * With three locations and s <= 2, this fixture is smaller than main's
+   * chunk threshold.  Witness equality is therefore meaningful here.  For a
+   * multi-chunk problem main does not specify the globally lowest witness;
+   * only its scientific decision and per-candidate behavior are the oracle.
+   */
 
   partitions[0] = 1U + (uint32_t)(next_random() % 3U);
   partitions[1] = 1U + (uint32_t)(next_random() % 3U);
@@ -107,8 +118,16 @@ static comb_code_t run_differential_case(uint32_t case_index) {
 
   x_stabilisers = comb_calloc_vector((int)n_x, (int)n);
   z_stabilisers = comb_calloc_vector((int)n_z, (int)n);
-  logical_dcps = comb_calloc_dcp((int)k, (int)n);
-  output_errors = comb_calloc_dcp((int)output_count, (int)n);
+  logical_dcps = comb_calloc_dcp((int)k, (int)n_all);
+  output_errors = comb_calloc_dcp((int)output_count, (int)n_all);
+  if (measured != 0U) {
+    x_measurements = comb_calloc_vector(1, (int)n_all);
+    z_measurements = comb_calloc_vector(1, (int)n_all);
+    CHECK(x_measurements != NULL);
+    CHECK(z_measurements != NULL);
+    comb_set_cvector_aref(x_measurements, 0, (int)(n + 1U), 1);
+    comb_set_cvector_aref(z_measurements, 0, (int)n, 1);
+  }
   x_lookup = comb_alloc_bit_array((int)x_lookup_count);
   z_lookup = comb_alloc_bit_array((int)z_lookup_count);
   CHECK(x_stabilisers != NULL);
@@ -136,15 +155,15 @@ static comb_code_t run_differential_case(uint32_t case_index) {
 
   for (index = 0U; index < output_count; ++index) {
     uint32_t row;
-    for (bit = 0U; bit < n; ++bit) {
+    for (bit = 0U; bit < n_all; ++bit) {
       comb_set_cdcp_h_x_aref(output_errors, (int)index, (int)bit,
                              (int)((next_random() >> 7U) & 1U));
       comb_set_cdcp_h_z_aref(output_errors, (int)index, (int)bit,
                              (int)((next_random() >> 19U) & 1U));
     }
-    for (row = 0U; row < n; ++row) {
+    for (row = 0U; row < n_all; ++row) {
       uint32_t column;
-      for (column = row; column < n; ++column) {
+      for (column = row; column < n_all; ++column) {
         const int value = (int)((next_random() >> 23U) & 1U);
         comb_set_cdcp_F_aref(output_errors, (int)index, (int)row,
                              (int)column, value);
@@ -180,7 +199,7 @@ static comb_code_t run_differential_case(uint32_t case_index) {
     comb_set_bit_array_aref(z_lookup, (int)lookup, (int)value);
   }
 
-  problem.n_all = n;
+  problem.n_all = n_all;
   problem.n = n;
   problem.n_x = n_x;
   problem.n_z = n_z;
@@ -197,10 +216,10 @@ static comb_code_t run_differential_case(uint32_t case_index) {
   problem.s = s;
   problem.output_error_count = output_count;
   problem.output_errors = output_errors;
-  problem.x_measurement_count = 0U;
-  problem.x_measurement_paulis = NULL;
-  problem.z_measurement_count = 0U;
-  problem.z_measurement_paulis = NULL;
+  problem.x_measurement_count = measured;
+  problem.x_measurement_paulis = x_measurements;
+  problem.z_measurement_count = measured;
+  problem.z_measurement_paulis = z_measurements;
 
   CHECK(comb_reference_context_create(&problem, &reference) ==
         COMB_CUDA_STATUS_SUCCESS);
@@ -209,21 +228,22 @@ static comb_code_t run_differential_case(uint32_t case_index) {
                               &result, &witness) ==
         COMB_CUDA_STATUS_SUCCESS);
 
-  legacy_code = comb_verify_css_magic_state(
-      n, n, n_x, n_z, k, x_stabilisers, x_lookup, z_stabilisers, z_lookup,
-      logical_dcps, location_count, partitions, s, legacy_faults,
-      output_count, output_errors, 0U, NULL, 0U, NULL, 1U);
-  CHECK(legacy_code == result.verification_code);
-  if (legacy_code == BAD_FAULT_FOUND) {
-    const uint64_t rank = legacy_witness_rank(location_count, partitions, s,
-                                              legacy_faults);
+  main_cpu_code = comb_verify_css_magic_state(
+      n_all, n, n_x, n_z, k, x_stabilisers, x_lookup, z_stabilisers, z_lookup,
+      logical_dcps, location_count, partitions, s, main_cpu_faults,
+      output_count, output_errors, measured, x_measurements,
+      measured, z_measurements, 1U);
+  CHECK(main_cpu_code == result.verification_code);
+  if (main_cpu_code == BAD_FAULT_FOUND) {
+    const uint64_t rank = main_cpu_witness_rank(
+        location_count, partitions, s, main_cpu_faults);
     CHECK(result.minimum_bad_rank == rank);
     CHECK(witness.rank == rank);
     CHECK(witness.fault_count == s);
     for (index = 0U; index < s; ++index)
-      CHECK(reference_faults[index] == legacy_faults[index]);
+      CHECK(reference_faults[index] == main_cpu_faults[index]);
   } else {
-    CHECK(legacy_code == ALL_FAULTS_GOOD);
+    CHECK(main_cpu_code == ALL_FAULTS_GOOD);
     CHECK(result.minimum_bad_rank == COMB_CUDA_RANK_NONE);
     CHECK(witness.fault_count == 0U);
   }
@@ -235,21 +255,25 @@ static comb_code_t run_differential_case(uint32_t case_index) {
   comb_cfree_dcp((int)k, logical_dcps);
   comb_cfree_vector((int)n_z, z_stabilisers);
   comb_cfree_vector((int)n_x, x_stabilisers);
-  return legacy_code;
+  if (measured != 0U) {
+    comb_cfree_vector(1, x_measurements);
+    comb_cfree_vector(1, z_measurements);
+  }
+  return main_cpu_code;
 }
 
 int main(void) {
   unsigned saw_good = 0U;
   unsigned saw_bad = 0U;
   uint32_t case_index;
-  for (case_index = 0U; case_index < 12U; ++case_index) {
+  for (case_index = 0U; case_index < 24U; ++case_index) {
     const comb_code_t decision = run_differential_case(case_index);
     if (decision == ALL_FAULTS_GOOD) saw_good = 1U;
     if (decision == BAD_FAULT_FOUND) saw_bad = 1U;
   }
   CHECK(saw_good != 0U);
   CHECK(saw_bad != 0U);
-  puts("comb legacy/reference: 12 synthetic CSS differential cases passed");
+  puts("comb main CPU/reference: 24 synthetic CSS differential cases passed");
   puts("coverage note: no user-supplied production corpus was available; "
        "this gate does not replace production-corpus differential testing");
   return EXIT_SUCCESS;

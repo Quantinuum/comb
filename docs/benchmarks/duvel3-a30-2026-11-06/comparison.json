@@ -1,0 +1,102 @@
+{
+  "output_directory": "results-20261106",
+  "warmups": 1,
+  "repetitions": 3,
+  "timeout_seconds": 300,
+  "keep_going": false,
+  "profiles": [
+    {
+      "name": "cpu_2workers",
+      "kind": "cpu_mpi",
+      "expected_ranks": 3,
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "{input}"
+      ],
+      "environment": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      }
+    },
+    {
+      "name": "cpu_31workers",
+      "kind": "cpu_mpi",
+      "expected_ranks": 32,
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "{input}"
+      ],
+      "environment": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      }
+    },
+    {
+      "name": "cuda_2a30",
+      "kind": "cuda_mpi",
+      "expected_ranks": 2,
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "{input}"
+      ],
+      "environment": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      }
+    }
+  ],
+  "workloads": [
+    {
+      "name": "steane",
+      "input": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run",
+      "expected_count": 944
+    },
+    {
+      "name": "colour-code-distance-3-single-faults",
+      "input": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run",
+      "expected_count": 2712
+    },
+    {
+      "name": "golay-distance-3",
+      "input": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run",
+      "expected_count": 7420
+    },
+    {
+      "name": "distance-5-optimised-2",
+      "input": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run",
+      "expected_count": 5781600
+    }
+  ],
+  "metadata": {
+    "cpu_ref": "8dd5ce73f80994b84b28b759b17459924c77d630",
+    "cuda_base_ref": "4e8ff181a1b024d4a5821dee187b20d6634ed509 plus working-tree changes identified by compiled-source hashes",
+    "host": "duvel3",
+    "gpus": "physical 1 and 2 only, two NVIDIA A30 24 GiB",
+    "cpu": "2x Intel Xeon Gold 6326, 32 physical cores total",
+    "build": "GCC8.4 -O3 -march=native; nvcc11.8 -O3 sm80; MPICH5.0.2; thread-safe M4RI20240729",
+    "timing": "Whole mpiexec process wall time; warmup unreported; medians/ranges of3 repetitions; profiles rotate order; no kernel-only comparison",
+    "gpu_options": "unmodified default epoch1048576, chunk16384, scratch limit default",
+    "cpu_resources": "One MPI coordinator; other ranks one compute thread each. Single-fault bundled cases produce one workchunk."
+  }
+}

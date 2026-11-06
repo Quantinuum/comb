@@ -6,8 +6,9 @@
  *
  * This path consumes the same normalized FlatProblem as the CUDA backend but
  * intentionally retains the pre-batched measurement sequence.  It is an
- * independent differential oracle; it does not establish equivalence with the
- * current M4RI batched-Z transform by itself.
+ * independent differential implementation.  The merged main M4RI CPU path is
+ * the compatibility source of truth; this path does not establish equivalence
+ * with its batched-Z transform by itself.
  */
 
 #include <stdint.h>

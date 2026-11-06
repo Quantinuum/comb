@@ -1,0 +1,10 @@
+========= COMPUTE-SANITIZER
+========= COMPUTE-SANITIZER
+========= COMPUTE-SANITIZER
+Native CUDA MPI matches scientific reference: 2 good and 10 bad cases
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors
+========= LEAK SUMMARY: 0 bytes leaked in 0 allocations
+========= ERROR SUMMARY: 0 errors

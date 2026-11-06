@@ -1,0 +1,3 @@
+========= COMPUTE-SANITIZER
+comb CUDA device: 116 exhaustive differential fixtures passed
+========= RACECHECK SUMMARY: 0 hazards displayed (0 errors, 0 warnings)

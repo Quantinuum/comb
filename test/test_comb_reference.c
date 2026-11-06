@@ -40,18 +40,18 @@ static uint64_t next_random(void) {
   return value * UINT64_C(2685821657736338717);
 }
 
-static size_t legacy_word_count(uint64_t bit_count) {
+static size_t external_word_count(uint64_t bit_count) {
   return (size_t)((bit_count / 8U) + ((bit_count % 8U) != 0U ? 1U : 0U));
 }
 
-static comb_bit_word_t *legacy_bits_allocate(uint64_t bit_count) {
-  const size_t words = legacy_word_count(bit_count);
+static comb_bit_word_t *external_bits_allocate(uint64_t bit_count) {
+  const size_t words = external_word_count(bit_count);
   if (words == 0U) return NULL;
   return (comb_bit_word_t *)calloc(words, sizeof(comb_bit_word_t));
 }
 
-static void legacy_bit_set(comb_bit_word_t *words, uint64_t bit,
-                           unsigned value) {
+static void external_bit_set(comb_bit_word_t *words, uint64_t bit,
+                             unsigned value) {
   const comb_bit_word_t mask = UINT64_C(1) << (bit % 8U);
   CHECK(words != NULL);
   if (value != 0U)
@@ -60,7 +60,7 @@ static void legacy_bit_set(comb_bit_word_t *words, uint64_t bit,
     words[bit / 8U] &= ~mask;
 }
 
-static unsigned legacy_bit_get(const comb_bit_word_t *words, uint64_t bit) {
+static unsigned external_bit_get(const comb_bit_word_t *words, uint64_t bit) {
   CHECK(words != NULL);
   return (unsigned)((words[bit / 8U] >> (bit % 8U)) & UINT64_C(1));
 }
@@ -74,7 +74,7 @@ static void vector_array_allocate(comb_vector_t **vectors, uint32_t count,
   CHECK(*vectors != NULL);
   for (index = 0U; index < count; ++index) {
     (*vectors)[index].n = width;
-    (*vectors)[index].data = legacy_bits_allocate(width);
+    (*vectors)[index].data = external_bits_allocate(width);
     CHECK((*vectors)[index].data != NULL);
   }
 }
@@ -97,11 +97,11 @@ static void dcp_array_allocate(comb_dcp_t **dcps, uint32_t count,
     (*dcps)[index].F.m = qubits;
     (*dcps)[index].F.n = qubits;
     (*dcps)[index].F.data =
-        legacy_bits_allocate((uint64_t)qubits * qubits);
+        external_bits_allocate((uint64_t)qubits * qubits);
     (*dcps)[index].h_x.n = qubits;
-    (*dcps)[index].h_x.data = legacy_bits_allocate(qubits);
+    (*dcps)[index].h_x.data = external_bits_allocate(qubits);
     (*dcps)[index].h_z.n = qubits;
-    (*dcps)[index].h_z.data = legacy_bits_allocate(qubits);
+    (*dcps)[index].h_z.data = external_bits_allocate(qubits);
     CHECK((*dcps)[index].F.data != NULL);
     CHECK((*dcps)[index].h_x.data != NULL);
     CHECK((*dcps)[index].h_z.data != NULL);
@@ -123,7 +123,7 @@ static void fixture_replace_lookup(problem_fixture_t *fixture, unsigned x,
                                    uint64_t bit_count) {
   comb_bit_word_t **storage = x != 0U ? &fixture->x_lookup : &fixture->z_lookup;
   free(*storage);
-  *storage = legacy_bits_allocate(bit_count);
+  *storage = external_bits_allocate(bit_count);
   CHECK(*storage != NULL);
   if (x != 0U) {
     fixture->problem.x_lookup_table = *storage;
@@ -144,13 +144,13 @@ static void fixture_init(problem_fixture_t *fixture, uint32_t qubits,
   CHECK(fixture->partitions != NULL);
   fixture->partitions[0] = output_count;
   lookup_count = UINT64_C(1) << qubits;
-  fixture->x_lookup = legacy_bits_allocate(lookup_count);
-  fixture->z_lookup = legacy_bits_allocate(lookup_count);
+  fixture->x_lookup = external_bits_allocate(lookup_count);
+  fixture->z_lookup = external_bits_allocate(lookup_count);
   CHECK(fixture->x_lookup != NULL);
   CHECK(fixture->z_lookup != NULL);
   for (bit = 0U; bit < lookup_count; ++bit) {
-    legacy_bit_set(fixture->x_lookup, bit, 1U);
-    legacy_bit_set(fixture->z_lookup, bit, 1U);
+    external_bit_set(fixture->x_lookup, bit, 1U);
+    external_bit_set(fixture->z_lookup, bit, 1U);
   }
   dcp_array_allocate(&fixture->outputs, output_count, qubits);
   dcp_array_allocate(&fixture->logicals, qubits, qubits);
@@ -243,16 +243,16 @@ static void fixture_destroy(problem_fixture_t *fixture) {
 }
 
 static void dcp_set_hx(comb_dcp_t *dcp, uint32_t bit, unsigned value) {
-  legacy_bit_set(dcp->h_x.data, bit, value);
+  external_bit_set(dcp->h_x.data, bit, value);
 }
 
 static void dcp_set_hz(comb_dcp_t *dcp, uint32_t bit, unsigned value) {
-  legacy_bit_set(dcp->h_z.data, bit, value);
+  external_bit_set(dcp->h_z.data, bit, value);
 }
 
 static void dcp_set_f(comb_dcp_t *dcp, uint32_t row, uint32_t column,
                       unsigned value) {
-  legacy_bit_set(dcp->F.data, (uint64_t)row * dcp->F.n + column, value);
+  external_bit_set(dcp->F.data, (uint64_t)row * dcp->F.n + column, value);
 }
 
 static comb_cuda_result_t fresh_result(void) {
@@ -277,7 +277,7 @@ static void test_known_good_bad_and_ranges(void) {
   fixture_init(&fixture, 1U, 3U);
   dcp_set_hx(&fixture.outputs[1], 0U, 1U);
   dcp_set_hx(&fixture.outputs[2], 0U, 1U);
-  legacy_bit_set(fixture.x_lookup, 1U, 0U);
+  external_bit_set(fixture.x_lookup, 1U, 0U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_SUCCESS);
 
@@ -343,7 +343,7 @@ static void test_z_lookup_and_logical_existential(void) {
 
   fixture_init(&fixture, 1U, 1U);
   dcp_set_hz(&fixture.outputs[0], 0U, 1U);
-  legacy_bit_set(fixture.z_lookup, 1U, 0U);
+  external_bit_set(fixture.z_lookup, 1U, 0U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_SUCCESS);
   result = fresh_result();
@@ -356,7 +356,7 @@ static void test_z_lookup_and_logical_existential(void) {
 
   fixture_init(&fixture, 1U, 1U);
   dcp_set_hx(&fixture.outputs[0], 0U, 1U);
-  legacy_bit_set(fixture.x_lookup, 1U, 0U);
+  external_bit_set(fixture.x_lookup, 1U, 0U);
   fixture_set_logical_count(&fixture, 1U);
   dcp_set_hx(&fixture.logicals[0], 0U, 1U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
@@ -393,8 +393,8 @@ static void test_context_validation(void) {
   fixture_init(&fixture, 1U, 1U);
   fixture_set_x_stabiliser_count(&fixture, 1U);
   fixture_set_z_stabiliser_count(&fixture, 1U);
-  legacy_bit_set(fixture.x_stabilisers[0].data, 0U, 1U);
-  legacy_bit_set(fixture.z_stabilisers[0].data, 0U, 1U);
+  external_bit_set(fixture.x_stabilisers[0].data, 0U, 1U);
+  external_bit_set(fixture.z_stabilisers[0].data, 0U, 1U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_INVALID_PROBLEM);
   CHECK(context == NULL);
@@ -402,8 +402,8 @@ static void test_context_validation(void) {
 
   fixture_init(&fixture, 2U, 1U);
   fixture_set_x_stabiliser_count(&fixture, 2U);
-  legacy_bit_set(fixture.x_stabilisers[0].data, 1U, 1U);
-  legacy_bit_set(fixture.x_stabilisers[1].data, 0U, 1U);
+  external_bit_set(fixture.x_stabilisers[0].data, 1U, 1U);
+  external_bit_set(fixture.x_stabilisers[1].data, 0U, 1U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_INVALID_PROBLEM);
   CHECK(context == NULL);
@@ -411,8 +411,8 @@ static void test_context_validation(void) {
 
   fixture_init(&fixture, 2U, 1U);
   fixture_set_z_measurement_count(&fixture, 1U);
-  legacy_bit_set(fixture.z_measurements[0].data, 0U, 1U);
-  legacy_bit_set(fixture.z_measurements[0].data, 1U, 1U);
+  external_bit_set(fixture.z_measurements[0].data, 0U, 1U);
+  external_bit_set(fixture.z_measurements[0].data, 1U, 1U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_INVALID_PROBLEM);
   CHECK(context == NULL);
@@ -420,10 +420,10 @@ static void test_context_validation(void) {
 
   fixture_init(&fixture, 3U, 1U);
   fixture_set_z_measurement_count(&fixture, 2U);
-  legacy_bit_set(fixture.z_measurements[0].data, 0U, 1U);
-  legacy_bit_set(fixture.z_measurements[1].data, 0U, 1U);
-  legacy_bit_set(fixture.z_measurements[1].data, 1U, 1U);
-  legacy_bit_set(fixture.z_measurements[1].data, 2U, 1U);
+  external_bit_set(fixture.z_measurements[0].data, 0U, 1U);
+  external_bit_set(fixture.z_measurements[1].data, 0U, 1U);
+  external_bit_set(fixture.z_measurements[1].data, 1U, 1U);
+  external_bit_set(fixture.z_measurements[1].data, 2U, 1U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_INVALID_PROBLEM);
   CHECK(context == NULL);
@@ -431,9 +431,9 @@ static void test_context_validation(void) {
 
   fixture_init(&fixture, 2U, 1U);
   fixture_set_z_stabiliser_count(&fixture, 1U);
-  legacy_bit_set(fixture.z_stabilisers[0].data, 0U, 1U);
+  external_bit_set(fixture.z_stabilisers[0].data, 0U, 1U);
   fixture_set_z_measurement_count(&fixture, 1U);
-  legacy_bit_set(fixture.z_measurements[0].data, 1U, 1U);
+  external_bit_set(fixture.z_measurements[0].data, 1U, 1U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_SUCCESS);
   CHECK(context != NULL);
@@ -455,7 +455,7 @@ static void test_sequential_measurement_contract(void) {
   comb_cuda_result_t result;
   fixture_init(&fixture, 1U, 2U);
   fixture_set_z_measurement_count(&fixture, 1U);
-  legacy_bit_set(fixture.z_measurements[0].data, 0U, 1U);
+  external_bit_set(fixture.z_measurements[0].data, 0U, 1U);
   dcp_set_hx(&fixture.outputs[1], 0U, 1U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_SUCCESS);
@@ -472,12 +472,13 @@ static void test_sequential_measurement_contract(void) {
 }
 
 /*
- * Lock the paper's E_2 E_1 convention with a one-qubit pair whose phase
- * vector changes if the factors are reversed.  For E_1=(F=1,h_x=0,h_z=0)
- * and E_2=(F=1,h_x=1,h_z=0), E_2 E_1 has (F=0,h_x=1,h_z=0), while E_1 E_2
- * has h_z=1.  The lookup accepts only the former.
+ * Lock the main CPU implementation's E_1 E_2 convention with a one-qubit
+ * pair whose phase vector changes if the factors are reversed.  For
+ * E_1=(F=1,h_x=0,h_z=0) and E_2=(F=1,h_x=1,h_z=0), E_1 E_2 has
+ * (F=0,h_x=1,h_z=1), while E_2 E_1 has h_z=0.  The lookup rejects only the
+ * main-order result.
  */
-static void test_noncommuting_fault_composition_order(void) {
+static void test_main_cpu_fault_composition_order(void) {
   problem_fixture_t fixture;
   comb_reference_context_t *context = NULL;
   comb_cuda_result_t result;
@@ -496,7 +497,7 @@ static void test_noncommuting_fault_composition_order(void) {
   dcp_set_f(&fixture.outputs[0], 0U, 0U, 1U);
   dcp_set_f(&fixture.outputs[1], 0U, 0U, 1U);
   dcp_set_hx(&fixture.outputs[1], 0U, 1U);
-  legacy_bit_set(fixture.z_lookup, 1U, 0U);
+  external_bit_set(fixture.z_lookup, 1U, 0U);
 
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_SUCCESS);
@@ -506,12 +507,14 @@ static void test_noncommuting_fault_composition_order(void) {
                                      COMB_CUDA_WITNESS_DETERMINISTIC, &result,
                                      &witness),
                COMB_CUDA_STATUS_SUCCESS);
-  CHECK(result.verification_code == ALL_FAULTS_GOOD);
+  CHECK(result.verification_code == BAD_FAULT_FOUND);
   CHECK(result.total_combination_count == 1U);
   CHECK(result.checked_combination_count == 1U);
-  CHECK(result.minimum_bad_rank == COMB_CUDA_RANK_NONE);
-  CHECK(witness.rank == COMB_CUDA_RANK_NONE);
-  CHECK(witness.fault_count == 0U);
+  CHECK(result.minimum_bad_rank == 0U);
+  CHECK(witness.rank == 0U);
+  CHECK(witness.fault_count == 2U);
+  CHECK(faults[0] == 0U);
+  CHECK(faults[1] == 1U);
 
   comb_reference_context_destroy(context);
   fixture_destroy(&fixture);
@@ -526,10 +529,10 @@ static void test_missing_measurement_is_rejected(void) {
   fixture_set_logical_count(&fixture, 1U);
   fixture_replace_lookup(&fixture, 1U, 2U);
   fixture_replace_lookup(&fixture, 0U, 2U);
-  legacy_bit_set(fixture.x_lookup, 0U, 1U);
-  legacy_bit_set(fixture.x_lookup, 1U, 1U);
-  legacy_bit_set(fixture.z_lookup, 0U, 1U);
-  legacy_bit_set(fixture.z_lookup, 1U, 1U);
+  external_bit_set(fixture.x_lookup, 0U, 1U);
+  external_bit_set(fixture.x_lookup, 1U, 1U);
+  external_bit_set(fixture.z_lookup, 0U, 1U);
+  external_bit_set(fixture.z_lookup, 1U, 1U);
   dcp_set_hz(&fixture.outputs[0], 1U, 1U);
   CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
                COMB_CUDA_STATUS_SUCCESS);
@@ -556,10 +559,10 @@ static void test_seeded_scalar_crosscheck(void) {
     uint64_t lookup;
     fixture_init(&fixture, qubits, output_count);
     for (lookup = 0U; lookup < lookup_count; ++lookup) {
-      legacy_bit_set(fixture.x_lookup, lookup,
-                     (unsigned)((next_random() >> 3U) & 1U));
-      legacy_bit_set(fixture.z_lookup, lookup,
-                     (unsigned)((next_random() >> 7U) & 1U));
+      external_bit_set(fixture.x_lookup, lookup,
+                       (unsigned)((next_random() >> 3U) & 1U));
+      external_bit_set(fixture.z_lookup, lookup,
+                       (unsigned)((next_random() >> 7U) & 1U));
     }
     for (output = 0U; output < output_count; ++output) {
       uint64_t hx = 0U;
@@ -574,8 +577,8 @@ static void test_seeded_scalar_crosscheck(void) {
         hz |= (uint64_t)z << bit;
       }
       if (expected_bad == COMB_CUDA_RANK_NONE &&
-          (legacy_bit_get(fixture.x_lookup, hx) == 0U ||
-           legacy_bit_get(fixture.z_lookup, hz) == 0U))
+          (external_bit_get(fixture.x_lookup, hx) == 0U ||
+           external_bit_get(fixture.z_lookup, hz) == 0U))
         expected_bad = output;
     }
     CHECK_STATUS(comb_reference_context_create(&fixture.problem, &context),
@@ -600,9 +603,9 @@ int main(void) {
   test_z_lookup_and_logical_existential();
   test_context_validation();
   test_sequential_measurement_contract();
-  test_noncommuting_fault_composition_order();
+  test_main_cpu_fault_composition_order();
   test_missing_measurement_is_rejected();
   test_seeded_scalar_crosscheck();
-  puts("comb_reference: sequential oracle checks passed");
+  puts("comb_reference: sequential reference checks passed");
   return EXIT_SUCCESS;
 }

@@ -13,10 +13,9 @@
 
 set -euo pipefail
 
-# The repository intentionally has no generic production-problem parser.
-# Point this at an application that constructs comb_problem_t on MPI rank zero
-# and calls comb_cuda_mpi_verify_comm.
-: "${COMB_MPI_EXECUTABLE:?Set COMB_MPI_EXECUTABLE to the embedding executable}"
+# Pass the serialized .run input file and any CLI options to sbatch.
+# Override COMB_MPI_EXECUTABLE when the build directory is elsewhere.
+COMB_MPI_EXECUTABLE="${COMB_MPI_EXECUTABLE:-./build-cuda/comb-cuda-mpi}"
 
 # Many clusters use pmix; replace this with the MPI plugin configured locally.
 # GPU binding should give each task a distinct CUDA_VISIBLE_DEVICES assignment.

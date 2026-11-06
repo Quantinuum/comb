@@ -1,5 +1,10 @@
 # CUDA and distributed-GPU port of Comb
 
+This is the optimization design. The initial implementation described in
+`cuda-port-status.md` now runs the complete candidate pipeline with one GPU
+thread per candidate and sequential postselection. Cooperative elimination
+and a GPU batched-Z transform below remain future, profile-driven work.
+
 ## Summary
 
 The CUDA port will parallelize over globally ranked fault combinations. Each
@@ -9,17 +14,21 @@ a warp or thread block; an elimination is never split across GPUs. Immutable
 problem data is replicated on each GPU, and workers communicate only status,
 counts, and bad-witness ranks.
 
-This decomposition preserves the scientific contract in the accompanying
-paper: the multiplication order is \(E=E_s\cdots E_1\), tableau row operations
-track phase, coherent terms are cancelled before weight tests, the
-logical-stabilizer search is existential, and coset checking is universal. The
-primary reference is the user-supplied
+The merged `main` CPU implementation in `src/c/comb.c` is the compatibility
+source of truth for this port. For output errors selected in iterator order
+\(E_1,E_2,\ldots,E_s\), it initializes the accumulator with \(E_1\) and
+right-multiplies each subsequent error, producing
+\(E=E_1E_2\cdots E_s\). The dependency-free reference path and every CUDA path
+must reproduce that fold exactly. The remaining contract is phase-aware
+tableau row operations, coherent cancellation before weight tests, an
+existential logical-stabilizer search, and universal coset checking. The
+scientific background is the user-supplied
 `CNOT___T_for_magic_state_preparation-10.pdf`; the working copy is intentionally
 kept outside this repository.
 
-The unmerged `multithreaded` and `chunked` branches are research references
-only. Their weighted partitioning, termination, MPI, and witness logic are not
-correct enough to merge.
+Historical development branches are not independent compatibility references.
+Where chunking and serialization have been merged into `main`, those merged
+files take precedence; unmerged experiments remain research references only.
 
 ## Interfaces and build
 
@@ -37,10 +46,10 @@ correct enough to merge.
   fast-any-witness mode.
 - Return the verification code, total and checked combination counts, minimum
   bad rank, decoded fault tuple, and setup/verification timings.
-- Keep the legacy external bit representation intact. Normalize it into an
-  internal, pointer-free `FlatProblem` containing dense, tail-masked `uint64_t`
-  rows. Never reinterpret M4RI objects or the legacy eight-bits-per-word macros
-  on the GPU.
+- Keep the main CPU API's external bit representation intact. Normalize it
+  into an internal, pointer-free `FlatProblem` containing dense, tail-masked
+  `uint64_t` rows. Never reinterpret M4RI objects or the CPU
+  eight-bits-per-word macros on the GPU.
 - Define one canonical global order: location subsets follow the current colex
   ordering; fault offsets within a subset use mixed-radix order with the first
   tuple element varying fastest. Implement checked weighted rank/unrank using
@@ -57,13 +66,14 @@ directory is reserved for source documentation such as this plan.
 
 ## Implementation phases
 
-### 1. Correctness contract and CPU oracle
+### 1. Correctness contract and main CPU implementation
 
 - Add executable tests with assertions; the current diagnostic test programs
   are not a usable oracle.
 - Retain a test-only sequential postselection path and prove it equivalent to
   `main`'s batched-Z transform before porting that transform.
-- Lock DCP multiplication order, phase-aware row-add semantics, pivot
+- Lock the main CPU output-error fold
+  \(E_1E_2\cdots E_s\), phase-aware row-add semantics, pivot
   selection, coset factor construction, lookup addressing, unsupported-input
   behavior, and witness ordering.
 - Add comprehensive dimension, shift, rank, partition, table-length, and
@@ -144,9 +154,12 @@ directory is reserved for source documentation such as this plan.
   the serial iterator.
 - Exercise widths 31, 32, 33, 63, 64, 65, and larger multiword tableaus; test
   tail-bit masking and lookup-index limits.
-- Require exact decision and lowest-witness agreement between CPU, one GPU,
-  1/2/4/8 GPUs, and different MPI world sizes. Fast mode may return a different
-  witness, but it must independently reproduce as bad on the CPU.
+- Require exact decision and per-candidate agreement with the main CPU
+  implementation. Require exact checked-count and lowest-witness agreement
+  with the sequential reference between one GPU, 1/2/4/8 GPUs, and different
+  MPI world sizes. Main's multi-chunk host loop does not define a global
+  minimum witness. Fast mode may return a different witness, but the main
+  candidate logic and sequential reference must both reproduce it as bad.
 - Run Compute Sanitizer `memcheck`, `racecheck`, `initcheck`, and `synccheck`
   with zero findings; see NVIDIA's
   [Compute Sanitizer documentation](https://docs.nvidia.com/compute-sanitizer/ComputeSanitizer/index.html).
@@ -173,10 +186,14 @@ directory is reserved for source documentation such as this plan.
 - General multiword tableaus are required, with a specialized one-word fast
   path. Physically unaddressable lookup tables remain rejected explicitly.
 - CSS-code verification remains in scope. Fault propagation, lookup-table
-  generation, non-CSS generalization, and changes to the paper's scientific
-  criterion are out of scope.
-- The CPU implementation remains the supported fallback and differential
-  oracle.
+  generation, non-CSS generalization, and changes to the merged main CPU's
+  scientific behavior are out of scope. Any difference between paper notation
+  and implemented main behavior must be recorded rather than silently changing
+  the port.
+- The merged `main` CPU implementation remains the supported fallback,
+  compatibility source of truth, and differential oracle. In particular, the
+  reference and CUDA implementations must not reverse its
+  \(E_1E_2\cdots E_s\) output-error fold merely to match a different notation.
 - The live NVIDIA skill catalog contained no closer skill specifically for this
   classical CUDA-C verifier; the architecture therefore follows installed CUDA
   guidance and current primary NVIDIA documentation.

@@ -40,13 +40,27 @@ m4ri-clean:
 clean:
 	rm -f *.so
 	rm -rf build
-	rm -rf docs
 	rm -rf test-bin
 	rm -f test_*
 	rm -rf *.run
 
-docs:
+docs: | build
 	doxygen Doxyfile
+
+cmake-configure:
+	$(CMAKE) -S . -B build -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) $(CMAKE_OPTIONS)
+
+cmake-build: cmake-configure
+	$(CMAKE) --build build --parallel
+
+cmake-test: cmake-build
+	$(CTEST) --test-dir build --output-on-failure
+
+cuda-configure:
+	$(CMAKE) -S . -B build -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DCOMB_ENABLE_CUDA=ON $(CMAKE_OPTIONS)
+
+mpi-configure:
+	$(CMAKE) -S . -B build -DCMAKE_BUILD_TYPE=$(CMAKE_BUILD_TYPE) -DCOMB_ENABLE_CUDA=ON -DCOMB_ENABLE_MPI=ON $(CMAKE_OPTIONS)
 
 test-bin: $(test_executables)
 	mkdir test-bin
@@ -58,5 +72,13 @@ test_%: test/%.c libcomb.so
 format:
 	clang-format --style=Google --verbose -i $(c_files) $(header_files)
 
+CMAKE ?= cmake
+CTEST ?= ctest
+CMAKE_BUILD_TYPE ?= Release
+CMAKE_OPTIONS ?=
+
 examples: comb
 	./examples.sh
+
+.PHONY: clean cmake-configure cmake-build cmake-test cuda-configure docs \
+	examples format m4ri-clean mpi-configure

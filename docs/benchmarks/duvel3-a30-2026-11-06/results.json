@@ -1,0 +1,5329 @@
+{
+  "configuration": {
+    "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+    "keep_going": false,
+    "metadata": {
+      "build": "GCC8.4 -O3 -march=native; nvcc11.8 -O3 sm80; MPICH5.0.2; thread-safe M4RI20240729",
+      "cpu": "2x Intel Xeon Gold 6326, 32 physical cores total",
+      "cpu_ref": "8dd5ce73f80994b84b28b759b17459924c77d630",
+      "cpu_resources": "One MPI coordinator; other ranks one compute thread each. Single-fault bundled cases produce one workchunk.",
+      "cuda_base_ref": "4e8ff181a1b024d4a5821dee187b20d6634ed509 plus working-tree changes identified by compiled-source hashes",
+      "gpu_options": "unmodified default epoch1048576, chunk16384, scratch limit default",
+      "gpus": "physical 1 and 2 only, two NVIDIA A30 24 GiB",
+      "host": "duvel3",
+      "timing": "Whole mpiexec process wall time; warmup unreported; medians/ranges of3 repetitions; profiles rotate order; no kernel-only comparison"
+    },
+    "output_directory": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106",
+    "profiles": [
+      {
+        "argv": [
+          "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+          "-n",
+          "3",
+          "-bind-to",
+          "core",
+          "-map-by",
+          "core",
+          "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+          "{input}"
+        ],
+        "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+        "environment": {
+          "CUDA_VISIBLE_DEVICES": "1,2",
+          "OMP_NUM_THREADS": "1"
+        },
+        "expected_ranks": 3,
+        "kind": "cpu_mpi",
+        "name": "cpu_2workers"
+      },
+      {
+        "argv": [
+          "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+          "-n",
+          "32",
+          "-bind-to",
+          "core",
+          "-map-by",
+          "core",
+          "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+          "{input}"
+        ],
+        "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+        "environment": {
+          "CUDA_VISIBLE_DEVICES": "1,2",
+          "OMP_NUM_THREADS": "1"
+        },
+        "expected_ranks": 32,
+        "kind": "cpu_mpi",
+        "name": "cpu_31workers"
+      },
+      {
+        "argv": [
+          "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+          "-n",
+          "2",
+          "-bind-to",
+          "core",
+          "-map-by",
+          "core",
+          "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+          "{input}"
+        ],
+        "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+        "environment": {
+          "CUDA_VISIBLE_DEVICES": "1,2",
+          "OMP_NUM_THREADS": "1"
+        },
+        "expected_ranks": 2,
+        "kind": "cuda_mpi",
+        "name": "cuda_2a30"
+      }
+    ],
+    "repetitions": 3,
+    "termination_grace_seconds": 5.0,
+    "timeout_seconds": 300.0,
+    "warmups": 1,
+    "workloads": [
+      {
+        "expected_count": 944,
+        "input": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run",
+        "input_bytes": 261500,
+        "input_sha256": "6167114ca58d4483f4e3aaeb135e2c2e101417c00de6e3ee9e56728aced214d9",
+        "name": "steane"
+      },
+      {
+        "expected_count": 2712,
+        "input": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run",
+        "input_bytes": 9511212,
+        "input_sha256": "b67441e40cfb324b0b135cff12960c6842ba43c6db72d25a6f224a765ace443d",
+        "name": "colour-code-distance-3-single-faults"
+      },
+      {
+        "expected_count": 7420,
+        "input": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run",
+        "input_bytes": 154058888,
+        "input_sha256": "d2c0cd2d4451d500cbd1b0e79805574bff89ed5f5de1fcd384ad0c3457006129",
+        "name": "golay-distance-3"
+      },
+      {
+        "expected_count": 5781600,
+        "input": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run",
+        "input_bytes": 13614300,
+        "input_sha256": "e1ad6af7d3b75b4822df42c9dba22694102ada36ec8fded559a284d5c8d43784",
+        "name": "distance-5-optimised-2"
+      }
+    ]
+  },
+  "generated_utc": "2026-11-06T06:06:18.717477+00:00",
+  "runs": [
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cpu_2workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002333,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.005035,
+            "rank": 0
+          },
+          {
+            "checked": 944,
+            "chunks": 1,
+            "internal_seconds": 0.005056,
+            "rank": 1
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_2workers/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_2workers/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.18887033313512802,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cpu_31workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.007081,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.016109,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.015331,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.01217,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002779,
+            "rank": 30
+          },
+          {
+            "checked": 944,
+            "chunks": 1,
+            "internal_seconds": 0.022975,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.005777,
+            "rank": 0
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002487,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002734,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002639,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002628,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002754,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002684,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002669,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002573,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002529,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002461,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002483,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002432,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002428,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002337,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002485,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002344,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002357,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002415,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002354,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002297,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002335,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.00231,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002366,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002322,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002325,
+            "rank": 9
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_31workers/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_31workers/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.6344145089387894,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cuda_2a30",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "total": 944,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cuda_2a30/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cuda_2a30/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.7678041383624077,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002341,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.005051,
+            "rank": 0
+          },
+          {
+            "checked": 944,
+            "chunks": 1,
+            "internal_seconds": 0.005059,
+            "rank": 2
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_2workers/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_2workers/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.16234727948904037,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.011554,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.008757,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.017734,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.015254,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.013265,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002518,
+            "rank": 2
+          },
+          {
+            "checked": 944,
+            "chunks": 1,
+            "internal_seconds": 0.02179,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.005732,
+            "rank": 0
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002304,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002287,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002268,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002243,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002255,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002706,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002684,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002697,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002755,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002726,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002728,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002633,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002241,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002464,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002427,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002326,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002413,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002304,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002361,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002302,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002361,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002354,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002362,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.00236,
+            "rank": 22
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_31workers/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_31workers/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.5921550020575523,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "total": 944,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cuda_2a30/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cuda_2a30/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.7759834453463554,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.128247,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.140039,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.128547,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.08911,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.124674,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.114458,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.106411,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.094015,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.10054,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.112873,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.1004,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.12511,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.12461,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.124554,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.07717,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002708,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.078794,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.078316,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002679,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002722,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002716,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002702,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.047648,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.049885,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.02402,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.003344,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.003289,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.005284,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.058166,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.062534,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.006611,
+            "rank": 0
+          },
+          {
+            "checked": 944,
+            "chunks": 1,
+            "internal_seconds": 0.145361,
+            "rank": 12
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_31workers/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_31workers/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.6399477794766426,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "total": 944,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cuda_2a30/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cuda_2a30/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.764101468026638,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002358,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.005081,
+            "rank": 0
+          },
+          {
+            "checked": 944,
+            "chunks": 1,
+            "internal_seconds": 0.005096,
+            "rank": 2
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_2workers/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_2workers/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.16224030405282974,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "total": 944,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cuda_2a30/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cuda_2a30/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.773510031402111,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002399,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.005119,
+            "rank": 0
+          },
+          {
+            "checked": 944,
+            "chunks": 1,
+            "internal_seconds": 0.005131,
+            "rank": 2
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_2workers/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_2workers/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.1610744744539261,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/steane.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 944,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.010237,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.009157,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.007382,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002752,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002538,
+            "rank": 6
+          },
+          {
+            "checked": 944,
+            "chunks": 1,
+            "internal_seconds": 0.015341,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.005802,
+            "rank": 0
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002403,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.00229,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002475,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002509,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002708,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002713,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.00277,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002672,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002657,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.00271,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.00274,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002724,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002627,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002497,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002581,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002354,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002313,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002419,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002409,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002389,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.00239,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002424,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002395,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002387,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.002414,
+            "rank": 11
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_31workers/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/steane/cpu_31workers/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.6441105529665947,
+      "workload": "steane"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cpu_2workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.033166,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.099685,
+            "rank": 0
+          },
+          {
+            "checked": 2712,
+            "chunks": 1,
+            "internal_seconds": 0.110785,
+            "rank": 1
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_2workers/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_2workers/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.9333310723304749,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cpu_31workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.669952,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.574254,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.495882,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.572962,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.573873,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.42646,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.40961,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.463161,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.360317,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.438936,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.103701,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.197061,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.161481,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.327372,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.197152,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.197162,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.103727,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.103708,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.103757,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.103976,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.103781,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.033058,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.033031,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.033274,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.03645,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.035521,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.033116,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.033101,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.038964,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.033051,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.098432,
+            "rank": 0
+          },
+          {
+            "checked": 2712,
+            "chunks": 1,
+            "internal_seconds": 0.741265,
+            "rank": 28
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_31workers/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_31workers/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 1.8554344549775124,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cuda_2a30",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "total": 2712,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cuda_2a30/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cuda_2a30/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.9107003733515739,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.031648,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.09715,
+            "rank": 0
+          },
+          {
+            "checked": 2712,
+            "chunks": 1,
+            "internal_seconds": 0.10286,
+            "rank": 2
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_2workers/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_2workers/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.9112354591488838,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.628927,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.717452,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.6245,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.721094,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.723699,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.627363,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.047718,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.622921,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.047728,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.539241,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.462138,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.048144,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.546098,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.335109,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.071885,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.048121,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.343966,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.321206,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.047763,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.038459,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.045494,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.047725,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.038464,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.038442,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.039602,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.047751,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.047772,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.04776,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.047769,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.042768,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.095792,
+            "rank": 0
+          },
+          {
+            "checked": 2712,
+            "chunks": 1,
+            "internal_seconds": 0.785071,
+            "rank": 25
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_31workers/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_31workers/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 1.7103161662817001,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "total": 2712,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cuda_2a30/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cuda_2a30/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.8787828236818314,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.71584,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.738116,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.73984,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.716471,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.657445,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.716135,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.265847,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.664967,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.658624,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.667098,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.607629,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.086962,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.088509,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.260527,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.086955,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.265733,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.265746,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.261777,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.086956,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.265772,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.265779,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.072193,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.028357,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.036192,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.050641,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.050634,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.050677,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.03052,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.050707,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.034318,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.086431,
+            "rank": 0
+          },
+          {
+            "checked": 2712,
+            "chunks": 1,
+            "internal_seconds": 0.802153,
+            "rank": 17
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_31workers/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_31workers/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 1.7286963239312172,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "total": 2712,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cuda_2a30/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cuda_2a30/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.8511203974485397,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.086255,
+            "rank": 0
+          },
+          {
+            "checked": 2712,
+            "chunks": 1,
+            "internal_seconds": 0.084063,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.031437,
+            "rank": 1
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_2workers/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_2workers/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.8371741026639938,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "total": 2712,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cuda_2a30/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cuda_2a30/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.7718750834465027,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.096849,
+            "rank": 0
+          },
+          {
+            "checked": 2712,
+            "chunks": 1,
+            "internal_seconds": 0.083593,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.031472,
+            "rank": 1
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_2workers/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_2workers/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 0.833506777882576,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/colour-code-distance-3-single-faults.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 2712,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.517442,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.514221,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.488386,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.457588,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.474597,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.457162,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.476306,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.484057,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.465763,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.062903,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.346478,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.065465,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.068905,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.445376,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.440683,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.40748,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.346546,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.263153,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.059209,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.043559,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.037086,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.037109,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.03712,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.038965,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.037068,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.037073,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.033727,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.037126,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.051956,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.038472,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.091247,
+            "rank": 0
+          },
+          {
+            "checked": 2712,
+            "chunks": 1,
+            "internal_seconds": 0.57987,
+            "rank": 29
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_31workers/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/colour-code-distance-3-single-faults/cpu_31workers/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 1.5029396712779999,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cpu_2workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.373176,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.808457,
+            "rank": 0
+          },
+          {
+            "checked": 7420,
+            "chunks": 1,
+            "internal_seconds": 1.896287,
+            "rank": 2
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_2workers/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_2workers/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 11.341918781399727,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cpu_31workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.649049,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.99662,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.92209,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.674502,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.709662,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.729585,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.852834,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.193316,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.121711,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.624176,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.169738,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 7.185148,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.852835,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.398633,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.836195,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.837678,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.469271,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.398597,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.836282,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.836236,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.844764,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.398602,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.836238,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.836206,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.231861,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.852386,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.398593,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 6.850038,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.371604,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.234273,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.83663,
+            "rank": 0
+          },
+          {
+            "checked": 7420,
+            "chunks": 1,
+            "internal_seconds": 9.533908,
+            "rank": 26
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_31workers/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_31workers/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 19.85768733918667,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cuda_2a30",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "total": 7420,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cuda_2a30/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cuda_2a30/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 2.1597339436411858,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.385724,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.805742,
+            "rank": 0
+          },
+          {
+            "checked": 7420,
+            "chunks": 1,
+            "internal_seconds": 2.487752,
+            "rank": 2
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_2workers/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_2workers/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 11.980709709227085,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.250736,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.216015,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.024188,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.089701,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.143259,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.025525,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.69923,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.676693,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.883257,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.92764,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.319163,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.46728,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.624283,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.04422,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.28592,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.939267,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.925057,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.86308,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.797247,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.820299,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.038466,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.957917,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.967747,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.401505,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.409477,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.414314,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.401527,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.401476,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.401517,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.43665,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.825273,
+            "rank": 0
+          },
+          {
+            "checked": 7420,
+            "chunks": 1,
+            "internal_seconds": 3.695796,
+            "rank": 26
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_31workers/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_31workers/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 14.002549961209297,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "total": 7420,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cuda_2a30/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cuda_2a30/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 2.1382546052336693,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.487541,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.470699,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.645068,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.672178,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.707744,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.459904,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.019074,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.021333,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.311529,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.311529,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.311517,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.311591,
+            "rank": 21
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.344704,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.33141,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 5.311533,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.404263,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 4.72869,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.568626,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.48126,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 4.694435,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 4.967238,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 4.791113,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.556263,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.559786,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.448124,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 4.940878,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 4.691061,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 4.958847,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.577255,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.008389,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.831882,
+            "rank": 0
+          },
+          {
+            "checked": 7420,
+            "chunks": 1,
+            "internal_seconds": 7.223436,
+            "rank": 29
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_31workers/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_31workers/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 17.658088460564613,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "total": 7420,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cuda_2a30/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cuda_2a30/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 2.164197139441967,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.403979,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.800162,
+            "rank": 0
+          },
+          {
+            "checked": 7420,
+            "chunks": 1,
+            "internal_seconds": 1.833266,
+            "rank": 2
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_2workers/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_2workers/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 11.27774354070425,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "total": 7420,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cuda_2a30/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cuda_2a30/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 2.148950435221195,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.37792,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.80688,
+            "rank": 0
+          },
+          {
+            "checked": 7420,
+            "chunks": 1,
+            "internal_seconds": 3.869102,
+            "rank": 1
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_2workers/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_2workers/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 13.38240697234869,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/golay-distance-3.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 7420,
+        "processes": [
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.986271,
+            "rank": 20
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.97707,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.972464,
+            "rank": 24
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 3.077844,
+            "rank": 27
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.936781,
+            "rank": 29
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.898889,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.775305,
+            "rank": 18
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.905062,
+            "rank": 19
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.910158,
+            "rank": 23
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.823217,
+            "rank": 25
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.547946,
+            "rank": 26
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.880048,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.927464,
+            "rank": 31
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.999219,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.04942,
+            "rank": 3
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.658135,
+            "rank": 5
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.06401,
+            "rank": 6
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.700083,
+            "rank": 7
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.652029,
+            "rank": 8
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.002426,
+            "rank": 12
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.065482,
+            "rank": 13
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.295575,
+            "rank": 14
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.676304,
+            "rank": 15
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.336683,
+            "rank": 16
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 2.461627,
+            "rank": 28
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.516428,
+            "rank": 4
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.641466,
+            "rank": 9
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.416081,
+            "rank": 10
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.437934,
+            "rank": 11
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 0.402359,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 1.831378,
+            "rank": 0
+          },
+          {
+            "checked": 7420,
+            "chunks": 1,
+            "internal_seconds": 4.548473,
+            "rank": 21
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_31workers/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/golay-distance-3/cpu_31workers/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 14.89710197597742,
+      "workload": "golay-distance-3"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cpu_2workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "processes": [
+          {
+            "checked": 2891040,
+            "chunks": 24,
+            "internal_seconds": 33.017894,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 33.278479,
+            "rank": 0
+          },
+          {
+            "checked": 2890560,
+            "chunks": 22,
+            "internal_seconds": 33.334621,
+            "rank": 1
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_2workers/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_2workers/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 34.44258971512318,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cpu_31workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "processes": [
+          {
+            "checked": 131200,
+            "chunks": 1,
+            "internal_seconds": 2.152689,
+            "rank": 23
+          },
+          {
+            "checked": 146752,
+            "chunks": 1,
+            "internal_seconds": 1.574679,
+            "rank": 25
+          },
+          {
+            "checked": 141376,
+            "chunks": 1,
+            "internal_seconds": 2.09677,
+            "rank": 29
+          },
+          {
+            "checked": 136816,
+            "chunks": 1,
+            "internal_seconds": 2.244989,
+            "rank": 31
+          },
+          {
+            "checked": 141904,
+            "chunks": 1,
+            "internal_seconds": 2.056333,
+            "rank": 26
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.593165,
+            "rank": 4
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.715226,
+            "rank": 12
+          },
+          {
+            "checked": 147328,
+            "chunks": 1,
+            "internal_seconds": 2.239131,
+            "rank": 16
+          },
+          {
+            "checked": 139648,
+            "chunks": 1,
+            "internal_seconds": 1.770784,
+            "rank": 8
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.766386,
+            "rank": 1
+          },
+          {
+            "checked": 145600,
+            "chunks": 1,
+            "internal_seconds": 1.773663,
+            "rank": 7
+          },
+          {
+            "checked": 138880,
+            "chunks": 1,
+            "internal_seconds": 1.785613,
+            "rank": 2
+          },
+          {
+            "checked": 169600,
+            "chunks": 2,
+            "internal_seconds": 1.798286,
+            "rank": 5
+          },
+          {
+            "checked": 145408,
+            "chunks": 1,
+            "internal_seconds": 1.826559,
+            "rank": 3
+          },
+          {
+            "checked": 141184,
+            "chunks": 1,
+            "internal_seconds": 1.832308,
+            "rank": 15
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.825917,
+            "rank": 11
+          },
+          {
+            "checked": 151168,
+            "chunks": 1,
+            "internal_seconds": 1.959701,
+            "rank": 10
+          },
+          {
+            "checked": 185888,
+            "chunks": 2,
+            "internal_seconds": 2.788846,
+            "rank": 28
+          },
+          {
+            "checked": 187664,
+            "chunks": 2,
+            "internal_seconds": 2.4336,
+            "rank": 13
+          },
+          {
+            "checked": 190304,
+            "chunks": 2,
+            "internal_seconds": 2.955797,
+            "rank": 18
+          },
+          {
+            "checked": 190592,
+            "chunks": 2,
+            "internal_seconds": 2.493015,
+            "rank": 27
+          },
+          {
+            "checked": 189728,
+            "chunks": 2,
+            "internal_seconds": 3.156437,
+            "rank": 21
+          },
+          {
+            "checked": 207344,
+            "chunks": 2,
+            "internal_seconds": 2.671839,
+            "rank": 19
+          },
+          {
+            "checked": 222512,
+            "chunks": 2,
+            "internal_seconds": 2.72437,
+            "rank": 6
+          },
+          {
+            "checked": 234320,
+            "chunks": 2,
+            "internal_seconds": 3.155405,
+            "rank": 17
+          },
+          {
+            "checked": 249584,
+            "chunks": 2,
+            "internal_seconds": 3.598232,
+            "rank": 24
+          },
+          {
+            "checked": 299072,
+            "chunks": 2,
+            "internal_seconds": 3.302687,
+            "rank": 14
+          },
+          {
+            "checked": 302720,
+            "chunks": 2,
+            "internal_seconds": 3.254728,
+            "rank": 22
+          },
+          {
+            "checked": 298112,
+            "chunks": 2,
+            "internal_seconds": 3.210733,
+            "rank": 9
+          },
+          {
+            "checked": 298112,
+            "chunks": 2,
+            "internal_seconds": 3.603225,
+            "rank": 30
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 3.351899,
+            "rank": 0
+          },
+          {
+            "checked": 257168,
+            "chunks": 2,
+            "internal_seconds": 4.056439,
+            "rank": 20
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_31workers/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_31workers/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 5.36282254755497,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "warmup",
+      "profile": "cuda_2a30",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "total": 5781600,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cuda_2a30/warmup-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cuda_2a30/warmup-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 11.331309832632542,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "processes": [
+          {
+            "checked": 2945392,
+            "chunks": 22,
+            "internal_seconds": 33.108477,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 33.215098,
+            "rank": 0
+          },
+          {
+            "checked": 2836208,
+            "chunks": 24,
+            "internal_seconds": 33.060612,
+            "rank": 2
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_2workers/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_2workers/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 34.181551948189735,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "processes": [
+          {
+            "checked": 146752,
+            "chunks": 1,
+            "internal_seconds": 1.593137,
+            "rank": 14
+          },
+          {
+            "checked": 141376,
+            "chunks": 1,
+            "internal_seconds": 2.075988,
+            "rank": 19
+          },
+          {
+            "checked": 136816,
+            "chunks": 1,
+            "internal_seconds": 2.131524,
+            "rank": 25
+          },
+          {
+            "checked": 141904,
+            "chunks": 1,
+            "internal_seconds": 2.030206,
+            "rank": 29
+          },
+          {
+            "checked": 147328,
+            "chunks": 1,
+            "internal_seconds": 2.136359,
+            "rank": 31
+          },
+          {
+            "checked": 139648,
+            "chunks": 1,
+            "internal_seconds": 1.748013,
+            "rank": 3
+          },
+          {
+            "checked": 138880,
+            "chunks": 1,
+            "internal_seconds": 1.757982,
+            "rank": 7
+          },
+          {
+            "checked": 141184,
+            "chunks": 1,
+            "internal_seconds": 1.801402,
+            "rank": 15
+          },
+          {
+            "checked": 142912,
+            "chunks": 1,
+            "internal_seconds": 1.413313,
+            "rank": 1
+          },
+          {
+            "checked": 169600,
+            "chunks": 2,
+            "internal_seconds": 1.816763,
+            "rank": 2
+          },
+          {
+            "checked": 145600,
+            "chunks": 1,
+            "internal_seconds": 1.749873,
+            "rank": 27
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.574441,
+            "rank": 9
+          },
+          {
+            "checked": 183776,
+            "chunks": 2,
+            "internal_seconds": 2.57008,
+            "rank": 17
+          },
+          {
+            "checked": 185504,
+            "chunks": 2,
+            "internal_seconds": 2.771504,
+            "rank": 30
+          },
+          {
+            "checked": 180752,
+            "chunks": 2,
+            "internal_seconds": 2.402089,
+            "rank": 6
+          },
+          {
+            "checked": 183872,
+            "chunks": 2,
+            "internal_seconds": 2.423577,
+            "rank": 13
+          },
+          {
+            "checked": 150016,
+            "chunks": 1,
+            "internal_seconds": 1.764533,
+            "rank": 5
+          },
+          {
+            "checked": 152320,
+            "chunks": 1,
+            "internal_seconds": 1.888335,
+            "rank": 10
+          },
+          {
+            "checked": 188192,
+            "chunks": 2,
+            "internal_seconds": 3.085724,
+            "rank": 23
+          },
+          {
+            "checked": 152704,
+            "chunks": 1,
+            "internal_seconds": 1.913182,
+            "rank": 16
+          },
+          {
+            "checked": 154624,
+            "chunks": 1,
+            "internal_seconds": 1.924048,
+            "rank": 11
+          },
+          {
+            "checked": 152704,
+            "chunks": 1,
+            "internal_seconds": 1.949441,
+            "rank": 4
+          },
+          {
+            "checked": 207344,
+            "chunks": 2,
+            "internal_seconds": 2.717243,
+            "rank": 12
+          },
+          {
+            "checked": 222512,
+            "chunks": 2,
+            "internal_seconds": 2.764547,
+            "rank": 8
+          },
+          {
+            "checked": 234320,
+            "chunks": 2,
+            "internal_seconds": 3.144008,
+            "rank": 28
+          },
+          {
+            "checked": 249584,
+            "chunks": 2,
+            "internal_seconds": 3.423895,
+            "rank": 21
+          },
+          {
+            "checked": 299072,
+            "chunks": 2,
+            "internal_seconds": 3.311043,
+            "rank": 18
+          },
+          {
+            "checked": 296768,
+            "chunks": 2,
+            "internal_seconds": 3.385387,
+            "rank": 26
+          },
+          {
+            "checked": 252176,
+            "chunks": 2,
+            "internal_seconds": 3.824961,
+            "rank": 20
+          },
+          {
+            "checked": 304064,
+            "chunks": 2,
+            "internal_seconds": 3.385285,
+            "rank": 22
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 3.36104,
+            "rank": 0
+          },
+          {
+            "checked": 291392,
+            "chunks": 2,
+            "internal_seconds": 3.9336,
+            "rank": 24
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_31workers/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_31workers/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 5.283631652593613,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 1,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "total": 5781600,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cuda_2a30/measured-01.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cuda_2a30/measured-01.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 11.320527851581573,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "processes": [
+          {
+            "checked": 146752,
+            "chunks": 1,
+            "internal_seconds": 1.511092,
+            "rank": 21
+          },
+          {
+            "checked": 131200,
+            "chunks": 1,
+            "internal_seconds": 2.20022,
+            "rank": 24
+          },
+          {
+            "checked": 136816,
+            "chunks": 1,
+            "internal_seconds": 2.219839,
+            "rank": 26
+          },
+          {
+            "checked": 141376,
+            "chunks": 1,
+            "internal_seconds": 2.182718,
+            "rank": 20
+          },
+          {
+            "checked": 141904,
+            "chunks": 1,
+            "internal_seconds": 2.131055,
+            "rank": 23
+          },
+          {
+            "checked": 147328,
+            "chunks": 1,
+            "internal_seconds": 2.266535,
+            "rank": 30
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.574162,
+            "rank": 4
+          },
+          {
+            "checked": 139648,
+            "chunks": 1,
+            "internal_seconds": 1.749433,
+            "rank": 15
+          },
+          {
+            "checked": 138880,
+            "chunks": 1,
+            "internal_seconds": 1.786172,
+            "rank": 2
+          },
+          {
+            "checked": 168064,
+            "chunks": 2,
+            "internal_seconds": 1.744625,
+            "rank": 28
+          },
+          {
+            "checked": 141184,
+            "chunks": 1,
+            "internal_seconds": 1.804242,
+            "rank": 11
+          },
+          {
+            "checked": 145600,
+            "chunks": 1,
+            "internal_seconds": 1.750517,
+            "rank": 13
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.679541,
+            "rank": 5
+          },
+          {
+            "checked": 145408,
+            "chunks": 1,
+            "internal_seconds": 1.814566,
+            "rank": 3
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.749447,
+            "rank": 10
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.820017,
+            "rank": 7
+          },
+          {
+            "checked": 151168,
+            "chunks": 1,
+            "internal_seconds": 1.982414,
+            "rank": 9
+          },
+          {
+            "checked": 185888,
+            "chunks": 2,
+            "internal_seconds": 2.842956,
+            "rank": 19
+          },
+          {
+            "checked": 187664,
+            "chunks": 2,
+            "internal_seconds": 2.442106,
+            "rank": 14
+          },
+          {
+            "checked": 189728,
+            "chunks": 2,
+            "internal_seconds": 3.104986,
+            "rank": 29
+          },
+          {
+            "checked": 190592,
+            "chunks": 2,
+            "internal_seconds": 2.499241,
+            "rank": 6
+          },
+          {
+            "checked": 190304,
+            "chunks": 2,
+            "internal_seconds": 3.110254,
+            "rank": 16
+          },
+          {
+            "checked": 207344,
+            "chunks": 2,
+            "internal_seconds": 2.656599,
+            "rank": 8
+          },
+          {
+            "checked": 222512,
+            "chunks": 2,
+            "internal_seconds": 2.708047,
+            "rank": 1
+          },
+          {
+            "checked": 234320,
+            "chunks": 2,
+            "internal_seconds": 3.352828,
+            "rank": 27
+          },
+          {
+            "checked": 249584,
+            "chunks": 2,
+            "internal_seconds": 3.608737,
+            "rank": 18
+          },
+          {
+            "checked": 299072,
+            "chunks": 2,
+            "internal_seconds": 3.498621,
+            "rank": 22
+          },
+          {
+            "checked": 254096,
+            "chunks": 2,
+            "internal_seconds": 3.749408,
+            "rank": 31
+          },
+          {
+            "checked": 294848,
+            "chunks": 2,
+            "internal_seconds": 3.724793,
+            "rank": 25
+          },
+          {
+            "checked": 304064,
+            "chunks": 2,
+            "internal_seconds": 3.634838,
+            "rank": 17
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 3.34999,
+            "rank": 0
+          },
+          {
+            "checked": 304640,
+            "chunks": 2,
+            "internal_seconds": 3.350022,
+            "rank": 12
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_31workers/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_31workers/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 5.357007794082165,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "total": 5781600,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cuda_2a30/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cuda_2a30/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 11.300741046667099,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 2,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "processes": [
+          {
+            "checked": 2882976,
+            "chunks": 24,
+            "internal_seconds": 33.059206,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 33.247505,
+            "rank": 0
+          },
+          {
+            "checked": 2898624,
+            "chunks": 22,
+            "internal_seconds": 33.247514,
+            "rank": 2
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_2workers/measured-02.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_2workers/measured-02.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 34.53397210687399,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "2",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/build-gpu-release/comb-cuda-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cuda_2a30",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "total": 5781600,
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cuda_2a30/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cuda_2a30/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 11.338508449494839,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "3",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_2workers",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "processes": [
+          {
+            "checked": 2882976,
+            "chunks": 24,
+            "internal_seconds": 33.032228,
+            "rank": 2
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 33.318807,
+            "rank": 0
+          },
+          {
+            "checked": 2898624,
+            "chunks": 22,
+            "internal_seconds": 33.322303,
+            "rank": 1
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_2workers/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_2workers/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 34.611721470952034,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "argv": [
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/tooling/env/bin/mpiexec",
+        "-n",
+        "32",
+        "-bind-to",
+        "core",
+        "-map-by",
+        "core",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/native-mpi/comb-mpi",
+        "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/inputs/distance-5-optimised-2.run"
+      ],
+      "cwd": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark",
+      "environment_overrides": {
+        "CUDA_VISIBLE_DEVICES": "1,2",
+        "OMP_NUM_THREADS": "1"
+      },
+      "interrupted": false,
+      "phase": "measured",
+      "profile": "cpu_31workers",
+      "repetition": 3,
+      "return_code": 0,
+      "scientific_result": {
+        "checked": 5781600,
+        "processes": [
+          {
+            "checked": 146752,
+            "chunks": 1,
+            "internal_seconds": 1.559808,
+            "rank": 8
+          },
+          {
+            "checked": 142912,
+            "chunks": 1,
+            "internal_seconds": 1.414058,
+            "rank": 13
+          },
+          {
+            "checked": 141376,
+            "chunks": 1,
+            "internal_seconds": 2.201474,
+            "rank": 31
+          },
+          {
+            "checked": 141904,
+            "chunks": 1,
+            "internal_seconds": 2.180061,
+            "rank": 25
+          },
+          {
+            "checked": 136816,
+            "chunks": 1,
+            "internal_seconds": 2.282963,
+            "rank": 27
+          },
+          {
+            "checked": 147328,
+            "chunks": 1,
+            "internal_seconds": 2.281823,
+            "rank": 23
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.578732,
+            "rank": 11
+          },
+          {
+            "checked": 139648,
+            "chunks": 1,
+            "internal_seconds": 1.747216,
+            "rank": 3
+          },
+          {
+            "checked": 138880,
+            "chunks": 1,
+            "internal_seconds": 1.756144,
+            "rank": 10
+          },
+          {
+            "checked": 141184,
+            "chunks": 1,
+            "internal_seconds": 1.791502,
+            "rank": 2
+          },
+          {
+            "checked": 156352,
+            "chunks": 2,
+            "internal_seconds": 2.513558,
+            "rank": 20
+          },
+          {
+            "checked": 145600,
+            "chunks": 1,
+            "internal_seconds": 1.750027,
+            "rank": 5
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.748088,
+            "rank": 9
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.761131,
+            "rank": 16
+          },
+          {
+            "checked": 145408,
+            "chunks": 1,
+            "internal_seconds": 1.810215,
+            "rank": 4
+          },
+          {
+            "checked": 147904,
+            "chunks": 1,
+            "internal_seconds": 1.805801,
+            "rank": 7
+          },
+          {
+            "checked": 151168,
+            "chunks": 1,
+            "internal_seconds": 1.937004,
+            "rank": 12
+          },
+          {
+            "checked": 185888,
+            "chunks": 2,
+            "internal_seconds": 2.900704,
+            "rank": 30
+          },
+          {
+            "checked": 187664,
+            "chunks": 2,
+            "internal_seconds": 2.494467,
+            "rank": 15
+          },
+          {
+            "checked": 189728,
+            "chunks": 2,
+            "internal_seconds": 3.161965,
+            "rank": 29
+          },
+          {
+            "checked": 190592,
+            "chunks": 2,
+            "internal_seconds": 2.521634,
+            "rank": 28
+          },
+          {
+            "checked": 190304,
+            "chunks": 2,
+            "internal_seconds": 3.143589,
+            "rank": 19
+          },
+          {
+            "checked": 207344,
+            "chunks": 2,
+            "internal_seconds": 2.687129,
+            "rank": 14
+          },
+          {
+            "checked": 222512,
+            "chunks": 2,
+            "internal_seconds": 2.719471,
+            "rank": 6
+          },
+          {
+            "checked": 234320,
+            "chunks": 2,
+            "internal_seconds": 3.333483,
+            "rank": 17
+          },
+          {
+            "checked": 249584,
+            "chunks": 2,
+            "internal_seconds": 3.576636,
+            "rank": 26
+          },
+          {
+            "checked": 299072,
+            "chunks": 2,
+            "internal_seconds": 3.439829,
+            "rank": 21
+          },
+          {
+            "checked": 302720,
+            "chunks": 2,
+            "internal_seconds": 3.125703,
+            "rank": 22
+          },
+          {
+            "checked": 252176,
+            "chunks": 2,
+            "internal_seconds": 3.977948,
+            "rank": 24
+          },
+          {
+            "checked": 302912,
+            "chunks": 2,
+            "internal_seconds": 3.309257,
+            "rank": 1
+          },
+          {
+            "checked": 0,
+            "chunks": 0,
+            "internal_seconds": 3.347652,
+            "rank": 0
+          },
+          {
+            "checked": 299840,
+            "chunks": 2,
+            "internal_seconds": 3.791745,
+            "rank": 18
+          }
+        ],
+        "verification_code": 0
+      },
+      "stderr_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_31workers/measured-03.stderr.log",
+      "stdout_log": "/home/erinaldi/codex-validation/comb-cuda-20261106-lsTaEl/benchmark/results-20261106/distance-5-optimised-2/cpu_31workers/measured-03.stdout.log",
+      "timed_out": false,
+      "timeout_seconds": 300.0,
+      "valid": true,
+      "wall_seconds": 5.42010373622179,
+      "workload": "distance-5-optimised-2"
+    }
+  ],
+  "schema_version": 1,
+  "status": "complete",
+  "summaries": [
+    {
+      "max_wall_seconds": 0.16234727948904037,
+      "median_tuples_per_second": 5818.529529460254,
+      "median_wall_seconds": 0.16224030405282974,
+      "min_wall_seconds": 0.1610744744539261,
+      "profile": "cpu_2workers",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "steane"
+    },
+    {
+      "max_wall_seconds": 0.6441105529665947,
+      "median_tuples_per_second": 1475.120361808295,
+      "median_wall_seconds": 0.6399477794766426,
+      "min_wall_seconds": 0.5921550020575523,
+      "profile": "cpu_31workers",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "steane"
+    },
+    {
+      "max_wall_seconds": 0.7759834453463554,
+      "median_tuples_per_second": 1220.4108048719788,
+      "median_wall_seconds": 0.773510031402111,
+      "min_wall_seconds": 0.764101468026638,
+      "profile": "cuda_2a30",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "steane"
+    },
+    {
+      "max_wall_seconds": 0.9112354591488838,
+      "median_tuples_per_second": 3239.4695337207318,
+      "median_wall_seconds": 0.8371741026639938,
+      "min_wall_seconds": 0.833506777882576,
+      "profile": "cpu_2workers",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "max_wall_seconds": 1.7286963239312172,
+      "median_tuples_per_second": 1585.6717333707973,
+      "median_wall_seconds": 1.7103161662817001,
+      "min_wall_seconds": 1.5029396712779999,
+      "profile": "cpu_31workers",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "max_wall_seconds": 0.8787828236818314,
+      "median_tuples_per_second": 3186.388210328342,
+      "median_wall_seconds": 0.8511203974485397,
+      "min_wall_seconds": 0.7718750834465027,
+      "profile": "cuda_2a30",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "colour-code-distance-3-single-faults"
+    },
+    {
+      "max_wall_seconds": 13.38240697234869,
+      "median_tuples_per_second": 619.3289195785621,
+      "median_wall_seconds": 11.980709709227085,
+      "min_wall_seconds": 11.27774354070425,
+      "profile": "cpu_2workers",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "golay-distance-3"
+    },
+    {
+      "max_wall_seconds": 17.658088460564613,
+      "median_tuples_per_second": 498.0834535445383,
+      "median_wall_seconds": 14.89710197597742,
+      "min_wall_seconds": 14.002549961209297,
+      "profile": "cpu_31workers",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "golay-distance-3"
+    },
+    {
+      "max_wall_seconds": 2.164197139441967,
+      "median_tuples_per_second": 3452.8483665265394,
+      "median_wall_seconds": 2.148950435221195,
+      "min_wall_seconds": 2.1382546052336693,
+      "profile": "cuda_2a30",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "golay-distance-3"
+    },
+    {
+      "max_wall_seconds": 34.611721470952034,
+      "median_tuples_per_second": 167417.7526439008,
+      "median_wall_seconds": 34.53397210687399,
+      "min_wall_seconds": 34.181551948189735,
+      "profile": "cpu_2workers",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "max_wall_seconds": 5.42010373622179,
+      "median_tuples_per_second": 1079259.2100364084,
+      "median_wall_seconds": 5.357007794082165,
+      "min_wall_seconds": 5.283631652593613,
+      "profile": "cpu_31workers",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "distance-5-optimised-2"
+    },
+    {
+      "max_wall_seconds": 11.338508449494839,
+      "median_tuples_per_second": 510718.2346795129,
+      "median_wall_seconds": 11.320527851581573,
+      "min_wall_seconds": 11.300741046667099,
+      "profile": "cuda_2a30",
+      "qualified": true,
+      "valid_measured_runs": 3,
+      "valid_warmup_runs": 1,
+      "workload": "distance-5-optimised-2"
+    }
+  ],
+  "timing_scope": "complete mpiexec command including setup, I/O, cleanup"
+}

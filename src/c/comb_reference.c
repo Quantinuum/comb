@@ -732,7 +732,11 @@ static comb_cuda_status_t reference_tuple_bad(
     status =
         reference_wrap_flat_dcp(context, 0U, fault_indices[selected], &view);
     if (status != COMB_CUDA_STATUS_SUCCESS) goto cleanup;
-    dense_status = comb_dense_dcp_multiply(&combined, &view, &combined);
+    /*
+     * Match comb.c's dcp_mulf_right accumulator fold exactly:
+     * combined <- combined * next_error, giving E_1 E_2 ... E_s.
+     */
+    dense_status = comb_dense_dcp_multiply(&combined, &combined, &view);
     comb_dense_dcp_destroy(&view);
     if (dense_status != COMB_DENSE_OK) {
       status = reference_dense_status(dense_status);

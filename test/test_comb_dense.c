@@ -432,26 +432,36 @@ static void test_random_dcp_multiplication(void) {
   }
 }
 
-static void test_dcp_order_fixture(void) {
-  comb_dense_dcp_t c1;
-  comb_dense_dcp_t c2;
-  comb_dense_dcp_t forward;
-  comb_dense_dcp_t reverse;
-  CHECK_OK(comb_dense_dcp_init(&c1, 2U));
-  CHECK_OK(comb_dense_dcp_init(&c2, 2U));
-  CHECK_OK(comb_dense_dcp_init(&forward, 2U));
-  CHECK_OK(comb_dense_dcp_init(&reverse, 2U));
-  set_dcp_f(&c1, 0U, 1U, 1U);
-  set_dcp_f(&c1, 1U, 0U, 1U);
-  set_dcp_vector_bit(c2.h_x, 1U, 1U);
-  CHECK_OK(comb_dense_dcp_multiply(&forward, &c2, &c1));
-  CHECK_OK(comb_dense_dcp_multiply(&reverse, &c1, &c2));
-  CHECK(dcp_vector_bit(forward.h_z, 0U) == 1U);
-  CHECK(dcp_vector_bit(reverse.h_z, 0U) == 0U);
-  comb_dense_dcp_destroy(&reverse);
-  comb_dense_dcp_destroy(&forward);
-  comb_dense_dcp_destroy(&c2);
-  comb_dense_dcp_destroy(&c1);
+static void test_main_cpu_dcp_fold_order(void) {
+  comb_dense_dcp_t first;
+  comb_dense_dcp_t next;
+  comb_dense_dcp_t main_order;
+  comb_dense_dcp_t opposite_order;
+  CHECK_OK(comb_dense_dcp_init(&first, 2U));
+  CHECK_OK(comb_dense_dcp_init(&next, 2U));
+  CHECK_OK(comb_dense_dcp_init(&main_order, 2U));
+  CHECK_OK(comb_dense_dcp_init(&opposite_order, 2U));
+  set_dcp_f(&first, 0U, 1U, 1U);
+  set_dcp_f(&first, 1U, 0U, 1U);
+  set_dcp_vector_bit(next.h_x, 1U, 1U);
+
+  /* comb.c uses dcp_mulf_right(accumulator, next), hence first * next. */
+  CHECK_OK(comb_dense_dcp_multiply(&main_order, &first, &next));
+  CHECK_OK(comb_dense_dcp_multiply(&opposite_order, &next, &first));
+  CHECK(dcp_vector_bit(main_order.h_z, 0U) == 0U);
+  CHECK(dcp_vector_bit(opposite_order.h_z, 0U) == 1U);
+
+  /* Also lock the alias-safe form used by comb_reference.c. */
+  CHECK_OK(comb_dense_dcp_multiply(&first, &first, &next));
+  CHECK(dcp_vector_bit(first.h_z, 0U) ==
+        dcp_vector_bit(main_order.h_z, 0U));
+  CHECK(dcp_vector_bit(first.h_z, 0U) !=
+        dcp_vector_bit(opposite_order.h_z, 0U));
+
+  comb_dense_dcp_destroy(&opposite_order);
+  comb_dense_dcp_destroy(&main_order);
+  comb_dense_dcp_destroy(&next);
+  comb_dense_dcp_destroy(&first);
 }
 
 static void test_postselection_fixtures(void) {
@@ -500,7 +510,7 @@ int main(void) {
   test_random_phase_row_add();
   test_random_coset_reduction();
   test_random_dcp_multiplication();
-  test_dcp_order_fixture();
+  test_main_cpu_dcp_fold_order();
   test_postselection_fixtures();
   puts("comb_dense: all deterministic and randomized checks passed");
   return EXIT_SUCCESS;

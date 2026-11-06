@@ -22,7 +22,7 @@ word _popcnt(word x){
   }
   return r;
 }
-inline word popcnt(word x){
+static inline word popcnt(word x){
   uint8_t* arr = (uint8_t*)&x;
   word r = 0;
   for(int i = 0; i <8; i++){
@@ -104,7 +104,7 @@ void set_row(mzd_t *x_parts, mzd_t *z_parts, int j, mzd_t *x_measurement_matrix,
   mzd_write_bit(delta_bits, j, 0, 0);
 }
 
-inline unsigned compress4(unsigned x, unsigned m) {  // from hacker's delight
+static inline unsigned compress4(unsigned x, unsigned m) {  // from hacker's delight
   unsigned mk, mp, mv, t;
   int i;
   x = x & m;     // Clear irrelevant bits.

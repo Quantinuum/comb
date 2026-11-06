@@ -1,6 +1,3 @@
-#include "comb_cuda.h"
-#include "comb_cuda_internal.h"
-
 #include <cuda_runtime.h>
 
 #include <chrono>
@@ -10,6 +7,10 @@
 #include <cstdlib>
 #include <cstring>
 #include <new>
+
+#include "comb_cuda.h"
+#include "comb_cuda_internal.h"
+#include "comb_cuda_pipeline.h"
 
 namespace {
 
@@ -66,146 +67,21 @@ struct comb_cuda_context {
   comb_cuda_scheduler_state_t *device_scheduler;
   void *device_scratch;
   uint64_t device_scratch_size;
+  void *device_prepared;
+  uint64_t scratch_per_worker;
+  uint32_t worker_count;
 };
 
-template <typename T>
-__device__ __forceinline__ const T *flat_section(const uint8_t *blob,
-                                                 uint64_t offset) {
-  return reinterpret_cast<const T *>(blob + offset);
-}
-
-/* Canonical weighted-colex unranking.  W[m][r] is copied into FlatProblem by
- * the checked pure-C packer.  The first selected tuple element varies fastest
- * when local fault offsets are decoded. */
-__device__ bool comb_cuda_unrank_weighted_colex(
-    const uint8_t *blob, uint64_t rank, uint32_t *selected_locations,
-    uint32_t *fault_indices) {
-  const auto *problem =
-      reinterpret_cast<const comb_cuda_flat_problem_t *>(blob);
-  if (rank >= problem->total_combination_count) return false;
-  const uint32_t *partitions =
-      flat_section<uint32_t>(blob, problem->fault_partitions_offset);
-  const uint64_t *prefixes =
-      flat_section<uint64_t>(blob, problem->fault_prefixes_offset);
-  const uint64_t *dp = flat_section<uint64_t>(blob, problem->rank_dp_offset);
-  const uint32_t columns = problem->rank_dp_columns;
-
-  uint32_t m = problem->fault_location_count;
-  uint32_t r = problem->s;
-  uint64_t probe = rank;
-  while (r != 0) {
-    if (m == 0) return false;
-    const uint64_t without_last =
-        dp[static_cast<uint64_t>(m - 1) * columns + r];
-    if (probe < without_last) {
-      --m;
-      continue;
-    }
-    const uint32_t location = m - 1;
-    const uint32_t partition = partitions[location];
-    selected_locations[r - 1] = location;
-    probe = (probe - without_last) / partition;
-    --m;
-    --r;
-  }
-
-  uint64_t block_begin = 0;
-  for (uint32_t index = 0; index < problem->s; ++index) {
-    const uint32_t location = selected_locations[index];
-    block_begin = dp[static_cast<uint64_t>(location) * columns + index + 1] +
-                  static_cast<uint64_t>(partitions[location]) * block_begin;
-  }
-  uint64_t local = rank - block_begin;
-  for (uint32_t index = 0; index < problem->s; ++index) {
-    const uint32_t location = selected_locations[index];
-    const uint32_t partition = partitions[location];
-    const uint32_t offset = static_cast<uint32_t>(local % partition);
-    local /= partition;
-    fault_indices[index] = static_cast<uint32_t>(prefixes[location] + offset);
-  }
-  return local == 0;
-}
-
-__device__ __forceinline__ uint32_t comb_cuda_warp_xor(uint32_t value) {
-  for (int offset = 16; offset != 0; offset >>= 1) {
-    value ^= __shfl_down_sync(0xffffffffU, value, offset);
-  }
-  return value;
-}
-
-__device__ uint32_t comb_cuda_block_and_parity(const uint64_t *left,
-                                               const uint64_t *right,
-                                               uint32_t words,
-                                               uint32_t *warp_scratch) {
-  uint32_t parity = 0;
-  for (uint32_t word = threadIdx.x; word < words; word += blockDim.x) {
-    parity ^= static_cast<uint32_t>(__popcll(left[word] & right[word]) & 1U);
-  }
-  parity = comb_cuda_warp_xor(parity);
-  const uint32_t lane = threadIdx.x & 31U;
-  const uint32_t warp = threadIdx.x >> 5U;
-  if (lane == 0) warp_scratch[warp] = parity;
-  __syncthreads();
-  if (warp == 0) {
-    const uint32_t warp_count = (blockDim.x + 31U) >> 5U;
-    parity = lane < warp_count ? warp_scratch[lane] : 0;
-    parity = comb_cuda_warp_xor(parity);
-    if (lane == 0) warp_scratch[0] = parity;
-  }
-  __syncthreads();
-  return warp_scratch[0];
-}
-
-__device__ void comb_cuda_row_xor(uint64_t *destination,
-                                  const uint64_t *source, uint32_t words,
-                                  uint64_t final_mask) {
-  for (uint32_t word = threadIdx.x; word < words; word += blockDim.x) {
-    destination[word] ^= source[word];
-  }
-  __syncthreads();
-  if (threadIdx.x == 0 && words != 0) destination[words - 1] &= final_mask;
-  __syncthreads();
-}
-
-/* Matches add_row_to: compute x_source . z_destination before either packed
- * destination row mutates, then apply the Dehaene-De Moor phase correction. */
-__device__ void comb_cuda_phase_aware_row_add(
-    uint64_t *destination_x, uint64_t *destination_z,
-    uint32_t *destination_delta, uint32_t *destination_epsilon,
-    const uint64_t *source_x, const uint64_t *source_z,
-    uint32_t source_delta, uint32_t source_epsilon, uint32_t words,
-    uint64_t final_mask, uint32_t *warp_scratch) {
-  const uint32_t destination_delta_before = *destination_delta;
-  const uint32_t a2_t_u_a1 = comb_cuda_block_and_parity(
-      source_x, destination_z, words, warp_scratch);
-  comb_cuda_row_xor(destination_x, source_x, words, final_mask);
-  comb_cuda_row_xor(destination_z, source_z, words, final_mask);
-  if (threadIdx.x == 0) {
-    *destination_delta = destination_delta_before ^ source_delta;
-    *destination_epsilon =
-        *destination_epsilon ^ source_epsilon ^
-        (source_delta & destination_delta_before) ^ a2_t_u_a1;
-  }
-  __syncthreads();
-}
-
-__device__ __forceinline__ void comb_cuda_atomic_min_rank(
-    uint64_t *minimum_bad_rank, uint64_t rank) {
-  atomicMin(reinterpret_cast<unsigned long long *>(minimum_bad_rank),
-            static_cast<unsigned long long>(rank));
-}
-
-/* Saturating work claim.  atomicAdd would wrap when rank_end is UINT64_MAX,
- * allowing later teams to reschedule rank zero. */
-__device__ bool comb_cuda_claim_rank(uint64_t *next_rank, uint64_t rank_end,
-                                     uint64_t *rank) {
-  auto *counter = reinterpret_cast<unsigned long long *>(next_rank);
+/* Saturating rank claim: an atomicAdd could wrap at UINT64_MAX. */
+__device__ bool claim_rank(uint64_t *counter_value, uint64_t end,
+                           uint64_t *rank) {
+  auto *counter = reinterpret_cast<unsigned long long *>(counter_value);
   unsigned long long current = atomicAdd(counter, 0ULL);
-  while (current < rank_end) {
-    const unsigned long long desired = current + 1ULL;
-    const unsigned long long observed = atomicCAS(counter, current, desired);
+  while (current < end) {
+    const unsigned long long observed =
+        atomicCAS(counter, current, current + 1ULL);
     if (observed == current) {
-      *rank = static_cast<uint64_t>(current);
+      *rank = current;
       return true;
     }
     current = observed;
@@ -213,89 +89,72 @@ __device__ bool comb_cuda_claim_rank(uint64_t *next_rank, uint64_t rank_end,
   return false;
 }
 
-/* Persistent scheduling skeleton.  It deliberately has no scientific badness
- * predicate yet and is not launched by the public verifier. */
-template <bool OneWord>
-__global__ void comb_cuda_candidate_scheduler_scaffold(
-    const uint8_t *flat_blob, comb_cuda_scheduler_state_t *scheduler) {
-  const auto *problem =
-      reinterpret_cast<const comb_cuda_flat_problem_t *>(flat_blob);
-  __shared__ uint64_t rank;
-  __shared__ uint32_t have_rank;
-  __shared__ uint32_t warp_scratch[32];
+__global__ void verify_candidates(const uint8_t *blob, const uint8_t *prepared,
+                                  uint8_t *scratch, uint64_t scratch_stride,
+                                  uint32_t workers, bool fast,
+                                  comb_cuda_scheduler_state_t *state) {
+  const uint32_t worker = blockIdx.x * blockDim.x + threadIdx.x;
+  if (worker >= workers) return;
+  void *workspace = scratch + static_cast<uint64_t>(worker) * scratch_stride;
   for (;;) {
-    if (threadIdx.x == 0) {
-      have_rank = comb_cuda_claim_rank(&scheduler->next_rank,
-                                       scheduler->rank_end, &rank)
-                      ? 1U
-                      : 0U;
+    if (atomicAdd(&state->runtime_error, 0U) != 0U) return;
+    if (fast && atomicAdd(reinterpret_cast<unsigned long long *>(
+                              &state->minimum_bad_rank),
+                          0ULL) != COMB_CUDA_RANK_NONE)
+      return;
+    uint64_t rank;
+    if (!claim_rank(&state->next_rank, state->rank_end, &rank)) return;
+    int bad = 0;
+    const int status =
+        comb_gpu_candidate(blob, prepared, rank, workspace, &bad);
+    if (status != COMB_CUDA_STATUS_SUCCESS) {
+      atomicCAS(&state->runtime_error, 0U, static_cast<unsigned int>(status));
+      return;
     }
-    __syncthreads();
-    if (have_rank == 0U || scheduler->stop_requested != 0) return;
-
-    uint32_t parity = 0;
-    if (OneWord) {
-      if (threadIdx.x == 0 && problem->words_all == 1) parity = 0;
-    } else if (problem->words_all != 0) {
-      const uint64_t *x =
-          flat_section<uint64_t>(flat_blob, problem->output_dcp_hx_offset);
-      const uint64_t *z =
-          flat_section<uint64_t>(flat_blob, problem->output_dcp_hz_offset);
-      parity = comb_cuda_block_and_parity(x, z, problem->words_all,
-                                          warp_scratch);
-    }
-    (void)parity;
-    if (threadIdx.x == 0) {
-      atomicAdd(reinterpret_cast<unsigned long long *>(
-                    &scheduler->scheduled_count),
-                1ULL);
-      atomicExch(reinterpret_cast<unsigned int *>(
-                     &scheduler->pipeline_incomplete),
-                 1U);
-    }
-    __syncthreads();
+    if (bad)
+      atomicMin(
+          reinterpret_cast<unsigned long long *>(&state->minimum_bad_rank),
+          static_cast<unsigned long long>(rank));
+    atomicAdd(reinterpret_cast<unsigned long long *>(&state->scheduled_count),
+              1ULL);
   }
 }
 
-/* Kept dormant until the scientific predicate is complete.  Its two branches
- * make the <=64-bit warp path and general multiword block path explicit and
- * compile both scheduler specializations in CUDA builds. */
-[[maybe_unused]] comb_cuda_status_t comb_cuda_launch_scheduler_scaffold(
-    comb_cuda_context_t *context, uint64_t rank_begin, uint64_t rank_end,
-    uint64_t *scheduled_count) {
-  comb_cuda_scheduler_state_t scheduler{};
-  scheduler.next_rank = rank_begin;
-  scheduler.rank_end = rank_end;
-  scheduler.minimum_bad_rank = COMB_CUDA_RANK_NONE;
-  comb_cuda_status_t status = status_from_cuda(cudaMemcpy(
-      context->device_scheduler, &scheduler, sizeof(scheduler),
-      cudaMemcpyHostToDevice));
+/* Allocate a bounded number of independent workspaces once per context. */
+comb_cuda_status_t allocate_workspace(comb_cuda_context_t *context,
+                                      const void *blob, uint64_t blob_size) {
+  void *prepared = nullptr;
+  uint64_t prepared_size = 0;
+  comb_cuda_status_t status = comb_cuda_prepare(
+      blob, blob_size, &prepared, &prepared_size, &context->scratch_per_worker);
   if (status != COMB_CUDA_STATUS_SUCCESS) return status;
-
-  const auto *problem = reinterpret_cast<const comb_cuda_flat_problem_t *>(
-      context->host_blob);
-  if (problem->n_all <= 64) {
-    comb_cuda_candidate_scheduler_scaffold<true><<<128, 32>>>(
-        static_cast<const uint8_t *>(context->device_blob),
-        context->device_scheduler);
-  } else {
-    comb_cuda_candidate_scheduler_scaffold<false><<<128, 128>>>(
-        static_cast<const uint8_t *>(context->device_blob),
-        context->device_scheduler);
+  status = status_from_cuda(cudaMalloc(&context->device_prepared,
+                                       static_cast<size_t>(prepared_size)));
+  if (status == COMB_CUDA_STATUS_SUCCESS)
+    status = status_from_cuda(cudaMemcpy(context->device_prepared, prepared,
+                                         static_cast<size_t>(prepared_size),
+                                         cudaMemcpyHostToDevice));
+  std::free(prepared);
+  if (status != COMB_CUDA_STATUS_SUCCESS) return status;
+  size_t free_bytes = 0, total_bytes = 0;
+  status = status_from_cuda(cudaMemGetInfo(&free_bytes, &total_bytes));
+  if (status != COMB_CUDA_STATUS_SUCCESS) return status;
+  uint64_t budget = context->scratch_limit_bytes;
+  if (budget == 0) {
+    budget = static_cast<uint64_t>(free_bytes) / 4;
+    if (budget > (UINT64_C(256) << 20)) budget = UINT64_C(256) << 20;
   }
-  status = status_from_cuda(cudaGetLastError());
-  if (status == COMB_CUDA_STATUS_SUCCESS) {
-    status = status_from_cuda(cudaDeviceSynchronize());
-  }
-  if (status == COMB_CUDA_STATUS_SUCCESS) {
-    status = status_from_cuda(cudaMemcpy(&scheduler, context->device_scheduler,
-                                         sizeof(scheduler),
-                                         cudaMemcpyDeviceToHost));
-  }
-  if (scheduled_count != nullptr) {
-    *scheduled_count = scheduler.scheduled_count;
-  }
-  return status;
+  if (budget > static_cast<uint64_t>(free_bytes)) budget = free_bytes;
+  uint64_t workers = budget / context->scratch_per_worker;
+  if (workers > 8192) workers = 8192;
+  if (workers > context->total_combination_count)
+    workers = context->total_combination_count;
+  if (workers == 0) return COMB_CUDA_STATUS_OUT_OF_MEMORY;
+  context->worker_count = static_cast<uint32_t>(workers);
+  context->device_scratch_size = workers * context->scratch_per_worker;
+  return status_from_cuda(
+      cudaMalloc(&context->device_scratch,
+                 static_cast<size_t>(context->device_scratch_size)));
 }
 
 extern "C" comb_cuda_status_t comb_cuda_context_create_from_flat_blob(
@@ -336,8 +195,7 @@ extern "C" comb_cuda_status_t comb_cuda_context_create_from_flat_blob(
   created->epoch_size = normalized.epoch_size;
   created->scratch_limit_bytes = normalized.scratch_limit_bytes;
   created->blob_size = blob_size;
-  const auto *header =
-      reinterpret_cast<const comb_cuda_flat_problem_t *>(blob);
+  const auto *header = reinterpret_cast<const comb_cuda_flat_problem_t *>(blob);
   created->total_combination_count = header->total_combination_count;
   created->s = header->s;
   created->host_blob =
@@ -356,12 +214,17 @@ extern "C" comb_cuda_status_t comb_cuda_context_create_from_flat_blob(
                                          cudaMemcpyHostToDevice));
   }
   if (status == COMB_CUDA_STATUS_SUCCESS) {
-    status = status_from_cuda(cudaMalloc(
-        reinterpret_cast<void **>(&created->device_scheduler),
-        sizeof(comb_cuda_scheduler_state_t)));
+    status = status_from_cuda(
+        cudaMalloc(reinterpret_cast<void **>(&created->device_scheduler),
+                   sizeof(comb_cuda_scheduler_state_t)));
   }
+  if (status == COMB_CUDA_STATUS_SUCCESS)
+    status = allocate_workspace(created, blob, blob_size);
   if (status != COMB_CUDA_STATUS_SUCCESS) {
-    if (created->device_scheduler != nullptr) cudaFree(created->device_scheduler);
+    if (created->device_scratch != nullptr) cudaFree(created->device_scratch);
+    if (created->device_prepared != nullptr) cudaFree(created->device_prepared);
+    if (created->device_scheduler != nullptr)
+      cudaFree(created->device_scheduler);
     if (created->device_blob != nullptr) cudaFree(created->device_blob);
     std::free(created->host_blob);
     created->magic = 0;
@@ -376,8 +239,9 @@ extern "C" comb_cuda_status_t comb_cuda_context_create_from_flat_blob(
   return COMB_CUDA_STATUS_SUCCESS;
 }
 
-extern "C" comb_cuda_status_t comb_cuda_device_pci_bus_id(
-    int32_t device, char *buffer, size_t buffer_size) {
+extern "C" comb_cuda_status_t comb_cuda_device_pci_bus_id(int32_t device,
+                                                          char *buffer,
+                                                          size_t buffer_size) {
   if (device < 0 || buffer == nullptr || buffer_size < 16U ||
       buffer_size > static_cast<size_t>(INT_MAX)) {
     return COMB_CUDA_STATUS_INVALID_ARGUMENT;
@@ -424,7 +288,8 @@ comb_cuda_status_t prepare_witness(comb_cuda_context_t *context,
   if (witness == nullptr) return COMB_CUDA_STATUS_SUCCESS;
   if (witness->struct_size < sizeof(comb_cuda_witness_t) ||
       witness->abi_version != COMB_CUDA_ABI_VERSION ||
-      witness->fault_capacity < context->s || witness->fault_indices == nullptr) {
+      witness->fault_capacity < context->s ||
+      witness->fault_indices == nullptr) {
     return COMB_CUDA_STATUS_INVALID_ARGUMENT;
   }
   witness->rank = COMB_CUDA_RANK_NONE;
@@ -476,7 +341,6 @@ extern "C" comb_cuda_status_t comb_cuda_verify_range(
   comb_cuda_witness_mode_t normalized_mode = COMB_CUDA_WITNESS_DEFAULT;
   status = normalize_mode(context, mode, &normalized_mode);
   if (status != COMB_CUDA_STATUS_SUCCESS) return status;
-  (void)normalized_mode;
   if (rank_begin > rank_end || rank_end > context->total_combination_count) {
     return COMB_CUDA_STATUS_INVALID_ARGUMENT;
   }
@@ -490,19 +354,74 @@ extern "C" comb_cuda_status_t comb_cuda_verify_range(
     return COMB_CUDA_STATUS_SUCCESS;
   }
 
-  /* Do not return a scientific decision until FlatProblem includes the CPU's
-   * RREF pivots/permutations, C_z/C_x/P_x transforms, PLUQ permutation and row
-   * schedule, followed by the complete DCP, postselection, phase-aware GE and
-   * universal-coset device pipeline. */
+  status = status_from_cuda(cudaSetDevice(context->device));
+  if (status != COMB_CUDA_STATUS_SUCCESS) return status;
+  const bool fast = normalized_mode == COMB_CUDA_WITNESS_FAST_ANY;
+  uint64_t begin = rank_begin;
+  while (begin < rank_end) {
+    const uint64_t remaining = rank_end - begin;
+    const uint64_t count =
+        remaining < context->epoch_size ? remaining : context->epoch_size;
+    const uint64_t end = begin + count;
+    comb_cuda_scheduler_state_t scheduler{};
+    scheduler.next_rank = begin;
+    scheduler.rank_end = end;
+    scheduler.minimum_bad_rank = COMB_CUDA_RANK_NONE;
+    status =
+        status_from_cuda(cudaMemcpy(context->device_scheduler, &scheduler,
+                                    sizeof(scheduler), cudaMemcpyHostToDevice));
+    if (status != COMB_CUDA_STATUS_SUCCESS) return status;
+    const uint32_t workers = count < context->worker_count
+                                 ? static_cast<uint32_t>(count)
+                                 : context->worker_count;
+    verify_candidates<<<(workers + 63U) / 64U, 64>>>(
+        static_cast<const uint8_t *>(context->device_blob),
+        static_cast<const uint8_t *>(context->device_prepared),
+        static_cast<uint8_t *>(context->device_scratch),
+        context->scratch_per_worker, workers, fast, context->device_scheduler);
+    status = status_from_cuda(cudaGetLastError());
+    if (status == COMB_CUDA_STATUS_SUCCESS)
+      status = status_from_cuda(cudaDeviceSynchronize());
+    if (status == COMB_CUDA_STATUS_SUCCESS)
+      status = status_from_cuda(
+          cudaMemcpy(&scheduler, context->device_scheduler, sizeof(scheduler),
+                     cudaMemcpyDeviceToHost));
+    if (status != COMB_CUDA_STATUS_SUCCESS) return status;
+    if (scheduler.runtime_error != 0)
+      return static_cast<comb_cuda_status_t>(scheduler.runtime_error);
+    result->checked_combination_count += scheduler.scheduled_count;
+    if (scheduler.minimum_bad_rank < result->minimum_bad_rank)
+      result->minimum_bad_rank = scheduler.minimum_bad_rank;
+    if (!fast && scheduler.scheduled_count != count)
+      return COMB_CUDA_STATUS_INTERNAL_ERROR;
+    if (fast && result->minimum_bad_rank != COMB_CUDA_RANK_NONE) break;
+    begin = end;
+  }
+  if (witness != nullptr && result->minimum_bad_rank != COMB_CUDA_RANK_NONE) {
+    auto *locations = static_cast<uint32_t *>(
+        std::malloc(static_cast<size_t>(context->s) * sizeof(uint32_t)));
+    if (locations == nullptr) return COMB_CUDA_STATUS_OUT_OF_MEMORY;
+    const bool decoded =
+        comb_gpu_unrank(context->host_blob, result->minimum_bad_rank, locations,
+                        witness->fault_indices) != 0;
+    std::free(locations);
+    if (!decoded) return COMB_CUDA_STATUS_INTERNAL_ERROR;
+    witness->rank = result->minimum_bad_rank;
+    witness->fault_count = context->s;
+  }
+  result->verification_code = result->minimum_bad_rank == COMB_CUDA_RANK_NONE
+                                  ? ALL_FAULTS_GOOD
+                                  : BAD_FAULT_FOUND;
   const auto finished = std::chrono::steady_clock::now();
   result->verification_milliseconds =
       std::chrono::duration<double, std::milli>(finished - started).count();
-  return COMB_CUDA_STATUS_NOT_IMPLEMENTED;
+  return COMB_CUDA_STATUS_SUCCESS;
 }
 
-extern "C" comb_cuda_status_t comb_cuda_verify(
-    comb_cuda_context_t *context, comb_cuda_witness_mode_t mode,
-    comb_cuda_result_t *result, comb_cuda_witness_t *witness) {
+extern "C" comb_cuda_status_t comb_cuda_verify(comb_cuda_context_t *context,
+                                               comb_cuda_witness_mode_t mode,
+                                               comb_cuda_result_t *result,
+                                               comb_cuda_witness_t *witness) {
   if (context == nullptr || context->magic != kContextMagic) {
     return COMB_CUDA_STATUS_INVALID_ARGUMENT;
   }
@@ -514,6 +433,7 @@ extern "C" void comb_cuda_context_destroy(comb_cuda_context_t *context) {
   if (context == nullptr || context->magic != kContextMagic) return;
   cudaSetDevice(context->device);
   if (context->device_scratch != nullptr) cudaFree(context->device_scratch);
+  if (context->device_prepared != nullptr) cudaFree(context->device_prepared);
   if (context->device_scheduler != nullptr) cudaFree(context->device_scheduler);
   if (context->device_blob != nullptr) cudaFree(context->device_blob);
   std::free(context->host_blob);
@@ -538,7 +458,7 @@ extern "C" const char *comb_cuda_status_string(comb_cuda_status_t status) {
     case COMB_CUDA_STATUS_OUT_OF_MEMORY:
       return "out of memory";
     case COMB_CUDA_STATUS_NOT_IMPLEMENTED:
-      return "CUDA scientific pipeline not implemented";
+      return "operation not implemented";
     case COMB_CUDA_STATUS_INTERNAL_ERROR:
       return "internal error";
     default:

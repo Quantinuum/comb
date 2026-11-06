@@ -1,0 +1,20 @@
+Fri Nov  6 05:34:49 UTC 2026
+NAME="Ubuntu"
+VERSION="20.04.5 LTS (Focal Fossa)"
+ID=ubuntu
+ID_LIKE=debian
+PRETTY_NAME="Ubuntu 20.04.5 LTS"
+VERSION_ID="20.04"
+HOME_URL="https://www.ubuntu.com/"
+SUPPORT_URL="https://help.ubuntu.com/"
+BUG_REPORT_URL="https://bugs.launchpad.net/ubuntu/"
+PRIVACY_POLICY_URL="https://www.ubuntu.com/legal/terms-and-policies/privacy-policy"
+VERSION_CODENAME=focal
+UBUNTU_CODENAME=focal
+NVIDIA (R) Compute Sanitizer
+Copyright (c) 2020-2022 NVIDIA Corporation
+Version 2022.3.0
+4c314a33d7e606099fd854beebe5452466db6f283c511c73aadaff9c920ea60f  build-gpu/libcomb_cuda.so
+f3cc7b9fbf4fb3e70ea6c2488655918a0314ae5420ffb14aa7cbd4a792ea39bd  build-gpu/comb-cuda-mpi
+7e8cec2528a2e6fe2a37df574245439990743d434fa2ccd7c34f904e9266fbde  build-gpu/comb_cuda_device_test
+8a7266c5475146f30a21691e2bfa8499b7c0b3da621e407524263a43a42c98b2  build-gpu/comb_cuda_mpi_device_test

@@ -171,11 +171,11 @@ void add_and_column_vector(mzd_t *result, mzd_t *F1, mzd_t *F2);
 
 // inline functions
 
-inline word mzd_data(const mzd_t *mzd) {  // assumes mzd is a row vector
+static inline word mzd_data(const mzd_t *mzd) {  // assumes mzd is a row vector
   return mzd->data[0];
 }
 
-inline uint32_t gray_bit_to_switch(uint32_t n) {
+static inline uint32_t gray_bit_to_switch(uint32_t n) {
   uint32_t n_add_one = n + 1;
   uint32_t diff = n ^ n_add_one ^ (n >> 1) ^ (n_add_one >> 1);
   return n ? 31 - __builtin_clz(diff) : 0;

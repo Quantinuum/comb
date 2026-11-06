@@ -18,7 +18,9 @@ int main(int argv, char** args){
   set_coset_to_stabiliser_state(coset,state);//,temp_n_n_1,temp_n_n_2,p,q,temp_n_n_plus_one,temp_n_plus_one_n,new_state);
   for(int i = 0; i < 1 << COSET_K(coset); i++){
     fprintf(stderr,"%s",print_pauli_z_coset(coset,1));
-    incf_coset(coset,i);
+    if ((i + 1) != (1 << COSET_K(coset)))
+      coset->factor_transpose->data[0] ^=
+          mzd_row(coset->set_generators, gray_bit_to_switch(i))[0];
   }
   mzd_print(coset->factor_transpose);
   printf("\n");

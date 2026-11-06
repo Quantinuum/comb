@@ -1,0 +1,14 @@
+[ 10%] Building C object CMakeFiles/comb_run_file.dir/src/mpi/comb_run_file.c.o
+[ 20%] Building CUDA object CMakeFiles/comb_cuda.dir/src/c/comb_cuda.cu.o
+[ 30%] Building C object CMakeFiles/comb_cuda.dir/src/c/comb_cuda_preprocess.c.o
+[ 40%] Building C object CMakeFiles/comb_cuda.dir/src/c/comb_cuda_flat.c.o
+[ 50%] Linking C static library libcomb_run_file.a
+[ 50%] Built target comb_run_file
+[ 60%] Linking CUDA shared library libcomb_cuda.so
+[ 60%] Built target comb_cuda
+[ 70%] Building C object CMakeFiles/comb_cuda_mpi.dir/src/mpi/comb_cuda_mpi.c.o
+[ 80%] Linking C static library libcomb_cuda_mpi.a
+[ 80%] Built target comb_cuda_mpi
+[ 90%] Building C object CMakeFiles/comb-cuda-mpi.dir/src/mpi/main.c.o
+[100%] Linking C executable comb-cuda-mpi
+[100%] Built target comb-cuda-mpi
