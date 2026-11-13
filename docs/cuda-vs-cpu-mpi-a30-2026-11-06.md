@@ -16,9 +16,9 @@ Times below are **median complete-process wall times from three repetitions**
 after one warmup per configuration. Profile order rotated between repetitions.
 They include MPI startup, loading, preprocessing, CUDA initialization/transfers,
 verification and teardown. All 48 primary runs returned `ALL_FAULTS_GOOD` and
-checked the exact full combination count on the same unchanged bundled inputs.
+checked the exact full combination count on the same unchanged verification inputs.
 
-| Bundled workload | Qubits incl. ancillas | Combinations | CPU: 3 MPI ranks | CPU: 32 MPI ranks | CUDA: 2 A30s |
+| Workload | Qubits incl. ancillas | Combinations | CPU: 3 MPI ranks | CPU: 32 MPI ranks | CUDA: 2 A30s |
 | --- | ---: | ---: | ---: | ---: | ---: |
 | Steane, single faults | 15 | 944 | 0.162 s | 0.640 s | 0.774 s |
 | Colour code, single faults | 58 | 2,712 | 0.837 s | 1.710 s | 0.851 s |
@@ -44,7 +44,7 @@ noninterleaved follow-up results are not substituted into the primary table.
 The default Golay job was 5.58× faster than the smaller CPU job, while Steane
 was slower and colour-code timings were comparable within observed variation.
 These are implementation/end-to-end results, not isolated GPU-kernel timings
-or evidence of general two-GPU scaling. Only four all-good bundled examples
+or evidence of general two-GPU scaling. Only four all-good verification inputs
 and three repetitions were tested. The original CPU branch's MPI shutdown
 warnings remain in the logs. Neither implementation was changed for these
 benchmark runs.
@@ -55,3 +55,7 @@ benchmark runs.
 [raw logs](benchmarks/duvel3-a30-2026-11-06/raw-timings.tar.gz) are retained.
 Reproduce in the recorded remote `benchmark` directory with
 `python3 run_comparison.py comparison.json --output-directory results-new`.
+Circuit inputs are kept outside version control. Obtain the named inputs
+separately, check them against the recorded hashes, and update the input paths
+in your comparison configuration. Historical logs and metadata retain the
+paths used for the measurements.

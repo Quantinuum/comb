@@ -1,9 +1,11 @@
 #!/usr/bin/env python3
-"""Extract existing scientific .run examples without changing their contents.
+"""Extract privately stored scientific .run inputs without changing contents.
 
 This script records native-endian headers, exact weighted candidate counts,
 and hashes. The directory names supply expected decisions, not validation.
 Run check_input.c and both executables before using those labels as results.
+Provide --examples or COMB_EXAMPLES_DIR; the compatibility default is the
+ignored local examples/ directory. Circuit input data is not distributed here.
 """
 
 from __future__ import annotations
@@ -13,6 +15,7 @@ import gzip
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import struct
 import sys
@@ -99,14 +102,21 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path)
     parser.add_argument("--examples", type=Path,
-                        default=Path(__file__).resolve().parents[2] / "examples")
+                        default=Path(os.environ.get(
+                            "COMB_EXAMPLES_DIR",
+                            Path(__file__).resolve().parents[2] / "examples")),
+                        help="Private input directory (COMB_EXAMPLES_DIR or ignored examples/)")
     parser.add_argument("--names", nargs="+", help="Exact compressed filenames")
     args = parser.parse_args()
+    sources = [source for source in sorted(args.examples.glob("*/*.run.gz"))
+               if not args.names or source.name in args.names]
+    if not sources:
+        parser.error("No private .run.gz inputs found; supply --examples or COMB_EXAMPLES_DIR")
+    if args.names and len(sources) != len(set(args.names)):
+        parser.error("one or more requested example names were not found")
     args.output.mkdir(parents=True, exist_ok=True)
     entries = []
-    for source in sorted(args.examples.glob("*/*.run.gz")):
-        if args.names and source.name not in args.names:
-            continue
+    for source in sources:
         data = gzip.decompress(source.read_bytes())
         entry = metadata(source, data)
         destination = args.output / source.with_suffix("").name
@@ -115,8 +125,6 @@ def main() -> None:
         entries.append(entry)
         print(f"{destination.name}: n_all={entry['header']['n_all']}, "
               f"s={entry['header']['s']}, candidates={entry['candidate_count']:,}")
-    if args.names and len(entries) != len(set(args.names)):
-        raise ValueError("one or more requested example names were not found")
     (args.output / "inputs.json").write_text(json.dumps(entries, indent=2) + "\n")
 
 

@@ -77,7 +77,7 @@ CTEST ?= ctest
 CMAKE_BUILD_TYPE ?= Release
 CMAKE_OPTIONS ?=
 
-examples: comb
+examples:
 	./examples.sh
 
 .PHONY: clean cmake-configure cmake-build cmake-test cuda-configure docs \

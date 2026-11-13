@@ -3,5 +3,7 @@
 test-bin/
 m4ri/
 build/
-comb-*.run
+*.run
+*.run.gz
+/examples/
 comb
