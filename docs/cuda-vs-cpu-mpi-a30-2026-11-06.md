@@ -51,8 +51,8 @@ benchmark runs.
 
 [Individual timings and ranges](benchmarks/duvel3-a30-2026-11-06/results.json),
 [input hashes](benchmarks/duvel3-a30-2026-11-06/inputs/inputs.json),
-[commands/configuration](benchmarks/duvel3-a30-2026-11-06/comparison.json), and
-[raw logs](benchmarks/duvel3-a30-2026-11-06/raw-timings.tar.gz) are retained.
+and [commands/configuration](benchmarks/duvel3-a30-2026-11-06/comparison.json) are retained.
+Raw timing logs are kept privately outside version control.
 Reproduce in the recorded remote `benchmark` directory with
 `python3 run_comparison.py comparison.json --output-directory results-new`.
 Circuit inputs are kept outside version control. Obtain the named inputs

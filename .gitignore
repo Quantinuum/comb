@@ -6,4 +6,5 @@ build/
 *.run
 *.run.gz
 /examples/
+raw-timings*.tar.gz
 comb
